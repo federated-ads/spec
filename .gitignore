@@ -1,0 +1,11 @@
+# This repo publishes Markdown specs: override the global *.md ignore
+!*.md
+# ...but keep the global convention for assistant notes and brainstorms
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+docs/brainstorms/
+.DS_Store
+# Unsent outreach drafts stay local (contain personal pitches/contacts)
+docs/outreach/
+*.tmp
