@@ -1,0 +1,2688 @@
+<title>Federated Ads Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: RFC-style standards document — metadata header block, sticky section index on the left, single reading column. Signed-message motif: seal for the AI disclosure. */
+:root {
+  --paper: #f6f7f5;
+  --ink: #17211f;
+  --ink-soft: #4b5754;
+  --rule: #d5dbd8;
+  --panel: #eceFEd;
+  --accent: #1c6b5a;      /* "verified" green-teal: signatures, links */
+  --accent-wash: #dcece7;
+  --code-bg: #e9edeb;
+  --display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121816; --ink: #e3e9e6; --ink-soft: #9fada8; --rule: #2a3431;
+    --panel: #19211e; --accent: #6cc4ad; --accent-wash: #1c2f2a; --code-bg: #1a2320;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121816; --ink: #e3e9e6; --ink-soft: #9fada8; --rule: #2a3431;
+  --panel: #19211e; --accent: #6cc4ad; --accent-wash: #1c2f2a; --code-bg: #1a2320;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink);
+  font-family: var(--body); font-size: 1.0625rem; line-height: 1.65;
+  padding-inline: 20px; padding-block: 0 64px;
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+.shell { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 56px; }
+
+/* Header */
+.masthead { grid-column: 1 / -1; padding-block: 48px 32px; border-bottom: 2px solid var(--ink); display: grid; gap: 24px; }
+.masthead .eyebrow { font-family: var(--mono); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.masthead h1 { font-family: var(--display); font-weight: 800; font-size: clamp(2.3rem, 6vw, 4.2rem); line-height: 1.02; letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.masthead .sub { font-family: var(--display); font-weight: 500; font-size: clamp(1.1rem, 2.2vw, 1.4rem); color: var(--ink-soft); margin: 0; max-width: 40ch; text-wrap: balance; }
+.meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0; border: 1px solid var(--rule); font-family: var(--mono); font-size: .8rem; }
+.meta div { padding: 10px 14px; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); margin: 0 -1px -1px 0; }
+.meta dt { color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; font-size: .7rem; }
+.meta dd { margin: 2px 0 0; color: var(--ink); }
+
+.seal { display: flex; gap: 16px; align-items: flex-start; background: var(--accent-wash); padding: 16px 18px; border-radius: 4px; max-width: 760px; }
+.seal svg { flex: 0 0 auto; width: 44px; height: 44px; color: var(--accent); }
+.seal p { margin: 0; font-size: .97rem; }
+.seal strong { font-family: var(--display); }
+
+/* TOC */
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; padding-top: 32px; font-family: var(--display); font-size: .86rem; }
+nav.toc h2 { font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); font-weight: 400; margin: 0 0 10px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+nav.toc a { display: grid; grid-template-columns: 2.2em 1fr; color: var(--ink-soft); text-decoration: none; padding: 4px 6px; border-radius: 3px; line-height: 1.3; }
+nav.toc a span { font-family: var(--mono); font-size: .76rem; padding-top: 1px; font-variant-numeric: tabular-nums; }
+nav.toc a:hover, nav.toc a.active { color: var(--ink); background: var(--panel); }
+nav.toc a.active span { color: var(--accent); }
+
+/* Article */
+article { min-width: 0; padding-top: 24px; max-width: 74ch; }
+article h2 { font-family: var(--display); font-weight: 700; font-size: 1.75rem; line-height: 1.2; letter-spacing: -.01em; margin: 64px 0 16px; padding-top: 18px; border-top: 1px solid var(--rule); text-wrap: balance; scroll-margin-top: 16px; }
+article h2:first-child { margin-top: 24px; }
+article h3 { font-family: var(--display); font-weight: 700; font-size: 1.18rem; margin: 36px 0 8px; text-wrap: balance; }
+article p, article ul, article ol { margin: 0 0 16px; }
+article li { margin-bottom: 6px; }
+article strong { font-weight: 600; }
+article hr { display: none; }
+article blockquote { margin: 20px 0; padding: 12px 18px; border-left: 3px solid var(--accent); background: var(--panel); color: var(--ink-soft); font-size: .95rem; }
+article blockquote p { margin: 0; }
+code { font-family: var(--mono); font-size: .84em; background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+pre { background: var(--code-bg); padding: 16px 18px; border-radius: 4px; overflow-x: auto; font-size: .82rem; line-height: 1.55; margin: 0 0 20px; max-width: 100%; }
+pre code { background: none; padding: 0; font-size: inherit; }
+.tbl { overflow-x: auto; margin: 0 0 24px; border-top: 2px solid var(--ink); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; line-height: 1.45; }
+th { font-family: var(--display); font-weight: 700; text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--ink); white-space: nowrap; }
+td { padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+td:first-child { font-weight: 600; }
+td code { white-space: nowrap; }
+footer { grid-column: 2; max-width: 74ch; margin-top: 56px; padding-top: 18px; border-top: 2px solid var(--ink); font-family: var(--mono); font-size: .78rem; color: var(--ink-soft); }
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  nav.toc { position: static; max-height: none; border-bottom: 1px solid var(--rule); padding-bottom: 20px; }
+  nav.toc ol { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  footer { grid-column: 1; }
+  body { padding-inline: 16px; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+article h1 { font-family: var(--mono); font-weight: 400; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin: 80px 0 -40px; }
+article h1:first-child { margin-top: 24px; }
+article h4 { font-family: var(--display); font-size: 1rem; margin: 24px 0 6px; }
+nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); padding: 14px 6px 4px; }
+.diagram { overflow-x: auto; margin: 0 0 24px; padding: 16px; background: var(--panel); border-radius: 4px; }
+.diagram pre.mermaid { background: none; margin: 0; padding: 0; font-family: var(--mono); font-size: .8rem; }
+.notice { font-family: var(--mono); font-size: .78rem; color: var(--ink-soft); margin: 0; max-width: 760px; }
+@media (max-width: 900px) { nav.toc li.part { grid-column: 1 / -1; } }
+</style>
+
+<div class="shell">
+  <header class="masthead">
+    <div class="eyebrow">Federated Ads Initiative · Whitepaper · Draft for public comment</div>
+    <h1>The Federated Ads Protocol</h1>
+    <p class="sub">An open, federated, owner-controlled protocol for advertising on the open web</p>
+    <dl class="meta">
+      <div><dt>Status</dt><dd>Draft · v0.2</dd></div>
+      <div><dt>Date</dt><dd>5 October 2026</dd></div>
+      <div><dt>Published by</dt><dd>Federated Ads Initiative</dd></div>
+      <div><dt>Contributors</dt><dd>Suneesh Rajan; Claude (Anthropic)</dd></div>
+      <div><dt>Licence</dt><dd>CC BY 4.0 (text) · Apache-2.0 (code)</dd></div>
+      <div><dt>Repository</dt><dd>github.com/federated-ads</dd></div>
+      <div><dt>Protocol draft</dt><dd>draft-rajan-federated-ads-protocol</dd></div>
+    </dl>
+    <div class="seal" role="note">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="24" cy="24" r="16" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 3"/><path d="M16 24.5l5.5 5.5L33 18.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <p><strong>Authored with Claude.</strong> This whitepaper was researched, structured and drafted with Claude, an AI model made by Anthropic. A human contributor set its goals, made every design decision, and is accountable for its contents. Research was AI-assisted and cited; items resting on secondary sources are flagged. See <a href="#28-ai-assistance-disclosure">§28, AI-assistance disclosure</a>.</p>
+    </div>
+    <p class="notice">Not affiliated with The Trade Desk's “OpenAds” or the “Open Ads Protocol”. Version 0.1 used the working name “OpenAds”.</p>
+  </header>
+
+  <nav class="toc" aria-label="Sections">
+    <h2>Contents</h2>
+    <ol>
+
+    </ol>
+  </nav>
+
+  <article>
+<h2 id="executive-summary">Executive summary</h2>
+<p><strong>The problem.</strong> Digital advertising pays for much of the open internet, but the system that delivers it is concentrated, opaque and built on tracking people.</p>
+<ul>
+<li>The ten largest US ad sellers now take <strong>84.1%</strong> of US internet ad revenue, up from 78.6% in 2021 [5].</li>
+<li>Outside China, Alphabet, Meta and Amazon take <strong>57.6%</strong> of all advertising revenue [6].</li>
+<li>Courts in the US and the EU have found that Google abused its position in ad tech [7][8].</li>
+<li>Even after years of reform, the ANA's benchmark finds that a large share of programmatic spend still fails to become effective, viewable, valid impressions [4].</li>
+<li>About <strong>1.1 billion people</strong>, roughly 30% of internet users, block ads [11].</li>
+</ul>
+<p>Meanwhile, the publishers who most need a fair way to earn have no neutral, interoperable option. That includes independent sites, newsletters, podcasts, fediverse communities and now AI assistants.</p>
+<p><strong>The proposal.</strong> The Federated Ads Protocol ("Federated Ads") is an open protocol, in the tradition of email and ActivityPub, that lets independent servers ("nodes") run by publishers, advertisers, agencies or cooperatives:</p>
+<ol type="1">
+<li><strong>find each other</strong> by domain;</li>
+<li><strong>agree deals</strong> with signed offers;</li>
+<li><strong>serve creatives the advertiser still owns and can withdraw at any time</strong>, under a time-limited licence;</li>
+<li><strong>prove delivery</strong> with signed, aggregated receipts recorded in tamper-evident logs;</li>
+<li><strong>settle payment</strong> on whatever payment rail the parties choose.</li>
+</ol>
+<p>Matching is <strong>contextual by default</strong>, so the protocol carries no cross-site identifiers. People who see ads get enforceable rights: an explanation, an opt-out, an ad-free option and a way to report abuse. One protocol covers websites, fediverse and social feeds, newsletters, podcasts and AI/chat surfaces.</p>
+<p><strong>What is new.</strong> Most pieces exist separately: domain-bound signing (DKIM, ads.cert), contextual networks (EthicalAds, Carbon), on-device matching (Brave), transparency logs (Certificate Transparency). Federated Ads combines them into one open, federated protocol with three properties no current system offers together:</p>
+<ul>
+<li>the advertiser keeps ownership of its creative and can revoke it;</li>
+<li>delivery is verifiable without surveillance;</li>
+<li>the parties choose their own intermediaries.</li>
+</ul>
+<p><strong>What this paper is honest about.</strong> Federated Ads will not offer cross-publisher reach-and-frequency planning, and that is by design. Its verification is weaker than incumbent verification vendors for anonymous, high-value deals until independent auditors and client attestation mature. It also faces a hard cold-start problem. <a href="#20-economics-a-worked-example">§20</a>, <a href="#22-adoption-strategy">§22</a> and <a href="#25-risks-and-mitigations">§25</a> address these directly.</p>
+<p><strong>What we are asking for.</strong> Review and criticism from standards bodies (W3C, IETF, IAB Tech Lab), from publishers and advertisers, and from civil society. Specifically:</p>
+<ul>
+<li>Is the problem framed correctly?</li>
+<li>Are the trade-offs acceptable?</li>
+<li>Would you implement, pilot or govern this?</li>
+</ul>
+<hr />
+<h1 id="part-i-why">Part I: Why</h1>
+<h2 id="1-the-problem">1. The problem</h2>
+<h3 id="11-concentration">1.1 Concentration</h3>
+<p>Advertising revenue is consolidating into fewer hands.</p>
+<p><strong>US market share.</strong> The IAB/PwC <em>Internet Advertising Revenue Report</em> for 2025 puts US internet ad revenue at <strong>$294.6 billion</strong>. The top ten companies hold <strong>84.1%</strong>, up from 78.6% in 2021. Companies ranked 11–25 hold 8.3%, and everyone else shares the remaining 7.5% [5].</p>
+<p><strong>Global share.</strong> WPP Media's mid-2026 forecast estimates global advertising revenue of about $1.3 trillion in 2026, with Alphabet, Meta and Amazon taking <strong>57.6%</strong> of the market outside China [6].</p>
+<p><strong>Conflicts of interest.</strong> The concentration problem goes beyond market share. The same firm often represents buyers, represents sellers and runs the exchange between them. Three sets of authorities have now examined this:</p>
+<ul>
+<li><strong>United States.</strong> In <em>United States v. Google</em> (E.D. Va.), the court found on <strong>17 April 2025</strong> that Google had illegally monopolised the publisher ad server and ad exchange markets and unlawfully tied them together. In September 2026 the court rejected divestiture of Google's AdX exchange. It instead ordered behavioural remedies, including interoperability with the open-source Prebid header-bidding framework and a ban on "first look"/"last look" advantages, overseen by a monitor [7]. Google has said it will appeal.</li>
+<li><strong>European Union.</strong> On <strong>5 September 2025</strong> the European Commission fined Google <strong>€2.95 billion</strong> for self-preferencing its ad exchange since 2014 and signalled that a structural remedy might be needed [8].</li>
+<li><strong>Canada.</strong> The Competition Bureau filed for divestiture of Google's publisher ad server and exchange in November 2024 [9].</li>
+</ul>
+<p>Regulators broadly agree on the diagnosis: conflicted intermediaries control the rails. They differ on the cure. The US remedy notably requires <strong>interoperability with an open, multi-party framework</strong>, which is the kind of remedy an open protocol makes possible.</p>
+<h3 id="12-opacity-and-leakage">1.2 Opacity and leakage</h3>
+<p><strong>ISBA/PwC studies.</strong> In 2020 the ISBA/PwC <em>Programmatic Supply Chain Transparency Study</em> found that only <strong>51%</strong> of advertiser spend reached publishers. <strong>15%</strong> was an "unknown delta" that could not be attributed to anyone [1].</p>
+<p>The 2023 follow-up found real improvement where participants shared log-level data and used private deals [2]:</p>
+<ul>
+<li>publishers received <strong>65%</strong> (against a restated 57% for the earlier study);</li>
+<li>the unknown delta fell to <strong>3%</strong>.</li>
+</ul>
+<p><strong>ANA study.</strong> The ANA's 2023 <em>Programmatic Media Supply Chain Transparency Study</em> covered $123 million of spend and 35.5 billion impressions [3]. It found that:</p>
+<ul>
+<li>only about <strong>36 cents</strong> of each dollar entering a demand-side platform reached consumers as an effective impression;</li>
+<li>made-for-advertising sites took <strong>15%</strong> of spend;</li>
+<li>an average campaign ran on <strong>44,000</strong> websites.</li>
+</ul>
+<p><strong>ANA/TAG TrustNet benchmark.</strong> The quarterly benchmark shows the industry improving [4]:</p>
+<ul>
+<li>Q4 2025: "TrueAdSpend" of 56.7% for top performers and 37.5% for laggards.</li>
+<li>Over <strong>92%</strong> of median web and mobile programmatic spend now flows through private marketplaces.</li>
+</ul>
+<p><strong>What this tells us.</strong> Verifiable records work: transparency rose sharply wherever log-level data and deal identifiers were available. But the industry's fix has largely been to retreat into private deals between large parties. Those deals are walled gardens by another name, and they are not open to the long tail of publishers. Federated Ads aims to make verifiable, deal-based buying a <strong>property of the protocol</strong>, available to anyone.</p>
+<h3 id="13-fraud">1.3 Fraud</h3>
+<p>Estimates of ad fraud vary widely by method. Juniper Research's model put fraud at about <strong>$84 billion in 2023</strong>, 22% of online ad spend [12]. That is a modelled upper-bound estimate. Verification vendors report much lower invalid-traffic rates on the inventory they measure. Either way, fraud thrives where delivery cannot be verified and identities cannot be authenticated, and both are design targets for Federated Ads.</p>
+<h3 id="14-surveillance-as-infrastructure-and-the-collapse-of-its-replacement">1.4 Surveillance as infrastructure, and the collapse of its replacement</h3>
+<p>Mainstream targeting was built on cross-site identifiers, and that model has run into trouble on several fronts:</p>
+<ul>
+<li><strong>Browsers.</strong> Safari and Firefox block third-party cookies by default.</li>
+<li><strong>Regulators.</strong> GDPR, the ePrivacy Directive, the EU Digital Services and Digital Markets Acts, US state privacy laws and India's Digital Personal Data Protection Act all restrict it (<a href="#19-legal-and-regulatory-considerations">§19</a>).</li>
+<li><strong>Privacy Sandbox.</strong> Google's proposed replacement was abandoned. In July 2024 Google dropped its plan to remove third-party cookies from Chrome. On <strong>17 October 2025</strong> it retired most Privacy Sandbox APIs, including Topics, Protected Audience and Attribution Reporting, citing low adoption [10].</li>
+<li><strong>The result:</strong> after six years of industry engineering effort on APIs controlled by one vendor, Chrome still has third-party cookies, and no privacy-preserving replacement is widely deployed.</li>
+</ul>
+<p>The surviving multi-vendor effort is the W3C Private Advertising Technology Working Group's <em>Attribution</em> specification, which is still a Working Draft [24].</p>
+<h3 id="15-loss-of-creative-control">1.5 Loss of creative control</h3>
+<p>Once a creative enters the supply chain, it is copied into ad servers, exchanges, caches and CDNs that the advertiser does not control. Advertisers have many reasons to pull a creative quickly:</p>
+<ul>
+<li>a legal problem;</li>
+<li>a product recall;</li>
+<li>a pricing error;</li>
+<li>expired rights to talent or music;</li>
+<li>a brand crisis.</li>
+</ul>
+<p>In today's supply chain, pulling a creative is slow and incomplete. No interoperable "stop" signal exists, and nothing proves that it was honoured.</p>
+<h3 id="16-the-unmonetised-open-web">1.6 The unmonetised open web</h3>
+<p>The ecosystems with the strongest values-based objections to surveillance advertising are also the ones with no workable alternative:</p>
+<ul>
+<li><strong>Fediverse and decentralised social.</strong> Mastodon promises it "will never serve ads" [16]. Bluesky's CEO has said the company "can't enshittify the network with ads", but has not ruled out "user intent-driven" advertising [17].</li>
+<li><strong>Newsletters and podcasts.</strong> These are funded mostly by <strong>direct-sold sponsorships</strong>, which are growing but manual and unverifiable. US podcast advertising reached <strong>$2.86 billion in 2025</strong> [15].</li>
+<li><strong>Open-source and developer sites.</strong> Small contextual networks have shown that tracking-free advertising can pay. EthicalAds paid publishers about <strong>$117,000 in Q2 2026</strong> across about 200 sites [19]. These networks are small, centralised and not interoperable.</li>
+<li><strong>AI assistants.</strong> These are becoming an ad surface faster than norms can form:
+<ul>
+<li>OpenAI began testing ads in ChatGPT in February 2026 under self-declared principles: answers not influenced by ads, ads clearly labelled, conversations kept private from advertisers [13]. It reports a $1 billion annualised run rate within about 200 days.</li>
+<li>Perplexity, by contrast, stopped its sponsored follow-up questions in early 2026, citing user trust [14].</li>
+<li>No AI provider's ad principles are independently verifiable.</li>
+</ul></li>
+</ul>
+<h3 id="17-ad-blocking-as-a-verdict">1.7 Ad blocking as a verdict</h3>
+<p>The eyeo <em>2026 Ad Blocking Report</em> estimates about <strong>1.1 billion</strong> ad-blocking users, roughly 30% of internet users, with mobile blocking up 27% since 2023. <strong>81%</strong> of respondents worry about how their data is used [11]. A large minority of the audience has opted out of today's advertising model altogether. Advertising that is non-tracking, accountable and clearly labelled is the most credible way to win part of that audience back.</p>
+<h3 id="18-what-is-missing">1.8 What is missing</h3>
+<p>There is no open, federated protocol for advertising, comparable to SMTP for email or ActivityPub for social posting. Such a protocol would let any party:</p>
+<ul>
+<li>run a node;</li>
+<li>transact directly or through intermediaries it chooses;</li>
+<li>keep ownership of what it contributes;</li>
+<li>verify what happened;</li>
+<li>do all of this without tracking the people who see the ads.</li>
+</ul>
+<hr />
+<h2 id="2-what-has-been-tried-lessons-from-prior-art">2. What has been tried: lessons from prior art</h2>
+<p>Federated Ads builds on, and has learned from, many earlier efforts. The table summarises what each did and what Federated Ads takes from it.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Effort</th>
+<th>What it did</th>
+<th>What happened</th>
+<th>Lesson for Federated Ads</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ads.txt / sellers.json / SupplyChain object</strong> (IAB Tech Lab)</td>
+<td>Plain-text and JSON files on the domain declaring authorised sellers</td>
+<td>Near-universal adoption</td>
+<td>Domain-hosted declarations spread when they cost almost nothing. Federated Ads keeps that pattern and adds signatures.</td>
+</tr>
+<tr>
+<td><strong>ads.cert 1.0 and 2.0</strong> (IAB Tech Lab)</td>
+<td>Signed bid requests; v2 binds keys to domains via DNS ("Call Signs") and signs server-to-server requests [20]</td>
+<td>v1 was tied to OpenRTB 3.0 and stalled. v2's reference implementation stopped at MVP. No buyer required it.</td>
+<td>The closest precedent. Signing cost was never the problem. Ship production-grade libraries and key management, and get major participants to <em>require</em> signatures.</td>
+</tr>
+<tr>
+<td><strong>OpenRTB 3.0 / AdCOM</strong></td>
+<td>A clean-slate redesign of real-time bidding</td>
+<td>Not backward compatible; adoption stayed minimal; useful parts moved back into 2.x [21]</td>
+<td>Breaking compatibility loses to incremental change. Provide bridges and a phased path.</td>
+</tr>
+<tr>
+<td><strong>Privacy Sandbox</strong> (Google)</td>
+<td>Browser APIs for interest-based ads and measurement without third-party cookies</td>
+<td>Most APIs retired in October 2025 [10]</td>
+<td>A "standard" controlled by one vendor with conflicting interests can be cancelled unilaterally. Require multi-stakeholder governance and independent implementations.</td>
+</tr>
+<tr>
+<td><strong>Prebid.org</strong></td>
+<td>Neutral open-source header bidding with a multi-company board</td>
+<td>Widely adopted. A unilateral 2025 change to transaction IDs prompted a public dispute with IAB Tech Lab and a fork by The Trade Desk [22][23]</td>
+<td>Neutral bodies work, but change control, notice periods and representation must be written down.</td>
+</tr>
+<tr>
+<td><strong>Do Not Track</strong></td>
+<td>A browser header asking sites not to track</td>
+<td>The W3C group closed in 2019 for insufficient deployment; "tracking" was never defined; no legal force [26]</td>
+<td>Vague signals fail.</td>
+</tr>
+<tr>
+<td><strong>Global Privacy Control</strong></td>
+<td>A narrow, well-defined opt-out header</td>
+<td>Recognised under California and Colorado law and in enforcement settlements; now a W3C Working Draft [25]</td>
+<td>Narrow semantics plus legal backing succeed. Federated Ads honours GPC.</td>
+</tr>
+<tr>
+<td><strong>Acceptable Ads / Coalition for Better Ads</strong></td>
+<td>Industry criteria for "acceptable" formats</td>
+<td>Criticised for pay-to-whitelist economics and for enforcement by an interested party</td>
+<td>Keep rule-making, enforcement and revenue separate.</td>
+</tr>
+<tr>
+<td><strong>Brave Ads</strong></td>
+<td>On-device matching from a downloaded catalogue; anonymous reporting via Privacy Pass-style tokens</td>
+<td>Works at scale (Brave reports 101 million monthly active users [18]), but within one browser and one operator</td>
+<td>Local matching and anonymous tokens work technically. Federation and payment neutrality are what is missing.</td>
+</tr>
+<tr>
+<td><strong>Web Monetization / Coil</strong></td>
+<td>Streaming micropayments as an alternative to ads</td>
+<td>Coil shut down in March 2023; the work continues under the Interledger Foundation [27]</td>
+<td>One company carrying an "open" standard is fragile. Payment rails are the hardest part, so stay rail-agnostic.</td>
+</tr>
+<tr>
+<td><strong>Blockchain ad projects</strong> (AdEx, Lucidity and others)</td>
+<td>On-chain ad accounting and tokens</td>
+<td>Pivoted or absorbed. Participants concluded what was really needed was "a better PKI"</td>
+<td>Signatures and verifiable logs are the valuable part. They need no blockchain.</td>
+</tr>
+<tr>
+<td><strong>EthicalAds, Carbon Ads</strong></td>
+<td>Contextual, privacy-respecting networks</td>
+<td>Commercially viable, small, centralised [19]</td>
+<td>Contextual advertising pays. Federation could let many such networks interoperate.</td>
+</tr>
+<tr>
+<td><strong>Email (SMTP, DKIM, DMARC)</strong></td>
+<td>Federated messaging with domain-bound signatures and aggregate reports</td>
+<td>Authentication became universal once large receivers <em>required</em> it (Gmail/Yahoo, February 2024)</td>
+<td>The strongest model for Federated Ads: domain keys, aligned policy, aggregate reports and a few important parties requiring them.</td>
+</tr>
+<tr>
+<td><strong>ActivityPub and FEPs; AT Protocol labelers</strong></td>
+<td>Federated social with a community extension process; composable, subscribable moderation [30][31]</td>
+<td>Living ecosystems</td>
+<td>A ready-made community process. Brand safety and fraud lists can be independent, subscribable "labelers".</td>
+</tr>
+<tr>
+<td><strong>C2PA / Content Credentials</strong></td>
+<td>Signed provenance manifests for media [34]</td>
+<td>Growing adoption in cameras, phones and tools</td>
+<td>Creative manifests should interoperate with C2PA, not reinvent provenance.</td>
+</tr>
+<tr>
+<td><strong>AdCP and IAB Tech Lab AAMP</strong> (2025–26)</td>
+<td>Protocols for AI agents to plan and buy media [28][29]</td>
+<td>Fast-moving; two camps</td>
+<td>Federated Ads should not be a third agent protocol. It can be the federated identity, licence and receipt layer that agent protocols call.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>The ten lessons Federated Ads is designed around:</strong></p>
+<ol type="1">
+<li><strong>Bind identity to domains and make signing mandatory</strong>, as email authentication did.</li>
+<li><strong>Bridge rather than break.</strong> Map to OpenRTB 2.6, AdCOM, VAST, GPP and the IAB taxonomies.</li>
+<li><strong>Ship production-grade reference code and key management</strong>, not just text.</li>
+<li><strong>No single vendor controls the standard.</strong> Require two independent interoperable implementations before calling anything stable.</li>
+<li><strong>Keep rule-making, enforcement and revenue separate.</strong></li>
+<li><strong>Write change control into governance from day one.</strong></li>
+<li><strong>Fund the stewards and avoid having the foundation operate critical infrastructure.</strong> Matrix's funding crisis is the warning [33].</li>
+<li><strong>No token, no chain.</strong> Use PKI and verifiable logs.</li>
+<li><strong>Define every term narrowly and honour signals that have legal force.</strong></li>
+<li><strong>Plug into existing trust frameworks</strong> (C2PA, MRC definitions, Privacy Pass, W3C Attribution, agent protocols) instead of rebuilding them.</li>
+</ol>
+<hr />
+<h1 id="part-ii-what">Part II: What</h1>
+<h2 id="3-vision-principles-goals-and-non-goals">3. Vision, principles, goals and non-goals</h2>
+<p><strong>Vision.</strong> <em>Anyone can run an ad node. Advertisers own their creative. Publishers own their audience relationship. People own their attention. Everyone can verify what happened.</em></p>
+<h3 id="31-principles">3.1 Principles</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Principle</th>
+<th>In practice</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P1</td>
+<td><strong>Federated</strong></td>
+<td>No mandatory central server, exchange, registry or token. Intermediaries are optional and replaceable.</td>
+</tr>
+<tr>
+<td>P2</td>
+<td><strong>Owner control of creative</strong></td>
+<td>Creatives are licensed, time-limited and revocable, never surrendered.</td>
+</tr>
+<tr>
+<td>P3</td>
+<td><strong>Privacy by default</strong></td>
+<td>Contextual matching. No cross-site personal identifiers in protocol messages. Aggregated receipts. Personal signals only by opt-in and preferably on the device.</td>
+</tr>
+<tr>
+<td>P4</td>
+<td><strong>Verifiable</strong></td>
+<td>Every economically meaningful event is a signed object recorded in an append-only, witnessable log.</td>
+</tr>
+<tr>
+<td>P5</td>
+<td><strong>Rail-agnostic</strong></td>
+<td>The protocol proves what is owed. Payment happens on any rail.</td>
+</tr>
+<tr>
+<td>P6</td>
+<td><strong>User agency</strong></td>
+<td>People can understand, refuse, pay to avoid, and report ads, and those choices are honoured.</td>
+</tr>
+<tr>
+<td>P7</td>
+<td><strong>Surface-neutral</strong></td>
+<td>One core protocol with profiles for web, social, email, audio and AI.</td>
+</tr>
+<tr>
+<td>P8</td>
+<td><strong>Bridge to today</strong></td>
+<td>Interoperate with existing buying and measurement systems.</td>
+</tr>
+<tr>
+<td>P9</td>
+<td><strong>Boring primitives</strong></td>
+<td>HTTPS, JSON, HTTP Message Signatures, W3C Data Integrity, Merkle logs. Verifiers never need a JSON-LD processor.</td>
+</tr>
+<tr>
+<td>P10</td>
+<td><strong>Honest limits</strong></td>
+<td>Where the protocol cannot guarantee something (deletion, humanity, cross-site frequency), it says so.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="32-goals-for-v1">3.2 Goals for v1</h3>
+<ul>
+<li>Interoperable discovery, deal-making, licensing, revocation, receipts and statements between independently built nodes.</li>
+<li>At least two independent node implementations passing a shared conformance suite.</li>
+<li>Profiles for five surfaces: web display/native, social, email, audio and AI/chat.</li>
+<li>A privacy design that works with <strong>no personal data</strong> for matching and billing.</li>
+<li>A bridge that lets existing demand buy Federated Ads inventory without receiving personal data.</li>
+</ul>
+<h3 id="33-non-goals-for-v1">3.3 Non-goals for v1</h3>
+<ul>
+<li><strong>Cross-publisher reach and frequency management.</strong> This is impossible without cross-site identity, and Federated Ads deliberately gives that up.</li>
+<li><strong>Video and connected TV</strong> beyond what VAST bridging gives. These are deferred to v2 because of format and measurement complexity.</li>
+<li><strong>Real-time auctions across nodes as the default.</strong> They are available only as a constrained optional profile (<a href="#64-price-discovery">§6.4</a>).</li>
+<li><strong>A native token, blockchain or mandatory payment provider.</strong></li>
+<li><strong>Conversion tracking at the individual level.</strong> Only aggregate, privacy-preserving measurement is supported (<a href="#106-conversions-and-attribution">§10.6</a>).</li>
+<li><strong>Content moderation of publisher content.</strong> Federated Ads describes content but does not judge it.</li>
+</ul>
+<hr />
+<h2 id="4-actors-and-roles">4. Actors and roles</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Actor</th>
+<th>Description</th>
+<th>Runs a node?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Advertiser</strong></td>
+<td>Brand, business, non-profit or individual buying attention. Owns creatives.</td>
+<td>Optional (may use a hosted buying node)</td>
+</tr>
+<tr>
+<td><strong>Publisher</strong></td>
+<td>A website, app, newsletter, podcast, fediverse instance or AI surface that shows ads.</td>
+<td>Optional (may use a hosted selling node or cooperative)</td>
+</tr>
+<tr>
+<td><strong>Buying node</strong></td>
+<td>Acts for one or more advertisers. An agency, trading desk or self-serve tool.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><strong>Selling node</strong></td>
+<td>Acts for one or more publishers. A publisher itself, a cooperative of independent sites, or a group of instances.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><strong>Relay</strong></td>
+<td>Optional aggregator that routes offers between nodes and may add value through discovery, curation or credit. Cannot alter signed content.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><strong>Creative host</strong></td>
+<td>Stores creatives for the advertiser. Often the buying node itself.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><strong>Witness</strong></td>
+<td>Independently cosigns transparency-log checkpoints so a node cannot show different histories to different parties.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><strong>Auditor</strong></td>
+<td>Samples receipts and runs test clients; issues attestations.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><strong>Labeler</strong></td>
+<td>Publishes signed labels about nodes, domains or creatives: brand safety, fraud, verified identity.</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><strong>Attester / token issuer</strong></td>
+<td>Issues privacy-preserving tokens that vouch for a client (<a href="#105-client-attestation">§10.5</a>).</td>
+<td>External</td>
+</tr>
+<tr>
+<td><strong>Settlement provider</strong></td>
+<td>Bank, payment processor or regulated stablecoin service that moves money.</td>
+<td>External</td>
+</tr>
+<tr>
+<td><strong>End user</strong></td>
+<td>The person who sees or hears the ad.</td>
+<td>Never required to run anything</td>
+</tr>
+</tbody>
+</table></div>
+<p>One organisation may hold several roles. Each node declares its roles in its signed Node Descriptor, the signed, machine-verifiable successor to ads.txt and sellers.json.</p>
+<hr />
+<h2 id="5-architecture">5. Architecture</h2>
+<h3 id="51-models-considered">5.1 Models considered</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Summary</th>
+<th>Strengths</th>
+<th>Weaknesses</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A. Hybrid federated nodes</strong> <em>(chosen)</em></td>
+<td>Independent nodes discover each other and exchange signed objects over HTTPS. Optional relays, witnesses and bridges.</td>
+<td>Decentralises power; low latency; familiar web primitives; works for any surface.</td>
+<td>Needs reputation and verification mechanisms; settlement is reconciled off-protocol.</td>
+</tr>
+<tr>
+<td><strong>B. Network of networks</strong></td>
+<td>Only existing ad networks federate.</td>
+<td>Fast incumbent adoption.</td>
+<td>Power stays with intermediaries.</td>
+</tr>
+<tr>
+<td><strong>C. Fully peer-to-peer or on-chain</strong></td>
+<td>Matching and settlement on a public ledger.</td>
+<td>Programmable settlement; public auditability.</td>
+<td>Latency and cost per event; public ledgers leak commercial data; regulatory burden; history of failure (<a href="#2-what-has-been-tried-lessons-from-prior-art">§2</a>).</td>
+</tr>
+</tbody>
+</table></div>
+<p>Federated Ads adopts <strong>Model A</strong>. Model B is a subset, since a network can run a Federated Ads node. Model C appears only as an optional settlement profile (<a href="#11-settlement">§11</a>).</p>
+<h3 id="52-topology">5.2 Topology</h3>
+<div class="diagram"><pre class="mermaid">flowchart LR
+  subgraph Buy side
+    ADV[Advertiser] --&gt; BN[Buying node]
+    BN --- CH[(Creative host)]
+  end
+  subgraph Sell side
+    SN[Selling node] --&gt; SURF[Surface: web, feed,&lt;br/&gt;email, audio, AI]
+    PUB[Publisher] --- SN
+  end
+  BN &lt;-- &quot;signed offers / deals&lt;br/&gt;(direct or via relay)&quot; --&gt; SN
+  R[Relay - optional] -.-&gt; BN
+  R -.-&gt; SN
+  CH -- &quot;licensed fetch&lt;br/&gt;(TTL-bounded)&quot; --&gt; SN
+  BN -- &quot;revocations (push + log)&quot; --&gt; SN
+  SN -- &quot;aggregated signed receipts&quot; --&gt; BN
+  W[Witnesses / auditors] -. &quot;cosign logs, sample&quot; .- SN
+  W -. &quot;cosign logs&quot; .- BN
+  BRIDGE[Bridge node] -- &quot;OpenRTB / VAST&quot; --- LEGACY[Existing DSPs and ad servers]
+  BRIDGE --- SN</pre></div>
+<h3 id="53-lifecycle-in-brief">5.3 Lifecycle in brief</h3>
+<ol type="1">
+<li><strong>Discover.</strong> A node is found from a domain via <code>/.well-known/federated-ads</code> or WebFinger. It publishes a signed Node Descriptor listing roles, endpoints, keys, policies and profiles.</li>
+<li><strong>Describe.</strong> Selling nodes publish <strong>Policies</strong>: what they accept, their floors and their content categories. They also publish <strong>Inventory</strong> descriptions: forecast volumes, formats and contexts.</li>
+<li><strong>Offer.</strong> Buying nodes send signed <strong>Offers</strong> to specific sellers, or publish <strong>Standing Offers</strong> that any matching seller may claim.</li>
+<li><strong>Agree.</strong> The seller accepts, counters or declines. Acceptance creates a <strong>Deal</strong> with an allocated budget and the approved creative hashes.</li>
+<li><strong>License.</strong> For each approved creative, the advertiser issues a <strong>Licence</strong> bound to the deal, the licensee, the surfaces and an expiry.</li>
+<li><strong>Serve.</strong> At render time the selling node chooses among active deals (<a href="#66-ad-decisioning-on-the-selling-node">§6.6</a>) and renders the creative with a "why this ad" disclosure.</li>
+<li><strong>Report.</strong> The selling node sends frequent <strong>Spend Reports</strong> for pacing and signed, aggregated <strong>Receipt Batches</strong> for billing. Both are committed to its transparency log.</li>
+<li><strong>Revoke, any time.</strong> The advertiser logs and pushes a <strong>Revocation</strong>. Receivers acknowledge it with a signed, logged <strong>Revocation Acknowledgement</strong>.</li>
+<li><strong>Settle.</strong> Both sides agree a <strong>Statement</strong> with two signatures and pay through the settlement profile they agreed.</li>
+</ol>
+<h3 id="54-why-deals-and-not-per-impression-auctions">5.4 Why deals and not per-impression auctions</h3>
+<p>Federated Ads prefers <strong>pre-agreed deals evaluated locally at render time</strong> to per-impression real-time bidding across the network. There are four reasons:</p>
+<ul>
+<li><strong>Privacy.</strong> User context stays on the publisher's node. Nothing is broadcast to dozens of bidders.</li>
+<li><strong>Latency.</strong> No network round trip is needed when rendering.</li>
+<li><strong>Accessibility.</strong> A small operator can run a node.</li>
+<li><strong>Market evidence.</strong> Even in conventional programmatic advertising, over 90% of median spend now runs through deals [4].</li>
+</ul>
+<hr />
+<h2 id="6-market-design-how-buying-and-selling-works">6. Market design: how buying and selling works</h2>
+<p>Version 0.1 left the market mechanism vague, and reviewers rightly called that the paper's largest gap. This section specifies it.</p>
+<h3 id="61-inventory-and-rate-cards">6.1 Inventory and rate cards</h3>
+<p>A selling node publishes an <strong>Inventory</strong> document so buyers can plan:</p>
+<ul>
+<li><strong>Placements:</strong> surface, format, position, and context categories.</li>
+<li><strong>Forecasts:</strong> expected impressions, sends or downloads per week by placement and context. Forecasts are always aggregated and rounded.</li>
+<li><strong>Rate card:</strong> a posted price per placement and pricing model, plus minimum spend, lead time and whether creatives need approval.</li>
+<li><strong>Avails:</strong> optional near-term availability by week.</li>
+</ul>
+<h3 id="62-offer-types">6.2 Offer types</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Use</th>
+<th>How it works</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Direct Offer</strong></td>
+<td>A buyer targets one known seller</td>
+<td>One signed offer to one seller. The seller accepts, counters or declines.</td>
+</tr>
+<tr>
+<td><strong>Standing Offer</strong></td>
+<td>A buyer wants to reach many sellers without negotiating each one</td>
+<td>One signed campaign with a total budget, price, targeting and policy, published to relays or directly. Any eligible seller may <strong>claim</strong> a slice up to a per-seller cap. The buyer's node confirms each claim, which turns it into a Deal.</td>
+</tr>
+<tr>
+<td><strong>Request for proposals</strong></td>
+<td>A buyer asks sellers to bid</td>
+<td>The buyer publishes requirements. Sellers reply with priced proposals. The buyer accepts some, creating Deals.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Standing Offers solve the many-to-many negotiation problem. A local advertiser can reach a hundred newsletters with one signed object, and each seller still keeps full control over what it accepts.</p>
+<h3 id="63-pricing-models">6.3 Pricing models</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Code</th>
+<th>Typical surface</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cost per thousand rendered impressions</td>
+<td><code>cpm</code></td>
+<td>Web, social, AI</td>
+</tr>
+<tr>
+<td>Cost per thousand viewable impressions</td>
+<td><code>vcpm</code></td>
+<td>Web</td>
+</tr>
+<tr>
+<td>Cost per click</td>
+<td><code>cpc</code></td>
+<td>All</td>
+</tr>
+<tr>
+<td>Flat fee per unit (issue, episode, day, week)</td>
+<td><code>flat</code></td>
+<td>Newsletters, podcasts, sponsorships</td>
+</tr>
+<tr>
+<td>Cost per delivered audio ad (IAB "Ad Delivered")</td>
+<td><code>cpad</code></td>
+<td>Podcasts</td>
+</tr>
+<tr>
+<td>Fixed sponsorship of a section or feed</td>
+<td><code>sponsorship</code></td>
+<td>All</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="64-price-discovery">6.4 Price discovery</h3>
+<p>Federated Ads does not mandate a single auction. Prices form in three ways:</p>
+<ol type="1">
+<li><strong>Posted prices.</strong> Sellers publish rate cards and buyers accept them. This is how newsletter and podcast sponsorship is sold today.</li>
+<li><strong>Offer prices.</strong> Standing Offers carry the buyer's price, and sellers choose which offers to claim.</li>
+<li><strong>Local competition.</strong> Each selling node ranks its eligible deals by effective price at render time (<a href="#66-ad-decisioning-on-the-selling-node">§6.6</a>). Buyers who want delivery must pay competitive prices.</li>
+</ol>
+<p>An optional <code>rtb</code> profile lets a selling node run a real-time auction among <em>pre-qualified</em> buyers. Bid requests are limited to context, coarse geography and placement, with no user or device identifiers.</p>
+<p><strong>Price indices and competition law.</strong> Public, aggregated price indices would help small participants. They must be designed to stay clear of competition law (<a href="#198-competition-law">§19.8</a>):</p>
+<ul>
+<li>published by independent parties;</li>
+<li>aggregated across many nodes;</li>
+<li>delayed by at least 30 days;</li>
+<li>above minimum cell sizes;</li>
+<li>never forward-looking;</li>
+<li>never at the level of individual nodes.</li>
+</ul>
+<h3 id="65-budgets-pacing-and-frequency">6.5 Budgets, pacing and frequency</h3>
+<p><strong>Budgets.</strong></p>
+<ul>
+<li>Each Deal has an allocated budget. A Standing Offer has a total budget and a per-seller cap.</li>
+<li>Delivery beyond a Deal's budget is <strong>not billable</strong>. The seller carries the risk of overdelivery.</li>
+</ul>
+<p><strong>Pacing.</strong></p>
+<ul>
+<li>Deals specify <code>even</code>, <code>asap</code> or day-parted pacing.</li>
+<li>Selling nodes send lightweight signed <strong>Spend Reports</strong> at least every 15 minutes (configurable per deal), so buyers can pause or shift budget.</li>
+<li>Signed hourly or daily <strong>Receipt Batches</strong> remain the billing record.</li>
+</ul>
+<p><strong>Frequency.</strong> Federated Ads is explicit about what is possible:</p>
+<ul>
+<li><strong>Per publisher:</strong> supported. The selling node or the user's client enforces a frequency cap using first-party state only.</li>
+<li><strong>On-device:</strong> supported through the optional on-device profile (<a href="#8-audience-matching-options-compared">§8</a>), where the client holds the counters.</li>
+<li><strong>Across publishers:</strong> not supported, by design. Deduplicated reach across publishers requires cross-site identity, which Federated Ads does not use. Buyers should pla Federated Ads as contextual, community-based reach, not upper-funnel reach-and-frequency buying.</li>
+</ul>
+<h3 id="66-ad-decisioning-on-the-selling-node">6.6 Ad decisioning on the selling node</h3>
+<p>When an ad slot renders, the selling node:</p>
+<ol type="1">
+<li>filters active deals by eligibility: active licence, surface, context match, policy, budget remaining, frequency cap, and minor-safe or jurisdiction rules;</li>
+<li>applies <strong>priority tiers</strong> (sponsorship &gt; guaranteed &gt; non-guaranteed &gt; house);</li>
+<li>ranks within a tier by effective price: an eCPM computed from the deal's pricing model and the node's own historical rates;</li>
+<li>applies <strong>competitive separation</strong>, so two competitors are not shown side by side and advertiser category exclusions are respected;</li>
+<li>renders, then counts the event for receipts.</li>
+</ol>
+<p>The algorithm is the node's own. The protocol standardises only the inputs (deals, licences, policies) and the outputs (receipts).</p>
+<hr />
+<h2 id="7-creative-ownership-licensing-and-revocation">7. Creative ownership, licensing and revocation</h2>
+<h3 id="71-the-principle">7.1 The principle</h3>
+<p>An advertiser grants a <strong>licence to display</strong>. It does not hand over a copy. The licence is limited in time, in scope (which deal, which licensee, which surfaces) and in purpose, and it can be withdrawn.</p>
+<h3 id="72-objects">7.2 Objects</h3>
+<ul>
+<li><strong>Creative Manifest:</strong> a signed description of a creative's assets, each pinned by a content hash, plus metadata. Where the asset carries a C2PA manifest, the Creative Manifest references it [34].</li>
+<li><strong>Licence:</strong> a separate signed object linking a manifest hash to a licensee node, a deal, surfaces, an issue time, a TTL and a revocation source. Keeping the licence separate from the manifest means one creative can be licensed to many nodes, including through relays, without re-signing the creative.</li>
+<li><strong>Approval:</strong> the selling node's signed acceptance of specific creative hashes, recorded in the Deal. A changed creative gets a new hash and needs a new approval. That closes the "swap the creative after approval" loophole.</li>
+</ul>
+<h3 id="73-licence-tiers">7.3 Licence tiers</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Mechanism</th>
+<th>Default TTL</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pointer</strong> (default)</td>
+<td>Assets stay on the creative host. The selling node fetches and caches them only within the TTL, renewing ahead of time so revocation checks never sit in the page's rendering path.</td>
+<td>15 minutes</td>
+<td>Web, social, AI</td>
+</tr>
+<tr>
+<td><strong>Signed cache</strong></td>
+<td>The selling node may hold assets longer. It must subscribe to revocations.</td>
+<td>Up to 24 hours</td>
+<td>Email rendering, podcast ad insertion, offline apps</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Why the selling node fetches, not the browser.</strong> If people's devices fetched creatives directly from the advertiser's host, the advertiser would learn every viewer's IP address, which is a tracking channel. The selling node, or an Oblivious HTTP relay with a gateway at the creative host, does the fetching instead. The advertiser keeps control without gaining surveillance.</p>
+<h3 id="74-revocation-mechanics">7.4 Revocation mechanics</h3>
+<ol type="1">
+<li><strong>Log.</strong> The advertiser appends a signed <code>Revocation</code> to its transparency log (<a href="#158-transparency-logs">§15.8</a>). <code>effectiveAt</code> may not be earlier than the log inclusion time, so revocations cannot be backdated to avoid paying for impressions already served.</li>
+<li><strong>Push.</strong> The advertiser posts the revocation to every licensee. Relays forward it unaltered and with priority, subject to rate limits.</li>
+<li><strong>Acknowledge.</strong> Each receiver returns a signed <code>RevocationAck</code> and logs it. A receiver cannot later deny having received a revocation.</li>
+<li><strong>Pull.</strong> Licensees poll the advertiser's log checkpoint at least once per TTL, which covers missed pushes.</li>
+<li><strong>Effect.</strong> Impressions after <code>effectiveAt</code> (plus a short grace period) are <strong>not billable</strong>. Receipts and logs make them provable.</li>
+</ol>
+<h3 id="75-what-revocation-guarantees-per-surface">7.5 What revocation guarantees, per surface</h3>
+<p>Version 0.1 overstated revocation. The guarantees actually achievable are below.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Guaranteed</th>
+<th>Not guaranteed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Web / native</strong></td>
+<td>No new renders after the deadline (TTL or acknowledgement + 60 s). Assets purged from node caches.</td>
+<td>Screenshots; copies in users' browser caches until they expire.</td>
+</tr>
+<tr>
+<td><strong>Social posts</strong></td>
+<td>No new sponsored posts. The selling node edits or deletes sponsored objects it has already posted (ActivityPub <code>Delete</code>/<code>Update</code>).</td>
+<td>Copies already federated to remote servers, which may ignore deletes. Boosts and quotes.</td>
+</tr>
+<tr>
+<td><strong>Email</strong></td>
+<td>No new sends. Images served through the node stop rendering where mail clients don't cache them.</td>
+<td>Text already delivered to inboxes. Images cached by mail-provider proxies.</td>
+</tr>
+<tr>
+<td><strong>Podcasts</strong></td>
+<td>No new insertions into future downloads.</td>
+<td>Episodes already downloaded and stored on listeners' devices.</td>
+</tr>
+<tr>
+<td><strong>AI/chat</strong></td>
+<td>No new sponsored units. Removal from regenerated or re-rendered sessions.</td>
+<td>Conversation history and exports the user already has.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Revocation is therefore defined as <strong>"no new deliveries after the deadline, plus purging wherever technically possible."</strong> The protocol does not promise that bytes disappear everywhere.</p>
+<h3 id="76-revocation-versus-legal-retention">7.6 Revocation versus legal retention</h3>
+<p>Some laws require advertising records to be kept, not deleted:</p>
+<ul>
+<li>political advertising rules (<a href="#19-legal-and-regulatory-considerations">§19</a>);</li>
+<li>platform ad-repository duties;</li>
+<li>tax and anti-money-laundering record-keeping.</li>
+</ul>
+<p>Federated Ads separates <strong>serving</strong> from <strong>evidence</strong>. Revocation stops serving immediately. A sealed archive record (creative hash, metadata, delivery totals) is kept for the legally required period, with deletion locked, in a store that is never used for serving.</p>
+<h3 id="77-honest-limits">7.7 Honest limits</h3>
+<p>No protocol can force a malicious party to delete bytes it has already received. Federated Ads makes misuse <strong>unprofitable and provable</strong> instead:</p>
+<ul>
+<li>an expired or revoked licence makes impressions unbillable;</li>
+<li>signatures and logs make violations attributable;</li>
+<li>labelers and node reputation let repeat offenders be excluded.</li>
+</ul>
+<hr />
+<h2 id="8-audience-matching-options-compared">8. Audience matching: options compared</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>How it works</th>
+<th>Privacy</th>
+<th>Relevance</th>
+<th>Burden</th>
+<th>Regulatory exposure</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Contextual</strong></td>
+<td>Match on page, post, episode or conversation topic; publisher category; language; coarse region; time; device class</td>
+<td>Excellent</td>
+<td>Good, and improving with content classification</td>
+<td>Low</td>
+<td>Low</td>
+</tr>
+<tr>
+<td><strong>On-device</strong></td>
+<td>The client stores interest signals and selects among candidate ads locally; only aggregate, anonymous reports leave the device (the model Brave has proven [18])</td>
+<td>Very good</td>
+<td>Good to high</td>
+<td>High (needs client support)</td>
+<td>Low to medium (device access may need consent)</td>
+</tr>
+<tr>
+<td><strong>First-party opt-in</strong></td>
+<td>A user knowingly shares interests with a publisher they trust; the publisher uses them only on its own node</td>
+<td>Good</td>
+<td>High for those who opt in</td>
+<td>Medium</td>
+<td>Medium (needs consent)</td>
+</tr>
+<tr>
+<td><strong>Cross-site identity</strong> (status quo)</td>
+<td>Persistent identifiers track people across sites</td>
+<td>Poor</td>
+<td>High</td>
+<td>Medium</td>
+<td>High</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Decision:</strong></p>
+<ul>
+<li>Every conformant node must support <strong>contextual</strong> matching.</li>
+<li><strong>On-device</strong> matching is an optional profile. Its catalogue and reporting formats will be specified once at least one client implementer commits; until then it stays experimental.</li>
+<li><strong>First-party opt-in</strong> signals may be used only by the publisher's own node and are never forwarded raw.</li>
+<li><strong>Cross-site identifiers are prohibited</strong> in protocol messages.</li>
+</ul>
+<p>Targeting in offers may therefore refer only to context categories (from the IAB Content Taxonomy 3.x, mapped into Federated Ads vocabulary), language, coarse region (country or first-level subdivision), time, device class and placement.</p>
+<hr />
+<h2 id="9-brand-safety-and-content-policy-options-compared">9. Brand safety and content policy: options compared</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Bilateral policy</strong>: each side publishes rules; a deal forms only where they match</td>
+<td>Maximum autonomy; no central arbiter</td>
+<td>Without shared vocabulary, policies cannot be compared by machine</td>
+</tr>
+<tr>
+<td><strong>Shared taxonomy plus local rules</strong>: one open vocabulary, with each node's own rules on top</td>
+<td>Interoperable; communities keep their norms</td>
+<td>Governing the taxonomy becomes political; risk of over-blocking news and minority voices</td>
+</tr>
+<tr>
+<td><strong>Central certification</strong></td>
+<td>A simple trust signal</td>
+<td>Recentralises power; contradicts P1</td>
+</tr>
+<tr>
+<td><strong>Subscribable labelers</strong> (as in AT Protocol): independent services publish signed labels, and each party chooses which to trust</td>
+<td>Separates rule-making from enforcement; lets the market compete on brand safety and fraud detection; no single gatekeeper</td>
+<td>Labelers need reputations of their own; risk of label inflation</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Decision: shared vocabulary, bilateral enforcement, subscribable labelers.</strong></p>
+<ul>
+<li>Federated Ads defines an open, versioned taxonomy. It is mapped to the IAB Tech Lab Content Taxonomy 3.x and Ad Product Taxonomy 2.0 for compatibility.</li>
+<li>Policies are written in that taxonomy and evaluated by machine on both sides.</li>
+<li>Brand-safety, fraud and verification judgements come from <strong>labelers</strong> that advertisers and publishers choose to subscribe to. There is no central certifier.</li>
+<li>The taxonomy separates <strong>"sensitive" from "unsafe"</strong>, so news, health and LGBTQ+ content are not blocked by default. That is a known failure of keyword blocklists.</li>
+<li><strong>Regulated categories</strong> require jurisdiction profiles (<a href="#196-jurisdiction-policy-profiles">§19.6</a>). These include political and issue ads, alcohol, gambling, pharmaceuticals, financial and crypto promotions, and anything aimed at minors.</li>
+<li><strong>Landing-page cloaking</strong>, where a page changes after approval, is countered in four ways:
+<ul>
+<li>the CTA URL is pinned in the approved manifest;</li>
+<li>selling nodes may periodically re-crawl landing pages;</li>
+<li>labelers may flag cloaking;</li>
+<li>a changed landing page voids the approval.</li>
+</ul></li>
+</ul>
+<hr />
+<h2 id="10-measurement-and-verification">10. Measurement and verification</h2>
+<p>Version 0.1's measurement design was its second-largest weakness. In particular, its claim that creative-host fetch logs corroborate volume was wrong, because a caching node fetches the same number of times whether it serves a thousand impressions or a million. This section rebuilds the trust model.</p>
+<h3 id="101-events">10.1 Events</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Definition</th>
+<th>Billable?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>impression</code></td>
+<td>Creative rendered in the placement</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>viewable</code></td>
+<td>Met the deal's viewability rule. The default follows the MRC: display 50% of pixels for 1 continuous second; large display 30% for 1 s; video 50% for 2 s [35]</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>click</code></td>
+<td>User activated the CTA through the selling node's redirect</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>ad_delivered</code></td>
+<td>Audio: 100% of the ad's bytes delivered within a valid download, per IAB Podcast Measurement v2.2 [36]</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>ad_play_confirmed</code></td>
+<td>Audio: client-side confirmation of playback, where the player supports it</td>
+<td>Yes, if the deal says so</td>
+</tr>
+<tr>
+<td><code>send</code></td>
+<td>Email: newsletter issue containing the ad sent to a deliverable address</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>open</code></td>
+<td>Email: image load</td>
+<td><strong>No.</strong> Informational only, because privacy proxies such as Apple Mail Privacy Protection inflate it</td>
+</tr>
+<tr>
+<td><code>engagement</code></td>
+<td>Surface-specific actions, such as a reply to a sponsored post</td>
+<td>If the deal says so</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="102-aggregated-receipts">10.2 Aggregated receipts</h3>
+<p>Receipts are <strong>aggregate cells</strong>, not per-impression logs. Each cell is one combination of:</p>
+<ul>
+<li>deal;</li>
+<li>creative hash;</li>
+<li>hour;</li>
+<li>context category;</li>
+<li>coarse region;</li>
+<li>event type;</li>
+<li>count.</li>
+</ul>
+<p>Cells below a minimum count (default <strong>k = 50</strong>) are merged into an "other" cell. Each cell is a leaf in a Merkle tree, salted so that outsiders cannot confirm guesses. The batch is signed and its root is committed to the node's transparency log (<a href="#158-transparency-logs">§15.8</a>).</p>
+<h3 id="103-verification-levels">10.3 Verification levels</h3>
+<p>A Deal states which levels are required. Price should reflect the level of verification.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Mechanism</th>
+<th>What it proves</th>
+<th>What it doesn't prove</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>V0: signed self-report</strong></td>
+<td>Seller-signed receipts in a witnessed log</td>
+<td>The seller asserted these numbers, cannot later change them, and showed everyone the same history</td>
+<td>That the numbers are true</td>
+</tr>
+<tr>
+<td><strong>V1: licence compliance</strong></td>
+<td>Creative-host fetch logs and revocation acknowledgements</td>
+<td>The seller held a valid licence while serving and honoured revocations</td>
+<td>Volume</td>
+</tr>
+<tr>
+<td><strong>V2: outcome corroboration</strong></td>
+<td>The advertiser counts arrivals on its landing page carrying the deal's non-personal parameter, and compares them with reported clicks. Statistically, impressions and clicks are compared with norms for the same context</td>
+<td>Clicks broadly happened; detects gross inflation</td>
+<td>Individual impressions</td>
+</tr>
+<tr>
+<td><strong>V3: client attestation</strong></td>
+<td>Privacy Pass tokens bound to the deal, redeemed for a sample of renders (<a href="#105-client-attestation">§10.5</a>)</td>
+<td>An attester vouched for a real client during that render</td>
+<td>That a human saw it; coverage is limited to supporting platforms</td>
+</tr>
+<tr>
+<td><strong>V4: independent audit</strong></td>
+<td>An auditor runs test clients, checks Merkle inclusion for sampled cells, checks that the measurement-module hash matches, and attests</td>
+<td>An independent party checked a sample</td>
+<td>Everything outside the sample</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Guidance:</strong></p>
+<ul>
+<li>V0 + V1 is suitable for prepaid or trusted, low-value deals.</li>
+<li>V0–V2 suits most direct deals.</li>
+<li>Large anonymous deals should require V3 or V4.</li>
+</ul>
+<h3 id="104-viewability-without-third-party-scripts">10.4 Viewability without third-party scripts</h3>
+<p>Federated Ads publishes an <strong>open-source measurement module</strong>. It is a small script whose hash is pinned, which measures viewability using standard browser APIs (Intersection Observer). Receipts record the module's hash, and auditors check that pages actually load that hash.</p>
+<p>This is weaker than an independent verification vendor's script, because the publisher controls the page. It is also more transparent: anyone can read the module, and tampering with it is detectable in audits. For apps, a native equivalent is planned, aligned with the IAB Open Measurement SDK concepts.</p>
+<h3 id="105-client-attestation">10.5 Client attestation</h3>
+<p>Privacy Pass (RFC 9576–9578) lets an attester vouch for a client without identifying it.</p>
+<p><strong>How Federated Ads uses it:</strong></p>
+<ul>
+<li>Token type <strong>0x0002</strong> (Blind RSA, publicly verifiable), so buyers and auditors can verify tokens themselves.</li>
+<li>The token challenge's <code>redemption_context</code> is set to <code>SHA-256(dealId ‖ creativeHash ‖ windowStart)</code>, so each token is bound to one deal, creative and time window.</li>
+<li>Redeemed tokens are committed in a Merkle tree alongside the receipt batch.</li>
+</ul>
+<p><strong>Limits:</strong></p>
+<ul>
+<li>A token proves only that an <em>attester</em> vouched for the client. It does not prove a human.</li>
+<li>Deployment is uneven. Apple's Private Access Tokens cover recent Safari. Chrome implements a different API (Private State Tokens). The rate-limited token draft has expired.</li>
+<li>The attesters that exist today are large platform companies, which is in tension with P1.</li>
+</ul>
+<p>V3 is therefore optional and sampled. Who should act as attesters is an open question (<a href="#26-open-questions">§26</a>).</p>
+<h3 id="106-conversions-and-attribution">10.6 Conversions and attribution</h3>
+<p>Federated Ads does not define its own attribution system.</p>
+<ul>
+<li><strong>Allowed now:</strong> click-through with a non-personal, deal-level parameter, plus aggregate on-site counting by the advertiser.</li>
+<li><strong>Planned profiles:</strong>
+<ul>
+<li>an IETF DAP profile (Distributed Aggregation Protocol, Prio3 histograms) in which the advertiser's site reports conversions over coarse campaign buckets to two unaffiliated aggregators, under a fixed privacy budget per campaign per week;</li>
+<li>a profile that consumes the W3C Attribution API output once that specification matures [24].</li>
+</ul></li>
+<li><strong>Prohibited:</strong> per-user conversion pixels and click identifiers that are unique to a person.</li>
+</ul>
+<h3 id="107-invalid-traffic-without-fingerprinting">10.7 Invalid traffic without fingerprinting</h3>
+<p>Selling nodes filter invalid traffic using:</p>
+<ul>
+<li>known-bot lists;</li>
+<li>data-centre IP ranges;</li>
+<li>rate heuristics;</li>
+<li>optional attestation.</li>
+</ul>
+<p>Signals are processed transiently and not logged per user. Invalid-traffic categories are recorded as flags on receipt cells. Residual invalid traffic will be higher than with device fingerprinting, and buyers should expect it to be reflected in price.</p>
+<h3 id="108-disputes">10.8 Disputes</h3>
+<p>A party may open a signed <code>Dispute</code> against a receipt batch or statement when:</p>
+<ul>
+<li>verification signals diverge from receipts beyond the deal's tolerance (default 10%); or</li>
+<li>impressions appear after a revocation.</li>
+</ul>
+<p>The v0.2 process:</p>
+<ol type="1">
+<li><strong>Bilateral review</strong> within 14 days, using log proofs and verification evidence.</li>
+<li><strong>Escalation to an arbiter</strong> named in the deal, usually an auditor, whose decision binds for that deal.</li>
+<li><strong>Escrow.</strong> Under prepaid settlement, the disputed amount stays in escrow until resolved.</li>
+</ol>
+<p>The burden of proof is set by verification level: under V0-only deals the seller's log stands unless the buyer shows contrary evidence.</p>
+<hr />
+<h2 id="11-settlement">11. Settlement</h2>
+<p>The protocol proves what is owed. <strong>Settlement profiles</strong> define how it is paid.</p>
+<ol type="1">
+<li>Each deal names acceptable settlement profiles and payment terms.</li>
+<li>At period end, both nodes compute totals from receipts and exchange a signed <code>Statement</code>. The second signature is chained to the first (Data Integrity proof chains).</li>
+<li>The doubly signed statement is the authoritative invoice basis.</li>
+<li>Payment happens off-protocol. A signed <code>PaymentNotice</code> references the statement.</li>
+</ol>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Profile</th>
+<th>Description</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>settle:invoice</code></td>
+<td>Invoice plus bank transfer or card</td>
+<td>Default; universal</td>
+</tr>
+<tr>
+<td><code>settle:processor</code></td>
+<td>Payouts through a regulated payment processor's marketplace accounts</td>
+<td>Good for self-serve and small advertisers. Nodes never hold funds.</td>
+</tr>
+<tr>
+<td><code>settle:prepaid</code></td>
+<td>The advertiser pre-funds an escrow at a <strong>regulated</strong> provider; draws down per statement</td>
+<td>Recommended default when the counterparty is unknown; protects publishers from credit risk</td>
+</tr>
+<tr>
+<td><code>settle:stablecoin</code></td>
+<td>Settlement in a regulated stablecoin; the statement hash may be recorded on-chain</td>
+<td>Optional; restricted by jurisdiction (<a href="#197-payments">§19.7</a>)</td>
+</tr>
+<tr>
+<td><code>settle:micropay</code></td>
+<td>Streaming or micro-settlement, e.g. Interledger Open Payments</td>
+<td>Experimental</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Design rules:</strong></p>
+<ul>
+<li><strong>Nodes should not hold other people's money.</strong> Holding funds usually requires payment, e-money or money-transmission licences. Settlement profiles route funds through regulated providers, and a node that does hold funds must declare its licensing status.</li>
+<li><strong>All intermediary fees are declared in the signed deal</strong>, so every party sees how each unit of currency is split. This attacks the "unknown delta" structurally.</li>
+<li><strong>Statements carry tax metadata:</strong> supplier and customer jurisdiction, VAT or GST identifiers, and a reverse-charge indicator, so invoices can be generated.</li>
+<li><strong>Each deal states its terms:</strong> payment terms, cancellation notice, make-good policy and currency. Deals may adopt existing industry terms by reference.</li>
+</ul>
+<hr />
+<h2 id="12-end-user-rights">12. End-user rights</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Right</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Why this ad</strong></td>
+<td>Every ad carries a human-readable and machine-readable disclosure. It covers the advertiser's verified legal name; the payer, if different; the main reasons the ad was selected (e.g. "matched to: article topic <em>cycling</em>; region: <em>Kerala</em>"); the intermediaries and their declared fees; and how to change preferences. This matches the EU DSA Article 26 transparency elements and must render on every surface, including spoken disclosures in audio and AI.</td>
+</tr>
+<tr>
+<td><strong>Opt-out</strong></td>
+<td>Nodes honour the Global Privacy Control signal (<code>Sec-GPC: 1</code>) as a binding opt-out wherever law gives it effect. They honour equivalent legally recognised signals as these emerge. Because Federated Ads is contextual-only by default, opting out turns off every optional profile beyond contextual (on-device, first-party opt-in, conversion measurement).</td>
+</tr>
+<tr>
+<td><strong>Ad-free option</strong></td>
+<td>A selling node may advertise an ad-free offer (subscription, one-time payment or micropayment) at a standard endpoint. Following EDPB guidance, the ad-free option sits <em>alongside</em> a free contextual tier, never as a forced choice between consent and payment.</td>
+</tr>
+<tr>
+<td><strong>Report and block</strong></td>
+<td>People can report an ad (misleading, offensive, scam, sensitive) or block an advertiser. Reports go to the selling node and are forwarded in aggregate to the buyer and advertiser. Block lists stay on the device or with the first party and never become cross-site identifiers. Scam reports in financial categories have a defined takedown time.</td>
+</tr>
+<tr>
+<td><strong>Minor-safe default</strong></td>
+<td>Where a user's age is unknown, or the user is known to be under 18, only contextual delivery is allowed: no profiling, no on-device interest profile and no conversion measurement (<a href="#19-legal-and-regulatory-considerations">§19</a>).</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="13-surfaces">13. Surfaces</h2>
+<h3 id="131-web-display-and-native-surfaceweb">13.1 Web display and native (<code>surface:web</code>)</h3>
+<p><strong>Creative formats allowed in v1:</strong></p>
+<ol type="1">
+<li><strong>Native</strong> (default): a title, body, image or video asset and a CTA, rendered by the publisher's own template. No creative code.</li>
+<li><strong>Display:</strong> a static image (WebP, AVIF, PNG, JPEG, or SVG loaded as an image, never inline).</li>
+<li><strong>HTML5:</strong> allowed only at the extended conformance level. It runs in an <code>&lt;iframe sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"&gt;</code> served from a dedicated cookieless origin, with a strict CSP (<code>default-src 'none'</code>; <code>connect-src 'none'</code>) and no network access after load. <code>allow-same-origin</code> is never combined with <code>allow-scripts</code>.</li>
+<li><strong>Never allowed:</strong> third-party JavaScript, tracking pixels, or unpinned assets.</li>
+</ol>
+<h3 id="132-social-and-fediverse-surfacesocial">13.2 Social and fediverse (<code>surface:social</code>)</h3>
+<p><strong>ActivityPub.</strong> ActivityStreams has no sponsorship concept, and remote servers drop properties they don't understand. The disclosure therefore appears <strong>in the visible content</strong> as well as in a machine-readable tag:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;@context&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;https://www.w3.org/ns/activitystreams&quot;</span><span class="ot">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>               <span class="fu">{</span><span class="dt">&quot;fa&quot;</span><span class="fu">:</span> <span class="st">&quot;https://w3id.org/federated-ads/ns#&quot;</span><span class="fu">,</span> <span class="dt">&quot;Sponsorship&quot;</span><span class="fu">:</span> <span class="st">&quot;fa:Sponsorship&quot;</span><span class="fu">}</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;Note&quot;</span><span class="fu">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;attributedTo&quot;</span><span class="fu">:</span> <span class="st">&quot;https://social.example.net/users/announcements&quot;</span><span class="fu">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;content&quot;</span><span class="fu">:</span> <span class="st">&quot;&lt;p&gt;&lt;strong&gt;Sponsored · Paid partnership with Acme Bikes&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;Ride further on a single charge…&lt;/p&gt;&quot;</span><span class="fu">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;tag&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="fu">{</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;Sponsorship&quot;</span><span class="fu">,</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;href&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.acme-bikes.example/fa/creatives/etour-v3&quot;</span><span class="fu">,</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Acme Bikes Pvt Ltd&quot;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span><span class="ot">]</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>Federated Ads will propose <code>fa:Sponsorship</code> as a Fediverse Enhancement Proposal [30]. Rules for this surface:</p>
+<ul>
+<li><strong>Opt-in.</strong> Instance administrators choose whether to participate. Sponsored posts appear only in the feeds of that instance's users.</li>
+<li><strong>No federation as organic content.</strong> Sponsored posts are addressed to local users only, never federated as public posts.</li>
+<li><strong>Revocation</strong> is an ActivityPub <code>Delete</code>.</li>
+</ul>
+<p><strong>AT Protocol.</strong> Posts carry a self-label, and a Federated Ads labeler service issues signed <code>sponsored</code> labels so participating clients can recognise them [31]:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;labels&quot;</span><span class="er">:</span> <span class="fu">{</span> <span class="dt">&quot;$type&quot;</span><span class="fu">:</span> <span class="st">&quot;com.atproto.label.defs#selfLabels&quot;</span><span class="fu">,</span> <span class="dt">&quot;values&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="fu">{</span> <span class="dt">&quot;val&quot;</span><span class="fu">:</span> <span class="st">&quot;sponsored&quot;</span> <span class="fu">}</span><span class="ot">]</span> <span class="fu">}</span></span></code></pre></div>
+<p>A Lexicon record in the publisher's repository (its namespace identifier will be assigned once the project controls a domain) links the post to its manifest and deal.</p>
+<h3 id="133-newsletters-surfaceemail">13.3 Newsletters (<code>surface:email</code>)</h3>
+<ul>
+<li>Creatives are rendered at send time under a signed-cache licence.</li>
+<li>The billable unit is <code>send</code> or <code>click</code>. Opens are informational only (<a href="#101-events">§10.1</a>).</li>
+<li>Clicks go through the selling node's redirect and carry no personal parameters.</li>
+<li>The sponsorship label must appear in the email body text, not only in markup.</li>
+</ul>
+<h3 id="134-podcasts-and-audio-surfaceaudio">13.4 Podcasts and audio (<code>surface:audio</code>)</h3>
+<ul>
+<li>Dynamically inserted ads are delivered by the hosting node using IAB Podcast Measurement v2.2 definitions for valid downloads and delivered ads [36].</li>
+<li>Host-read ads are represented as a script creative with an approval workflow.</li>
+<li>A VAST 4.x bridge (audio ads, VMAP placement) connects to existing ad-insertion servers.</li>
+<li>The disclosure is spoken ("This episode is sponsored by…") and also appears in the episode notes.</li>
+</ul>
+<h3 id="135-ai-and-chat-surfaces-surfaceai">13.5 AI and chat surfaces (<code>surface:ai</code>)</h3>
+<p>People may not be able to tell an answer from persuasion. Additional rules apply:</p>
+<ol type="1">
+<li><strong>Separation.</strong> Sponsored content is a distinct unit, visually and semantically separate from the generated answer. Paid influence on the organic answer is prohibited.</li>
+<li><strong>Labelling.</strong> A persistent "Sponsored" label and a why-this-ad disclosure on every sponsored unit.</li>
+<li><strong>Context handling.</strong> Matching may use the topic of the current conversation, derived in the session on the AI provider's node. Conversation content is never sent to buying nodes and is not kept for advertising beyond the session unless the user opts in.</li>
+<li><strong>Ineligible contexts.</strong> Conversations classified as health, mental health, crisis, politics or legal or financial distress, and accounts known to belong to minors, receive no ads by default. This matches what OpenAI announced for ChatGPT [13].</li>
+<li><strong>No emotional targeting.</strong> Sponsored units may not be selected or worded using inferences about the user's emotional state or vulnerabilities (relevant to EU AI Act Article 5).</li>
+<li><strong>Synthetic creatives</strong> are marked as AI-generated and carry provenance metadata (C2PA where available).</li>
+</ol>
+<h3 id="136-ai-agents-profileagent">13.6 AI agents (<code>profile:agent</code>)</h3>
+<p>When an AI agent acts for a user, for example comparing products or booking services:</p>
+<ul>
+<li>It must disclose to the user when a sponsored option influenced its choice.</li>
+<li>It must not prefer a sponsored option over a better organic one without disclosure.</li>
+<li>Federated Ads offers a binding that exposes node functions (discover inventory, create offers, fetch receipts) as tools for agent frameworks. This lets agent protocols such as AdCP and IAB Tech Lab's AAMP use Federated Ads as their <strong>identity, licence and receipt layer</strong>, instead of Federated Ads competing with them [28][29].</li>
+</ul>
+<hr />
+<h2 id="14-interoperability-with-existing-standards">14. Interoperability with existing standards</h2>
+<h3 id="141-approaches-compared">14.1 Approaches compared</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Extend existing protocols</strong> (ActivityPub, OpenRTB)</td>
+<td>Existing buyers and servers; continuity for standards bodies; mature libraries</td>
+<td>Inherits OpenRTB's data leakage and ActivityPub's loose typing; ownership and revocation would be bolted on</td>
+</tr>
+<tr>
+<td><strong>Clean slate</strong></td>
+<td>Designed for ownership, revocation, receipts and privacy</td>
+<td>No liquidity at launch; no tooling</td>
+</tr>
+<tr>
+<td><strong>Clean-slate core on existing primitives, plus bridges</strong> <em>(chosen)</em></td>
+<td>Native design where it matters; proven building blocks elsewhere; an on-ramp for existing demand</td>
+<td>Bridges need careful privacy stripping; two code paths</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="142-what-federated-ads-reuses">14.2 What Federated Ads reuses</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Standard</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTTP Semantics (RFC 9110)</td>
+<td>Transport</td>
+</tr>
+<tr>
+<td>HTTP Message Signatures (RFC 9421) and Digest Fields (RFC 9530)</td>
+<td>Authenticating each hop</td>
+</tr>
+<tr>
+<td>W3C Data Integrity 1.0 with <code>eddsa-jcs-2022</code>; JSON Canonicalization Scheme (RFC 8785)</td>
+<td>End-to-end signatures on stored objects</td>
+</tr>
+<tr>
+<td>W3C Controlled Identifiers 1.0 (Multikey)</td>
+<td>Key representation</td>
+</tr>
+<tr>
+<td>WebFinger (RFC 7033); well-known URIs (RFC 8615)</td>
+<td>Discovery</td>
+</tr>
+<tr>
+<td>Problem Details (RFC 9457)</td>
+<td>Errors</td>
+</tr>
+<tr>
+<td>Merkle tree hashing (RFC 6962/9162); C2SP tlog-tiles, tlog-checkpoint, signed-note, tlog-witness</td>
+<td>Transparency logs</td>
+</tr>
+<tr>
+<td>Privacy Pass (RFC 9576–9578)</td>
+<td>Client attestation</td>
+</tr>
+<tr>
+<td>Oblivious HTTP (RFC 9458)</td>
+<td>Optional private fetching</td>
+</tr>
+<tr>
+<td>WebSub (W3C)</td>
+<td>Pattern for push subscriptions (revocations)</td>
+</tr>
+<tr>
+<td>IETF DAP (draft); W3C Attribution (draft)</td>
+<td>Future aggregate conversion profiles</td>
+</tr>
+<tr>
+<td>Global Privacy Control (W3C draft); IAB GPP</td>
+<td>Opt-out and consent signals</td>
+</tr>
+<tr>
+<td>ActivityPub, AT Protocol</td>
+<td>Social surfaces</td>
+</tr>
+<tr>
+<td>IAB Content Taxonomy 3.x, Ad Product Taxonomy 2.0, ads.txt, sellers.json</td>
+<td>Vocabulary and seller authorisation mapping</td>
+</tr>
+<tr>
+<td>OpenRTB 2.6, AdCOM, VAST 4.x, IAB Podcast Measurement v2.2, MRC viewability</td>
+<td>Bridges and measurement definitions</td>
+</tr>
+<tr>
+<td>C2PA</td>
+<td>Creative provenance</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="143-bridges">14.3 Bridges</h3>
+<p><strong>OpenRTB bridge.</strong> In conventional programmatic advertising, <em>sell-side platforms send bid requests to demand-side platforms</em>. The Federated Ads bridge plays that sell-side role on behalf of Federated Ads selling nodes:</p>
+<ul>
+<li>It holds Federated Ads deals with publishers and issues OpenRTB 2.6 requests to existing buyers for that inventory, using deal IDs (PMP) where possible.</li>
+<li>It removes all user and device identifiers, precise location and other personal fields.</li>
+<li>It converts winning bids into Federated Ads deals and licences.</li>
+</ul>
+<p>Expect modest demand through the bridge. Existing buyers pay less for inventory without identifiers. The bridge exists to avoid a completely empty marketplace, not to replace direct Federated Ads buying.</p>
+<p><strong>VAST bridge.</strong> It turns a Federated Ads manifest into a VAST <code>InLine</code> response for ad-insertion servers and video players.</p>
+<p><strong>Agent binding.</strong> It exposes Federated Ads operations as tools for agent frameworks, as described in <a href="#136-ai-agents-profileagent">§13.6</a>.</p>
+<hr />
+<h1 id="part-iii-how">Part III: How</h1>
+<h2 id="15-protocol-overview">15. Protocol overview</h2>
+<blockquote>
+<p>This section is informative. Normative requirements, including the MUST/SHOULD/MAY keywords as defined in BCP 14 (RFC 2119 and RFC 8174), live in the Internet-Draft <code>draft-rajan-federated-ads-protocol</code>. All example values are illustrative. Keys, signatures and hashes are placeholders unless stated otherwise.</p>
+</blockquote>
+<h3 id="151-conventions">15.1 Conventions</h3>
+<ul>
+<li>Objects are JSON. The namespace is <code>https://w3id.org/federated-ads/v0</code>, a permanent identifier that redirects to the specification. Verifiers process the <strong>JSON bytes</strong>. JSON-LD processing is optional and used only for vocabulary extension.</li>
+<li>Object identifiers are <code>https://</code> URLs on the issuing node, e.g. <code>https://ads.example.com/fa/offers/0c8e5d3a</code>.</li>
+<li>Timestamps are RFC 3339 in UTC with a literal <code>Z</code>. Money is <code>{"amount": "12.50", "currency": "USD"}</code>, with the amount as a decimal string.</li>
+<li>Content hashes use the Subresource Integrity format, <code>sha256-&lt;base64&gt;</code>.</li>
+<li>The media type is <code>application/federated-ads+json</code> (registration planned).</li>
+</ul>
+<h3 id="152-two-layers-of-signatures">15.2 Two layers of signatures</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Mechanism</th>
+<th>Protects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Transport (each hop)</strong></td>
+<td>RFC 9421 HTTP Message Signatures with <code>created</code>, <code>expires</code>, <code>keyid</code>, <code>alg="ed25519"</code>, <code>tag="federated-ads"</code>, covering <code>@method</code>, <code>@target-uri</code>, <code>content-type</code> and <code>content-digest</code> when there is a body. Responses are also signed (covering <code>@status</code> and the request via <code>;req</code>).</td>
+<td>Authenticity and freshness of each request and response; replay protection</td>
+</tr>
+<tr>
+<td><strong>Object (end to end)</strong></td>
+<td>W3C Data Integrity proof, cryptosuite <code>eddsa-jcs-2022</code></td>
+<td>Integrity of stored objects across relays and over time. Relays re-sign the transport but cannot alter object proofs.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The same <code>eddsa-jcs-2022</code> cryptosuite is used by the fediverse's object-integrity proofs (FEP-8b32), which Mastodon 4.7 verifies [32].</p>
+<p>Example signed request:</p>
+<pre class="http"><code>POST /fa/inbox HTTP/1.1
+Host: ads.example.com
+Content-Type: application/federated-ads+json
+Content-Digest: sha-256=:Pc1EWC05sjJPosvus5LefPh+i3TViCo38kEWdpN6oa0=:
+Signature-Input: fa=(&quot;@method&quot; &quot;@target-uri&quot; &quot;content-type&quot; &quot;content-digest&quot;);created=1791187200;expires=1791187500;keyid=&quot;https://ads.acme-bikes.example/fa/node#key-2026&quot;;alg=&quot;ed25519&quot;;tag=&quot;federated-ads&quot;
+Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
+<p>Example object proof:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;proof&quot;</span><span class="er">:</span> <span class="fu">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;DataIntegrityProof&quot;</span><span class="fu">,</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;cryptosuite&quot;</span><span class="fu">:</span> <span class="st">&quot;eddsa-jcs-2022&quot;</span><span class="fu">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;created&quot;</span><span class="fu">:</span> <span class="st">&quot;2026-10-05T10:00:00Z&quot;</span><span class="fu">,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;verificationMethod&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.acme-bikes.example/fa/node#key-2026&quot;</span><span class="fu">,</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;proofPurpose&quot;</span><span class="fu">:</span> <span class="st">&quot;assertionMethod&quot;</span><span class="fu">,</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;proofValue&quot;</span><span class="fu">:</span> <span class="st">&quot;z2HnFSSPPBzR36zdDgK8PbEHeXbR56YF24jwMpt3R1eHXQz…&quot;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<h3 id="153-identity-keys-and-discovery">15.3 Identity, keys and discovery</h3>
+<p><strong>Discovery.</strong> A domain publishes <code>/.well-known/federated-ads</code>, to be registered under RFC 8615. It lists the domain's own node or its authorised delegates. WebFinger (<code>resource=https://example.com</code>) is supported as an alternative.</p>
+<p><strong>Node Descriptor.</strong> The descriptor is itself a W3C Controlled Identifier document. Keys are <code>Multikey</code> entries:</p>
+<ul>
+<li><code>assertionMethod</code> keys sign objects;</li>
+<li><code>authentication</code> keys sign HTTP messages.</li>
+</ul>
+<p><strong>Key rotation.</strong></p>
+<ol type="1">
+<li>Publish the new key alongside the old one.</li>
+<li>Log a <code>KeyRotation</code> signed by the old key.</li>
+<li>Retire the old key after the maximum object lifetime.</li>
+</ol>
+<p><strong>Compromise.</strong> Log a <code>KeyRevocation</code> with <code>revokedAt</code>. Because key history lives in the log, signatures on old receipts remain verifiable after rotation. Hot signing keys should be short-lived subkeys certified by an offline root key.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;@context&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;https://www.w3.org/ns/cid/v1&quot;</span><span class="ot">,</span> <span class="st">&quot;https://w3id.org/federated-ads/v0&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.example.com/fa/node&quot;</span><span class="fu">,</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;Node&quot;</span><span class="fu">,</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Example News selling node&quot;</span><span class="fu">,</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;publisher&quot;</span><span class="ot">,</span> <span class="st">&quot;selling&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;operator&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;legalName&quot;</span><span class="fu">:</span> <span class="st">&quot;Example Media Ltd&quot;</span><span class="fu">,</span> <span class="dt">&quot;jurisdiction&quot;</span><span class="fu">:</span> <span class="st">&quot;IN&quot;</span><span class="fu">,</span> <span class="dt">&quot;contact&quot;</span><span class="fu">:</span> <span class="st">&quot;ads@example.com&quot;</span> <span class="fu">},</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;verificationMethod&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="fu">{</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.example.com/fa/node#key-2026&quot;</span><span class="fu">,</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;Multikey&quot;</span><span class="fu">,</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;controller&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.example.com/fa/node&quot;</span><span class="fu">,</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;publicKeyMultibase&quot;</span><span class="fu">:</span> <span class="st">&quot;z6MkrJVnaZkeFzdQyMZu1cgjg7k1pZZ6pvBQ7XJPt4swbTQ2&quot;</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;assertionMethod&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;https://ads.example.com/fa/node#key-2026&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;authentication&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;https://ads.example.com/fa/node#key-2026&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;endpoints&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;inbox&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.example.com/fa/inbox&quot;</span><span class="fu">,</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;inventory&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.example.com/fa/inventory&quot;</span><span class="fu">,</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;policy&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.example.com/fa/policy&quot;</span><span class="fu">,</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;log&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.example.com/fa/log/&quot;</span><span class="fu">,</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;adfree&quot;</span><span class="fu">:</span> <span class="st">&quot;https://example.com/subscribe&quot;</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;surfaces&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;surface:web&quot;</span><span class="ot">,</span> <span class="st">&quot;surface:email&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;settlement&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;settle:invoice&quot;</span><span class="ot">,</span> <span class="st">&quot;settle:prepaid&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;jurisdictionProfiles&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;jp:in&quot;</span><span class="ot">,</span> <span class="st">&quot;jp:eu&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;conformance&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;federated-ads-core/0.2&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;critical&quot;</span><span class="fu">:</span> <span class="ot">[]</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<h3 id="154-core-objects">15.4 Core objects</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Issued by</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Node</code></td>
+<td>Any node</td>
+<td>Identity, keys, endpoints, roles, profiles</td>
+</tr>
+<tr>
+<td><code>Policy</code></td>
+<td>Seller / buyer</td>
+<td>What is accepted or required, in taxonomy terms</td>
+</tr>
+<tr>
+<td><code>Inventory</code></td>
+<td>Seller</td>
+<td>Placements, forecasts, rate card</td>
+</tr>
+<tr>
+<td><code>Offer</code> / <code>StandingOffer</code> / <code>RFP</code></td>
+<td>Buyer</td>
+<td>Proposed terms</td>
+</tr>
+<tr>
+<td><code>Claim</code> / <code>Acceptance</code> / <code>CounterOffer</code> / <code>Decline</code></td>
+<td>Seller (Claim, Acceptance), either</td>
+<td>Responses</td>
+</tr>
+<tr>
+<td><code>Deal</code></td>
+<td>Both (two-signature chain)</td>
+<td>Agreed terms, budget, approved creative hashes, fees, verification levels, settlement</td>
+</tr>
+<tr>
+<td><code>CreativeManifest</code></td>
+<td>Advertiser</td>
+<td>Assets, hashes, metadata, C2PA reference</td>
+</tr>
+<tr>
+<td><code>Licence</code></td>
+<td>Advertiser</td>
+<td>Right to display: manifest hash, licensee, deal, surfaces, TTL</td>
+</tr>
+<tr>
+<td><code>Revocation</code> / <code>RevocationAck</code></td>
+<td>Advertiser / licensee</td>
+<td>Withdraw a licence; prove receipt</td>
+</tr>
+<tr>
+<td><code>SpendReport</code></td>
+<td>Seller</td>
+<td>Near-real-time pacing counters</td>
+</tr>
+<tr>
+<td><code>ReceiptBatch</code></td>
+<td>Seller</td>
+<td>Signed aggregate delivery cells with a Merkle root and log inclusion</td>
+</tr>
+<tr>
+<td><code>Statement</code> / <code>PaymentNotice</code></td>
+<td>Both / payer</td>
+<td>Settlement</td>
+</tr>
+<tr>
+<td><code>Dispute</code></td>
+<td>Either</td>
+<td>Contest a batch or statement</td>
+</tr>
+<tr>
+<td><code>Report</code></td>
+<td>Seller (aggregating users)</td>
+<td>User reports</td>
+</tr>
+<tr>
+<td><code>Label</code></td>
+<td>Labeler</td>
+<td>A signed judgement about a node, domain or creative</td>
+</tr>
+<tr>
+<td><code>KeyRotation</code> / <code>KeyRevocation</code></td>
+<td>Any node</td>
+<td>Key lifecycle</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="155-example-licence-separate-from-the-manifest">15.5 Example: Licence (separate from the manifest)</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;@context&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;https://w3id.org/federated-ads/v0&quot;</span><span class="ot">,</span> <span class="st">&quot;https://w3id.org/security/data-integrity/v2&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;Licence&quot;</span><span class="fu">,</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.acme-bikes.example/fa/licences/7d41&quot;</span><span class="fu">,</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;manifest&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.acme-bikes.example/fa/creatives/etour-v3&quot;</span><span class="fu">,</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;manifestHash&quot;</span><span class="fu">:</span> <span class="st">&quot;sha256-l/CpsGkeGlPK62GeqemLcWH9HRMXJO/lbCmDtsgPL8k=&quot;</span><span class="fu">,</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;licensee&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.example.com/fa/node&quot;</span><span class="fu">,</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;deal&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.acme-bikes.example/fa/deals/3d9e&quot;</span><span class="fu">,</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;surfaces&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;surface:web&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;tier&quot;</span><span class="fu">:</span> <span class="st">&quot;pointer&quot;</span><span class="fu">,</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;issuedAt&quot;</span><span class="fu">:</span> <span class="st">&quot;2026-10-05T10:00:00Z&quot;</span><span class="fu">,</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;expiresAt&quot;</span><span class="fu">:</span> <span class="st">&quot;2026-10-05T10:15:00Z&quot;</span><span class="fu">,</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;revocationLog&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.acme-bikes.example/fa/log/&quot;</span><span class="fu">,</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;proof&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;DataIntegrityProof&quot;</span><span class="fu">,</span> <span class="dt">&quot;cryptosuite&quot;</span><span class="fu">:</span> <span class="st">&quot;eddsa-jcs-2022&quot;</span><span class="fu">,</span> <span class="dt">&quot;…&quot;</span><span class="fu">:</span> <span class="st">&quot;…&quot;</span> <span class="fu">}</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<h3 id="156-state-machines">15.6 State machines</h3>
+<div class="diagram"><pre class="mermaid">stateDiagram-v2
+  direction LR
+  state &quot;Offer&quot; as O {
+    [*] --&gt; Sent
+    Sent --&gt; Countered
+    Countered --&gt; Sent
+    Sent --&gt; Accepted
+    Sent --&gt; Declined
+    Sent --&gt; Expired
+    Sent --&gt; Withdrawn
+  }
+  state &quot;Deal&quot; as D {
+    [*] --&gt; Active
+    Active --&gt; Paused
+    Paused --&gt; Active
+    Active --&gt; Exhausted
+    Active --&gt; Ended
+    Paused --&gt; Ended
+    Active --&gt; Terminated
+  }
+  state &quot;Licence&quot; as L {
+    [*] --&gt; Issued
+    Issued --&gt; Expired_
+    Issued --&gt; Revoked
+  }
+  state &quot;Statement&quot; as S {
+    [*] --&gt; Proposed
+    Proposed --&gt; Countersigned
+    Countersigned --&gt; Paid
+    Proposed --&gt; Disputed
+    Countersigned --&gt; Disputed
+    Disputed --&gt; Countersigned
+  }</pre></div>
+<p>Every transition is a signed message referencing the previous state's object. A Deal may also be marked <strong>Disputed</strong>, which pauses settlement but not delivery unless a party also pauses the deal.</p>
+<h3 id="157-messaging-errors-and-delivery-semantics">15.7 Messaging, errors and delivery semantics</h3>
+<ul>
+<li><strong>Inbox model.</strong> Each node has one inbox endpoint that receives signed objects. It answers <code>202 Accepted</code> with a signed acknowledgement, and processes asynchronously where needed.</li>
+<li><strong>Idempotency.</strong> The object <code>id</code> is the deduplication key. Receivers keep IDs for at least the object's lifetime plus 7 days.</li>
+<li><strong>Delivery.</strong> At least once, with exponential back-off. <code>429</code> with <code>Retry-After</code> for rate limiting.</li>
+<li><strong>Errors.</strong> RFC 9457 Problem Details with <code>type</code> URIs under <code>https://w3id.org/federated-ads/errors/</code>, e.g. <code>licence-expired</code>, <code>policy-mismatch</code>, <code>budget-exhausted</code>, <code>signature-invalid</code>, <code>unknown-critical-extension</code>.</li>
+<li><strong>Clocks.</strong> Allowed clock skew is ±60 seconds. Signatures older than their <code>expires</code> are rejected.</li>
+<li><strong>Pagination.</strong> Cursor-based, for logs and lists.</li>
+<li><strong>Extensions.</strong> Unknown fields are ignored <em>unless</em> they are listed in the object's <code>critical</code> array. A receiver that does not understand a critical extension must reject the object. This keeps new brand-safety constraints from being silently dropped.</li>
+<li><strong>Versioning.</strong> Nodes advertise supported protocol versions. A new major version requires negotiation. Minor versions are additive.</li>
+</ul>
+<h3 id="158-transparency-logs">15.8 Transparency logs</h3>
+<p>Every node keeps an <strong>append-only Merkle log</strong> in the C2SP tlog-tiles format, the same family used by Certificate Transparency and Sigstore. The log records:</p>
+<ul>
+<li>receipt batch commitments;</li>
+<li>revocations and revocation acknowledgements;</li>
+<li>statements;</li>
+<li>key rotations.</li>
+</ul>
+<p><strong>Checkpoints.</strong></p>
+<ul>
+<li>Each checkpoint records tree size and root hash, and is signed with the signed-note format.</li>
+<li><strong>Witnesses</strong> (auditors, cooperatives, other nodes) cosign checkpoints after verifying consistency proofs.</li>
+<li>This makes it impossible for a node to show different histories to different counterparties without being detected.</li>
+<li>Witness cosignatures also give approximate time anchoring, which supports the rule that revocations cannot be backdated.</li>
+</ul>
+<p><strong>Proofs.</strong></p>
+<ul>
+<li>Buyers fetch inclusion proofs for their batches and consistency proofs between the checkpoints they have seen.</li>
+<li>Tiles are immutable and can be cached on CDNs, so logs are cheap to serve.</li>
+</ul>
+<h3 id="159-example-receipt-batch">15.9 Example: Receipt Batch</h3>
+<div class="sourceCode" id="cb9"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;@context&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;https://w3id.org/federated-ads/v0&quot;</span><span class="ot">,</span> <span class="st">&quot;https://w3id.org/security/data-integrity/v2&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;ReceiptBatch&quot;</span><span class="fu">,</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.example.com/fa/receipts/2026-10-05T10&quot;</span><span class="fu">,</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;deal&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ads.acme-bikes.example/fa/deals/3d9e&quot;</span><span class="fu">,</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;window&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;start&quot;</span><span class="fu">:</span> <span class="st">&quot;2026-10-05T10:00:00Z&quot;</span><span class="fu">,</span> <span class="dt">&quot;end&quot;</span><span class="fu">:</span> <span class="st">&quot;2026-10-05T11:00:00Z&quot;</span> <span class="fu">},</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;kThreshold&quot;</span><span class="fu">:</span> <span class="dv">50</span><span class="fu">,</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;totals&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;impression&quot;</span><span class="fu">:</span> <span class="dv">18240</span><span class="fu">,</span> <span class="dt">&quot;viewable&quot;</span><span class="fu">:</span> <span class="dv">12011</span><span class="fu">,</span> <span class="dt">&quot;click&quot;</span><span class="fu">:</span> <span class="dv">97</span> <span class="fu">},</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;cells&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">&quot;creative&quot;</span><span class="fu">:</span> <span class="st">&quot;sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ=&quot;</span><span class="fu">,</span> <span class="dt">&quot;context&quot;</span><span class="fu">:</span> <span class="st">&quot;sports:cycling&quot;</span><span class="fu">,</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;region&quot;</span><span class="fu">:</span> <span class="st">&quot;IN-KL&quot;</span><span class="fu">,</span> <span class="dt">&quot;event&quot;</span><span class="fu">:</span> <span class="st">&quot;impression&quot;</span><span class="fu">,</span> <span class="dt">&quot;count&quot;</span><span class="fu">:</span> <span class="dv">11020</span> <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">&quot;creative&quot;</span><span class="fu">:</span> <span class="st">&quot;sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ=&quot;</span><span class="fu">,</span> <span class="dt">&quot;context&quot;</span><span class="fu">:</span> <span class="st">&quot;technology&quot;</span><span class="fu">,</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;region&quot;</span><span class="fu">:</span> <span class="st">&quot;IN-KA&quot;</span><span class="fu">,</span> <span class="dt">&quot;event&quot;</span><span class="fu">:</span> <span class="st">&quot;impression&quot;</span><span class="fu">,</span> <span class="dt">&quot;count&quot;</span><span class="fu">:</span> <span class="dv">7220</span> <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">&quot;creative&quot;</span><span class="fu">:</span> <span class="st">&quot;sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ=&quot;</span><span class="fu">,</span> <span class="dt">&quot;context&quot;</span><span class="fu">:</span> <span class="st">&quot;*&quot;</span><span class="fu">,</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;region&quot;</span><span class="fu">:</span> <span class="st">&quot;*&quot;</span><span class="fu">,</span> <span class="dt">&quot;event&quot;</span><span class="fu">:</span> <span class="st">&quot;click&quot;</span><span class="fu">,</span> <span class="dt">&quot;count&quot;</span><span class="fu">:</span> <span class="dv">97</span> <span class="fu">}</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;cellTree&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;alg&quot;</span><span class="fu">:</span> <span class="st">&quot;rfc6962-sha256&quot;</span><span class="fu">,</span> <span class="dt">&quot;size&quot;</span><span class="fu">:</span> <span class="dv">7</span><span class="fu">,</span> <span class="dt">&quot;root&quot;</span><span class="fu">:</span> <span class="st">&quot;sha256-…&quot;</span> <span class="fu">},</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;measurementModule&quot;</span><span class="fu">:</span> <span class="st">&quot;sha256-…&quot;</span><span class="fu">,</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;attestation&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;tokenType&quot;</span><span class="fu">:</span> <span class="st">&quot;0x0002&quot;</span><span class="fu">,</span> <span class="dt">&quot;issuer&quot;</span><span class="fu">:</span> <span class="st">&quot;https://issuer.example&quot;</span><span class="fu">,</span> <span class="dt">&quot;count&quot;</span><span class="fu">:</span> <span class="dv">2104</span><span class="fu">,</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>                   <span class="dt">&quot;tokenTree&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;size&quot;</span><span class="fu">:</span> <span class="dv">2104</span><span class="fu">,</span> <span class="dt">&quot;root&quot;</span><span class="fu">:</span> <span class="st">&quot;sha256-…&quot;</span> <span class="fu">}</span> <span class="fu">},</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;log&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;origin&quot;</span><span class="fu">:</span> <span class="st">&quot;ads.example.com/fa/log&quot;</span><span class="fu">,</span> <span class="dt">&quot;index&quot;</span><span class="fu">:</span> <span class="dv">48213</span> <span class="fu">},</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;proof&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;DataIntegrityProof&quot;</span><span class="fu">,</span> <span class="dt">&quot;cryptosuite&quot;</span><span class="fu">:</span> <span class="st">&quot;eddsa-jcs-2022&quot;</span><span class="fu">,</span> <span class="dt">&quot;…&quot;</span><span class="fu">:</span> <span class="st">&quot;…&quot;</span> <span class="fu">}</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<h3 id="1510-registries">15.10 Registries</h3>
+<p>The specification will define registries with explicit registration policies for:</p>
+<ul>
+<li>event types;</li>
+<li>pricing models;</li>
+<li>surface profiles;</li>
+<li>settlement profiles;</li>
+<li>jurisdiction profiles;</li>
+<li>revocation reasons;</li>
+<li>error types;</li>
+<li>taxonomy versions;</li>
+<li>critical extensions.</li>
+</ul>
+<p>Initially the editors maintain the registries in the repository. They will move to the eventual standards body.</p>
+<h3 id="1511-conformance-levels">15.11 Conformance levels</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Includes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>federated-ads-core</strong></td>
+<td>Discovery; Node Descriptor; Policy; Direct Offer → Deal; Licence (pointer tier); revocation (push, log, acknowledgement); aggregated Receipt Batches in a witnessed log; why-this-ad; GPC; Report; contextual matching; native and static display formats</td>
+</tr>
+<tr>
+<td><strong>federated-ads-extended</strong></td>
+<td>Core + Standing Offers and RFPs; signed-cache tier; Spend Reports; Statements and at least one settlement profile; ad-free endpoint; HTML5 sandbox; dispute flow</td>
+</tr>
+<tr>
+<td><strong>federated-ads-verified</strong></td>
+<td>Extended + V3 client attestation and/or V4 audit attestation from a labeler the counterparty trusts</td>
+</tr>
+</tbody>
+</table></div>
+<p>Surface profiles add rendering, labelling and measurement requirements. A public conformance suite and test vectors (signatures, Merkle proofs, canonicalisation) ship with each version.</p>
+<hr />
+<h2 id="16-end-to-end-worked-example">16. End-to-end worked example</h2>
+<p><strong>Scenario.</strong> Acme Bikes, a Kerala e-bike retailer, wants to reach cycling and technology readers in Kerala and Karnataka for October. It uses a hosted buying node. <em>Example News</em> runs its own selling node. Every name is fictional.</p>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+  autonumber
+  participant B as Buying node (Acme)
+  participant S as Selling node (Example News)
+  participant C as Creative host (Acme)
+  participant W as Witness / auditor
+  B-&gt;&gt;S: GET /.well-known/federated-ads → Node, Policy, Inventory
+  B-&gt;&gt;S: POST inbox: Offer (CPM ₹350, budget ₹1,25,000, Oct 5–31, cycling+tech, IN-KL/KA)
+  S-&gt;&gt;B: CounterOffer (CPM ₹380, creative approval required)
+  B-&gt;&gt;S: Offer v2 (CPM ₹370)
+  S-&gt;&gt;B: Acceptance (+ approves creative hash)
+  B-&gt;&gt;S: Deal (countersigned chain) + Licence (pointer, 15 min)
+  S-&gt;&gt;C: Fetch manifest + assets (signed request), cache ≤ TTL
+  loop every ≤15 min
+    S-&gt;&gt;B: SpendReport
+    S-&gt;&gt;C: Renew licence ahead of expiry
+  end
+  S-&gt;&gt;W: Log checkpoint → witness cosigns
+  S-&gt;&gt;B: ReceiptBatch (hourly, aggregated, log index)
+  B-&gt;&gt;W: Fetch inclusion + consistency proofs
+  Note over B,C: Oct 12: pricing error found on landing page
+  B-&gt;&gt;B: Append Revocation to own log (effectiveAt = now)
+  B-&gt;&gt;S: POST Revocation
+  S-&gt;&gt;B: RevocationAck (signed, logged) — stops serving within 60 s
+  B-&gt;&gt;S: New manifest v4 + approval request + new Licence
+  Note over B,S: Oct 31: campaign ends
+  S-&gt;&gt;B: Statement (signed)
+  B-&gt;&gt;S: Statement countersigned
+  B-&gt;&gt;S: PaymentNotice (settle:invoice, bank transfer)</pre></div>
+<p><strong>What each step shows:</strong></p>
+<ul>
+<li><strong>Steps 2–5:</strong> negotiation is ordinary and auditable.</li>
+<li><strong>Step 6:</strong> the deal records the approved creative hash, the declared fees (here a 6% hosted buying-node fee, visible to both parties) and the verification levels: V0 + V1 + V2.</li>
+<li><strong>Steps 7–9:</strong> creative control without tracking. The selling node fetches the creative, people's devices never contact Acme's server, and licences renew in the background.</li>
+<li><strong>Steps 10–12:</strong> delivery is verifiable without per-user data. Receipts are aggregated cells, and the log is witnessed.</li>
+<li><strong>Steps 13–16:</strong> revocation is fast and provable. Impressions after <code>effectiveAt</code> + 60 s are not billable, and both sides hold signed evidence.</li>
+<li><strong>Steps 17–19:</strong> settlement uses whatever rail the parties chose, based on a statement both have signed.</li>
+</ul>
+<hr />
+<h2 id="17-security-considerations">17. Security considerations</h2>
+<h3 id="171-trust-assumptions">17.1 Trust assumptions</h3>
+<ul>
+<li>A node's identity is rooted in control of its domain and TLS. Domain takeover means identity takeover. Logged key history limits the damage to past records.</li>
+<li>Witnesses are assumed not to all collude with the node they witness.</li>
+<li>Privacy Pass attesters are assumed not to collude with the selling node.</li>
+</ul>
+<h3 id="172-threats-and-mitigations">17.2 Threats and mitigations</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Threat</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Impression inflation</strong> by a seller</td>
+<td>Verification levels V2–V4; witnessed logs make inflated numbers permanent and attributable; price reflects verification</td>
+</tr>
+<tr>
+<td><strong>Backdated receipts or revocations</strong></td>
+<td>Log inclusion plus witness cosignatures anchor time; <code>effectiveAt</code> ≥ log time; signed acknowledgements</td>
+</tr>
+<tr>
+<td><strong>Equivocation</strong> (different histories for different parties)</td>
+<td>Witness cosigning and consistency proofs</td>
+</tr>
+<tr>
+<td><strong>Replay</strong></td>
+<td>RFC 9421 <code>created</code>/<code>expires</code>; object <code>id</code> deduplication</td>
+</tr>
+<tr>
+<td><strong>Seller + relay collusion</strong></td>
+<td>Relays cannot alter signed objects; fees declared in the deal; buyers may require direct delivery of receipts</td>
+</tr>
+<tr>
+<td><strong>Seller + sock-puppet advertiser</strong> (laundering, fake demand)</td>
+<td>KYB attestations from labelers; settlement through regulated providers with their own checks</td>
+</tr>
+<tr>
+<td><strong>Sybil publishers</strong> farming Standing Offers</td>
+<td>Per-seller caps; minimum verification levels for unknown sellers; labeler reputation; prepaid or holdback for new sellers</td>
+</tr>
+<tr>
+<td><strong>Click fraud</strong> through the seller's own redirect</td>
+<td>V2 landing-page corroboration; invalid-traffic filtering; CPC deals can require V3</td>
+</tr>
+<tr>
+<td><strong>Malvertising</strong></td>
+<td>Restricted formats (<a href="#131-web-display-and-native-surfaceweb">§13.1</a>); hash pinning; approval of exact hashes; sandbox profile; Report flow</td>
+</tr>
+<tr>
+<td><strong>Landing-page cloaking</strong></td>
+<td>Pinned CTA; re-crawls; labelers; approval voided on change</td>
+</tr>
+<tr>
+<td><strong>SSRF</strong> through the seller fetching advertiser URLs</td>
+<td>Fetch only from the creative host declared in the advertiser's Node Descriptor; block private address ranges; size and type limits</td>
+</tr>
+<tr>
+<td><strong>Revocation flooding</strong></td>
+<td>Revocations must come from the licence issuer's key; rate limits; relays authenticate before giving priority</td>
+</tr>
+<tr>
+<td><strong>Report-channel abuse</strong></td>
+<td>Reports aggregated and rate-limited; no automatic takedown except for scam categories with verification</td>
+</tr>
+<tr>
+<td><strong>Key compromise</strong></td>
+<td>Short-lived subkeys; offline root; logged revocation</td>
+</tr>
+<tr>
+<td><strong>Attester centralisation</strong></td>
+<td>V3 is optional; multiple issuers allowed; an open question on community attesters</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="173-implementation-requirements">17.3 Implementation requirements</h3>
+<p>The reference implementation will include safe defaults for:</p>
+<ul>
+<li>signature verification;</li>
+<li>canonicalisation (RFC 8785);</li>
+<li>log verification;</li>
+<li>fetch sandboxing;</li>
+<li>key storage.</li>
+</ul>
+<p>ads.cert showed that weak reference code stalls adoption [20].</p>
+<hr />
+<h2 id="18-privacy-considerations">18. Privacy considerations</h2>
+<h3 id="181-data-inventory">18.1 Data inventory</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Data</th>
+<th>Where processed</th>
+<th>Retention</th>
+<th>Leaves the node?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IP address, user agent</td>
+<td>Selling node (coarse region lookup, invalid-traffic filtering)</td>
+<td>Transient (seconds to hours)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Page, post or episode context</td>
+<td>Selling node</td>
+<td>As for the content</td>
+<td>Only as a category in aggregate cells</td>
+</tr>
+<tr>
+<td>Conversation context (AI)</td>
+<td>AI provider's node, in session</td>
+<td>Session only, unless the user opts in</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Frequency counters</td>
+<td>Selling node (first party) or the user's device</td>
+<td>Campaign duration</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Aggregate receipt cells</td>
+<td>Selling node → buyer, auditor</td>
+<td>Contract and legal retention</td>
+<td>Yes, aggregated with k ≥ 50</td>
+</tr>
+<tr>
+<td>Report content</td>
+<td>Selling node → aggregate to the advertiser</td>
+<td>As required for moderation</td>
+<td>Aggregated</td>
+</tr>
+<tr>
+<td>Privacy Pass tokens</td>
+<td>Client → selling node → auditor</td>
+<td>Batch retention</td>
+<td>Yes, unlinkable</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="182-re-identification-risk">18.2 Re-identification risk</h3>
+<p>Combinations of fine context, language, region and time can single out individuals, especially on small fediverse instances. Federated Ads limits this with:</p>
+<ul>
+<li><strong>aggregation</strong> into cells;</li>
+<li><strong>k-thresholds</strong>, with small cells merged;</li>
+<li>hourly or coarser windows;</li>
+<li>coarse regions only;</li>
+<li>salted Merkle leaves;</li>
+<li>a ban on per-click unique identifiers.</li>
+</ul>
+<p>Small nodes whose volume falls below thresholds report daily or weekly instead of hourly.</p>
+<h3 id="183-device-access">18.3 Device access</h3>
+<p>Viewability scripts, on-device profiles and Privacy Pass tokens all involve reading from or storing on the user's device. EU guidance treats this broadly as access to terminal equipment, which may require consent unless strictly necessary. <strong>Core</strong> Federated Ads billing therefore works <strong>server-side</strong>: impressions, sends, deliveries and clicks. Device-side features are optional profiles that come with their own consent requirements (<a href="#19-legal-and-regulatory-considerations">§19</a>).</p>
+<h3 id="184-the-standards-body-and-controllership">18.4 The standards body and controllership</h3>
+<p>The CJEU's <em>IAB Europe</em> judgment (C-604/22, March 2024) held that a standards body can be a joint controller when its rules shape how personal data is processed, even if it never receives the data. Federated Ads therefore:</p>
+<ul>
+<li>operates <strong>no central infrastructure</strong> that handles user signals;</li>
+<li>keeps user-side signals (opt-outs, blocks, reports) local or aggregated;</li>
+<li>will publish a template allocation of controller responsibilities for node operators.</li>
+</ul>
+<hr />
+<h2 id="19-legal-and-regulatory-considerations">19. Legal and regulatory considerations</h2>
+<blockquote>
+<p>This section is a map of considerations, not legal advice. Several 2026 developments rest on secondary sources and must be verified against primary texts before reliance.</p>
+</blockquote>
+<h3 id="191-european-union">19.1 European Union</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Instrument</th>
+<th>Relevance</th>
+<th>Federated Ads response</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GDPR</strong>; CJEU <em>Meta v Bundeskartellamt</em> (C-252/21, 2023)</td>
+<td>Personalised ads generally require consent</td>
+<td>Contextual default that needs no profiling; profiling only through opt-in profiles</td>
+</tr>
+<tr>
+<td><strong>EDPB Opinion 08/2024</strong> ("consent or pay")</td>
+<td>A bare pay-or-consent choice rarely gives valid consent for large platforms; a free, less-personalised alternative is recommended</td>
+<td>Free contextual tier always available alongside ad-free payment</td>
+</tr>
+<tr>
+<td><strong>ePrivacy Art. 5(3)</strong>; EDPB Guidelines 2/2023</td>
+<td>Device access (pixels, local storage, identifiers) generally needs consent</td>
+<td>Server-side core; device features opt-in</td>
+</tr>
+<tr>
+<td><strong>CJEU <em>IAB Europe</em> (C-604/22, 2024)</strong></td>
+<td>Joint-controllership risk for standard-setters</td>
+<td>No central user-signal infrastructure (<a href="#184-the-standards-body-and-controllership">§18.4</a>)</td>
+</tr>
+<tr>
+<td><strong>Digital Services Act</strong>: Art. 26 (ad transparency), Art. 28 (no profiling ads to minors), Art. 39 (repositories for very large platforms)</td>
+<td>Required disclosures; minors; record-keeping</td>
+<td>Why-this-ad matches Art. 26; minor-safe default; repository export API</td>
+</tr>
+<tr>
+<td><strong>Digital Markets Act</strong> Arts. 5–6</td>
+<td>Price, fee and verification transparency for gatekeepers' business users</td>
+<td>Federated Ads offers this transparency to everyone by design</td>
+</tr>
+<tr>
+<td><strong>Political advertising Regulation (EU) 2024/900</strong> (applies from 10 October 2025)</td>
+<td>Labels, transparency notices, strict targeting limits, record retention. Google and Meta withdrew political ads in the EU rather than comply</td>
+<td>Political and issue ads <strong>off by default</strong>; enabled only by a dedicated jurisdiction profile; archive retention</td>
+</tr>
+<tr>
+<td><strong>AI Act</strong>: Art. 5 (manipulative practices), Art. 50 (transparency; applicable from 2 August 2026)</td>
+<td>AI-chat ads and synthetic creatives</td>
+<td>AI surface rules (<a href="#135-ai-and-chat-surfaces-surfaceai">§13.5</a>)</td>
+</tr>
+<tr>
+<td><strong>Pending:</strong> Digital Omnibus (machine-readable consent signals), Digital Fairness Act</td>
+<td>May change consent and dark-pattern rules</td>
+<td>Regulatory watch; signal handling designed to map onto machine-readable signals</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="192-united-kingdom">19.2 United Kingdom</h3>
+<ul>
+<li><strong>Data (Use and Access) Act 2025:</strong> relaxed some cookie-consent rules for analytics, not for advertising measurement, and raised PECR fines to UK GDPR levels.</li>
+<li><strong>Online Safety Act:</strong> Ofcom is consulting on codes for fraudulent advertising.</li>
+<li><strong>FCA financial promotions regime:</strong> applies to crypto advertising.</li>
+</ul>
+<h3 id="193-united-states">19.3 United States</h3>
+<ul>
+<li><strong>FTC 2015 Enforcement Policy Statement on Deceptively Formatted Advertisements</strong> and the <strong>2023 Endorsement Guides:</strong> they apply directly to sponsored posts, newsletter placements, podcast reads and AI answers. Disclosures must be clear and hard to miss.</li>
+<li><strong>Revised COPPA Rule:</strong> compliance required by April 2026.</li>
+<li><strong>State privacy laws:</strong> at least a dozen states require businesses to honour universal opt-out signals such as GPC (per secondary trackers). California's AB 566 requires browsers to offer an opt-out signal from 2027.</li>
+</ul>
+<h3 id="194-india">19.4 India</h3>
+<p>The lead contributor's home jurisdiction.</p>
+<ul>
+<li><strong>Digital Personal Data Protection Act 2023 and DPDP Rules 2025:</strong> phased in, with most obligations applying from May 2027.
+<ul>
+<li><strong>Section 9 bars tracking, behavioural monitoring and targeted advertising directed at children (under 18).</strong> This supports Federated Ads' contextual-only minor-safe default.</li>
+<li>The consent-manager framework is a possible integration point for opt-in signals.</li>
+</ul></li>
+<li><strong>CCPA Guidelines for Prevention and Regulation of Dark Patterns, 2023:</strong> these list "disguised advertisement", which supports strict labelling.</li>
+<li><strong>ASCI codes:</strong> influencer and AI-generated content disclosure.</li>
+<li><strong>Promotion and Regulation of Online Gaming Act 2025:</strong> bans advertising of online money games. This is a hard block in the India jurisdiction profile.</li>
+<li><strong>Stablecoins:</strong> the regulatory position is uncertain. Stablecoin settlement is off by default for India-based nodes, and INR settlement uses regulated rails.</li>
+</ul>
+<h3 id="195-other-jurisdictions-brief">19.5 Other jurisdictions (brief)</h3>
+<ul>
+<li><strong>Brazil (ECA Digital, 2025):</strong> profiling-based ads to children prohibited.</li>
+<li><strong>China (PIPL Art. 24):</strong> a non-personalised option is required, which contextual matching satisfies.</li>
+<li><strong>Canada and Australia:</strong> privacy reform bills are pending.</li>
+</ul>
+<h3 id="196-jurisdiction-policy-profiles">19.6 Jurisdiction policy profiles</h3>
+<p>Federated Ads carries legal variation as <strong>machine-readable profiles</strong>: <code>jp:eu</code>, <code>jp:eu-political</code>, <code>jp:uk</code>, <code>jp:us-&lt;state&gt;</code>, <code>jp:in</code>, <code>jp:br</code> and others. Each profile defines:</p>
+<ul>
+<li>blocked and allowed categories;</li>
+<li>required labels and disclosures;</li>
+<li>targeting limits;</li>
+<li>age gating;</li>
+<li>archive retention periods;</li>
+<li>advertiser licence attestations required, e.g. a financial-promotion approval reference.</li>
+</ul>
+<p>Nodes declare which profiles they enforce. Creatives carry category tags and signed advertiser attestations.</p>
+<h3 id="197-payments">19.7 Payments</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Consideration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Holding funds</strong></td>
+<td>Generally requires licensing: EU payment or e-money licences; US money-transmitter rules, with the narrow FinCEN payment-processor exemption</td>
+</tr>
+<tr>
+<td><strong>Stablecoins</strong></td>
+<td>EU MiCA (stablecoin rules applying since June 2024); the US GENIUS Act (signed July 2025, rules in progress)</td>
+</tr>
+<tr>
+<td><strong>Compliance checks</strong></td>
+<td>KYC, KYB, sanctions screening and the crypto Travel Rule apply to whoever onboards advertisers or moves money</td>
+</tr>
+<tr>
+<td><strong>Tax</strong></td>
+<td>Cross-border ad services are typically taxed through reverse-charge VAT or GST, e.g. India's 18% GST on imported digital services. India's equalisation levy on online advertising was abolished in 2025</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="198-competition-law">19.8 Competition law</h3>
+<p>Standard-setting is generally lawful under the EU's 2023 Horizontal Guidelines when four conditions hold:</p>
+<ul>
+<li>participation is unrestricted;</li>
+<li>the procedure is transparent;</li>
+<li>compliance is voluntary;</li>
+<li>access is effective.</li>
+</ul>
+<p>Exchanging price information has no safe harbour. Federated Ads governance therefore:</p>
+<ul>
+<li>adopts antitrust guidelines;</li>
+<li>publishes agendas and minutes;</li>
+<li>never shares forward-looking or node-level pricing through project channels;</li>
+<li>leaves price indices to independent parties under the constraints in <a href="#64-price-discovery">§6.4</a>.</li>
+</ul>
+<hr />
+<h1 id="part-iv-making-it-real">Part IV: Making it real</h1>
+<h2 id="20-economics-a-worked-example">20. Economics: a worked example</h2>
+<blockquote>
+<p>All numbers in this section are <strong>hypothetical assumptions</strong> chosen to illustrate the fee structure, not market data or forecasts.</p>
+</blockquote>
+<p><strong>Scenario.</strong> A regional advertiser spends <strong>$5,000</strong> through a hosted buying node across:</p>
+<ul>
+<li>60 newsletters (flat-fee sponsorships);</li>
+<li>30 fediverse and community instances (CPM);</li>
+<li>20 independent websites (CPM).</li>
+</ul>
+<h3 id="201-fee-stack-illustrative">20.1 Fee stack (illustrative)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Assumed fee</th>
+<th>Amount</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hosted buying node</td>
+<td>6%</td>
+<td>$300</td>
+<td>Campaign tools, creative hosting, consolidated invoicing</td>
+</tr>
+<tr>
+<td>Relay (discovery and curation)</td>
+<td>0–3% (assume 2% on half the spend)</td>
+<td>$50</td>
+<td>Optional; declared in deals</td>
+</tr>
+<tr>
+<td>Payment processing</td>
+<td>~3%</td>
+<td>$150</td>
+<td>Depends on rail; bank transfer is lower</td>
+</tr>
+<tr>
+<td>Verification (auditor sampling, labelers)</td>
+<td>~1%</td>
+<td>$50</td>
+<td>Only for deals that require V4</td>
+</tr>
+<tr>
+<td>Hosted selling node or cooperative (for publishers who don't self-host)</td>
+<td>0–8% (assume 5% on 60% of spend)</td>
+<td>$150</td>
+<td>Self-hosting publishers pay infrastructure costs instead</td>
+</tr>
+<tr>
+<td><strong>Total intermediation</strong></td>
+<td><strong>~14%</strong></td>
+<td><strong>$700</strong></td>
+<td>Every line declared in signed deals</td>
+</tr>
+<tr>
+<td><strong>Publisher net</strong></td>
+<td><strong>~86%</strong></td>
+<td><strong>$4,300</strong></td>
+<td>Compare with ISBA/PwC's 65% (2023) and 51% (2020) [1][2]</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="202-what-this-does-and-does-not-show">20.2 What this does and does not show</h3>
+<ul>
+<li><strong>The structural point</strong> is that every fee is declared and verifiable. The "unknown delta" cannot exist, because no unsigned hop exists.</li>
+<li><strong>Contextual inventory without identifiers may sell at lower CPMs</strong> than identity-based inventory in today's market. Publishers' gains come from a larger <em>share</em>, not necessarily a higher <em>price</em>. The net effect is an empirical question for the pilot (<a href="#24-roadmap-and-success-metrics">§24</a>).</li>
+<li><strong>Verification has a cost.</strong> V3 and V4 add cost, so they suit larger deals. Small deals use V0–V2 with prepaid settlement.</li>
+<li><strong>Node operating costs</strong> are modest under the pointer tier. The selling node serves cached assets alongside its own content. Logs are static, cacheable tiles. The heavier costs are media bandwidth for audio and video and operating a public HTTP endpoint securely. Hosted cooperatives exist to spread those costs.</li>
+</ul>
+<h3 id="203-where-value-comes-from-for-each-side">20.3 Where value comes from for each side</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Party</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Publishers</strong></td>
+<td>Higher share; direct relationships; choice of intermediaries; standard tooling instead of manual sponsorship sales</td>
+</tr>
+<tr>
+<td><strong>Advertisers</strong></td>
+<td>Creative control and fast revocation; brand-safe, contextual, community placements; full fee transparency; regulatory comfort (no profiling, ready-made disclosures)</td>
+</tr>
+<tr>
+<td><strong>Users</strong></td>
+<td>Non-tracking ads; real explanations; opt-outs that work; an ad-free option</td>
+</tr>
+<tr>
+<td><strong>Intermediaries</strong></td>
+<td>A legitimate role competing on service (curation, credit, tooling, verification), not on information asymmetry</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="21-comparison-with-existing-systems">21. Comparison with existing systems</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th><strong>Federated Ads</strong></th>
+<th><strong>OpenRTB + Prebid</strong></th>
+<th><strong>Brave Ads</strong></th>
+<th><strong>EthicalAds / Carbon</strong></th>
+<th><strong>Newsletter marketplaces</strong></th>
+<th><strong>AI-assistant ads (e.g. ChatGPT)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Open protocol</td>
+<td>Yes</td>
+<td>Yes (OpenRTB); open source (Prebid)</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Federated / multi-operator</td>
+<td>Yes</td>
+<td>Multi-vendor, but concentrated</td>
+<td>Single operator</td>
+<td>Single operator each</td>
+<td>Single operator each</td>
+<td>Single operator</td>
+</tr>
+<tr>
+<td>Tracking-free by default</td>
+<td>Yes</td>
+<td>No</td>
+<td>Yes (on-device)</td>
+<td>Yes</td>
+<td>Mostly</td>
+<td>Self-declared</td>
+</tr>
+<tr>
+<td>Advertiser creative revocation</td>
+<td>Protocol-level, provable</td>
+<td>No standard</td>
+<td>Operator-controlled</td>
+<td>Operator-controlled</td>
+<td>Manual</td>
+<td>Operator-controlled</td>
+</tr>
+<tr>
+<td>Verifiable delivery</td>
+<td>Signed, witnessed logs + optional attestation</td>
+<td>Third-party verification vendors</td>
+<td>Anonymous tokens</td>
+<td>Operator reports</td>
+<td>Publisher reports</td>
+<td>Operator reports</td>
+</tr>
+<tr>
+<td>Fee transparency</td>
+<td>Declared in signed deals</td>
+<td>Partial (schain, studies)</td>
+<td>Operator-set</td>
+<td>Published rev share</td>
+<td>Varies</td>
+<td>Opaque</td>
+</tr>
+<tr>
+<td>Surfaces</td>
+<td>Web, social, email, audio, AI</td>
+<td>Web, app, CTV, audio</td>
+<td>Browser</td>
+<td>Web</td>
+<td>Email</td>
+<td>AI chat</td>
+</tr>
+<tr>
+<td>Cross-publisher frequency</td>
+<td>No (by design)</td>
+<td>Yes (with identifiers)</td>
+<td>On-device</td>
+<td>No</td>
+<td>No</td>
+<td>Within platform</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="22-adoption-strategy">22. Adoption strategy</h2>
+<p>Two-sided networks fail when they try to launch everywhere at once. Federated Ads starts narrow.</p>
+<h3 id="221-the-first-niche">22.1 The first niche</h3>
+<p>Start where the pain is highest and identity matters least:</p>
+<ol type="1">
+<li><strong>Newsletters and podcasts.</strong> Already sold as flat-fee sponsorships, already contextual, and today run by email and spreadsheet. Federated Ads gives them standard deals, verifiable delivery and simple payment.</li>
+<li><strong>Developer, open-source and technical sites.</strong> EthicalAds has shown tracking-free demand exists here [19].</li>
+<li><strong>Fediverse and community instances that opt in.</strong> These come with community governance: users vote, revenue is shared, and the instance publishes its policy.</li>
+</ol>
+<h3 id="222-seeding-demand">22.2 Seeding demand</h3>
+<ul>
+<li><strong>Values-aligned anchor advertisers:</strong> privacy-focused software companies, developer tools, open-source sponsors, non-profits.</li>
+<li><strong>Sponsorship pools:</strong> sponsors fund open-source or public-interest communities through Federated Ads deals.</li>
+<li><strong>House and cross-promotion ads</strong> between participating publishers, so inventory is never empty.</li>
+<li><strong>The OpenRTB bridge,</strong> for modest additional demand.</li>
+</ul>
+<h3 id="223-making-adoption-cheap">22.3 Making adoption cheap</h3>
+<ul>
+<li>A reference <strong>selling node</strong> that runs on a small server, plus a <strong>hosted cooperative</strong> option.</li>
+<li><strong>Plugins</strong> for popular publishing tools (WordPress, Ghost), newsletter platforms, podcast hosts and fediverse server software.</li>
+<li>A <strong>self-serve buying tool</strong> for small advertisers.</li>
+<li>Libraries for signing, logs and canonicalisation in several languages.</li>
+</ul>
+<h3 id="224-the-email-lesson">22.4 The email lesson</h3>
+<p>DKIM and DMARC became universal only once major receivers required them. Federated Ads needs a small number of important participants, such as a large cooperative, a podcast host or a well-known advertiser, who <strong>require</strong> signed, logged receipts from their counterparties.</p>
+<hr />
+<h2 id="23-governance-ipr-and-funding">23. Governance, IPR and funding</h2>
+<h3 id="231-what-the-federated-ads-initiative-is-today">23.1 What the "Federated Ads Initiative" is today</h3>
+<p>Today the initiative is <strong>one individual contributor working with an AI assistant</strong>. It has no legal entity, no members and no funding. We say so plainly because a standards effort must earn trust by being transparent about its origins. The governance below describes how that changes.</p>
+<h3 id="232-phases">23.2 Phases</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Trigger</th>
+<th>Structure</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. Community incubation</strong> (now)</td>
+<td>Publication of this paper</td>
+<td>Public repository and issue tracker; a FEP-style proposal process (proposal → discussion → editor's draft → last call); named editors; open calls with published notes</td>
+</tr>
+<tr>
+<td><strong>2. Standards track</strong></td>
+<td>Two or three independent interoperable implementations</td>
+<td>A <strong>W3C Community Group</strong> (free and open to all) for the overall specification. Liaison with the PATCG/PATWG and IAB Tech Lab. The wire protocol may be brought to the IETF as an Internet-Draft via DISPATCH.</td>
+</tr>
+<tr>
+<td><strong>3. Neutral home</strong></td>
+<td>Material adoption; need to hold trademarks or fund the conformance suite</td>
+<td>An independent non-profit, or a project under an existing open-source foundation, with a multi-stakeholder board: publishers, advertisers, implementers and civil society, <strong>with no single company holding a majority</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="233-change-control">23.3 Change control</h3>
+<ul>
+<li><strong>Two independent interoperable implementations</strong> before any feature is marked stable.</li>
+<li><strong>At least 90 days' notice</strong> for breaking changes, with a migration path.</li>
+<li>Every decision is recorded in public with its rationale.</li>
+<li>Each working group includes publisher, advertiser and user-advocacy participants.</li>
+</ul>
+<h3 id="234-intellectual-property">23.4 Intellectual property</h3>
+<ul>
+<li><strong>Specification text:</strong> CC BY 4.0. <strong>Code:</strong> Apache-2.0.</li>
+<li><strong>Before a Community Group exists,</strong> contributors make a royalty-free patent commitment modelled on the W3C Community Contributor License Agreement.</li>
+<li><strong>Once a Community Group is formed,</strong> the W3C CLA and Final Specification Agreement apply.</li>
+<li><strong>Trademark:</strong> the name will be held for the community, not for any company. Before public launch, a trademark search will be done on the name "Federated Ads Protocol".</li>
+</ul>
+<h3 id="235-funding">23.5 Funding</h3>
+<ul>
+<li><strong>Early funding</strong> should come from public-interest technology grants and in-kind contributions from implementers.</li>
+<li><strong>Later:</strong> capped implementer membership dues and conformance-testing fees, with caps so that no funder gains control.</li>
+<li><strong>The foundation must not operate critical network infrastructure.</strong> Relays, labelers and witnesses are run by independent parties, so the network survives a funding gap. Matrix's funding difficulties are the cautionary example [33].</li>
+</ul>
+<hr />
+<h2 id="24-roadmap-and-success-metrics">24. Roadmap and success metrics</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Milestone</th>
+<th>Deliverables</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>M0: Whitepaper v0.2</strong> (this document)</td>
+<td>Public comment; outreach to W3C, IETF, IAB Tech Lab and civil society</td>
+</tr>
+<tr>
+<td><strong>M1: Internet-Draft -00 and schemas</strong></td>
+<td><code>draft-rajan-federated-ads-protocol-00</code>; JSON Schemas; test vectors; taxonomy mapping v0.1</td>
+</tr>
+<tr>
+<td><strong>M2: Reference implementation</strong></td>
+<td>Selling node, buying node and creative host; log and witness tooling; WordPress/Ghost plugin; a fediverse integration; conformance suite</td>
+</tr>
+<tr>
+<td><strong>M3: Pilot</strong></td>
+<td>50+ publishers (newsletters, podcasts, technical sites, opt-in instances) and 10+ advertisers on <code>settle:invoice</code> / <code>settle:prepaid</code></td>
+</tr>
+<tr>
+<td><strong>M4: Bridges and profiles</strong></td>
+<td>OpenRTB and VAST bridges; audio profile; AI-surface pilot with at least one assistant provider; agent binding</td>
+</tr>
+<tr>
+<td><strong>M5: Standards track</strong></td>
+<td>W3C Community Group; second independent implementation; v1.0 candidate</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Pilot success metrics (M3):</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Independent interoperating implementations</td>
+<td>≥ 2</td>
+</tr>
+<tr>
+<td>Publisher net share of advertiser spend</td>
+<td>≥ 80%</td>
+</tr>
+<tr>
+<td>Revocation: post-deadline billable impressions</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Revocation acknowledgement latency (p99)</td>
+<td>≤ 60 s for pointer-tier licences</td>
+</tr>
+<tr>
+<td>Disputed spend</td>
+<td>&lt; 2%</td>
+</tr>
+<tr>
+<td>Receipt batches with valid witnessed inclusion</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>Publishers and advertisers retained after 3 months</td>
+<td>≥ 70%</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="25-risks-and-mitigations">25. Risks and mitigations</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Likelihood</th>
+<th>Impact</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cold start</strong>: too little demand or supply</td>
+<td>High</td>
+<td>High</td>
+<td>Narrow first niche; anchor advertisers; sponsorship pools; house ads; bridge</td>
+</tr>
+<tr>
+<td><strong>Adverse selection</strong>: premium publishers stay with direct sales, low-quality supply joins</td>
+<td>Medium</td>
+<td>High</td>
+<td>Labelers; verification levels; curation by relays and cooperatives; start with high-quality niches</td>
+</tr>
+<tr>
+<td><strong>Lower contextual CPMs</strong></td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Higher publisher share; lower fees; brand-safety and compliance premium; honest positioning</td>
+</tr>
+<tr>
+<td><strong>Relay centralisation</strong>: one dominant relay</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Multi-homing; portable reputation and deal history; declared fees; norms on fee caps</td>
+</tr>
+<tr>
+<td><strong>Verification seen as insufficient by agencies</strong></td>
+<td>High (early)</td>
+<td>Medium</td>
+<td>V3/V4; work with auditors; align with MRC definitions; target direct-buying advertisers first</td>
+</tr>
+<tr>
+<td><strong>Regulatory change</strong></td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Jurisdiction profiles; regulatory watch; privacy-maximal default</td>
+</tr>
+<tr>
+<td><strong>Governance capture</strong></td>
+<td>Low (early) to medium</td>
+<td>High</td>
+<td>Phased neutral governance; no majority holder; public process</td>
+</tr>
+<tr>
+<td><strong>Single-maintainer risk</strong></td>
+<td>High (now)</td>
+<td>High</td>
+<td>Recruit co-editors and implementers before M2; keep everything public</td>
+</tr>
+<tr>
+<td><strong>Name and trademark</strong></td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Renamed from "OpenAds"; trademark search before launch</td>
+</tr>
+<tr>
+<td><strong>Security incident in reference code</strong></td>
+<td>Medium</td>
+<td>High</td>
+<td>Security review before pilot; safe defaults; disclosure policy</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="26-open-questions">26. Open questions</h2>
+<ol type="1">
+<li><strong>Attesters.</strong> Who should issue client-attestation tokens without recreating platform dependency? Could cooperatives or browser vendors play this role?</li>
+<li><strong>On-device profile.</strong> Which clients will implement it? Should Federated Ads define its own catalogue format or align with an existing design (e.g. Brave's)?</li>
+<li><strong>Dispute resolution.</strong> Is arbitration by an auditor named in the deal enough, or is a standing panel needed? What evidence decides a case?</li>
+<li><strong>AI agents.</strong> Should agents be allowed to <em>act on</em> sponsored offers at all, or only display them?</li>
+<li><strong>Revocation and archives.</strong> Exactly which record-retention duties apply to small nodes in each jurisdiction?</li>
+<li><strong>Taxonomy governance.</strong> Who maintains the "sensitive versus unsafe" distinction, and how are disputes resolved?</li>
+<li><strong>Small advertisers.</strong> Can a local business buy through a hosted buying node without recentralising the network?</li>
+<li><strong>Price discovery.</strong> Will posted prices plus Standing Offers converge on fair prices? Are independent price indices needed?</li>
+<li><strong>Agency acceptance.</strong> What would large agencies need before accepting V3/V4 verification in place of incumbent vendors?</li>
+<li><strong>C2PA.</strong> Should Federated Ads define a C2PA assertion for licences and revocation status?</li>
+<li><strong>Measurement module.</strong> Who maintains and audits the open-source viewability module?</li>
+<li><strong>Funding.</strong> Which funders can support early stewardship without compromising neutrality?</li>
+</ol>
+<hr />
+<h2 id="27-frequently-asked-questions">27. Frequently asked questions</h2>
+<p><strong>Is this a blockchain or crypto project?</strong> No. Federated Ads uses ordinary signatures and Merkle logs, the same technology as Certificate Transparency. Stablecoin settlement is one optional payment profile among several.</p>
+<p><strong>Does Federated Ads replace OpenRTB or Prebid?</strong> No. It is a different model, based on deals and federation, for parties who want it. A bridge lets existing buyers participate.</p>
+<p><strong>Does Federated Ads track users?</strong> No. Matching is contextual. Receipts are aggregated. Cross-site identifiers are prohibited in protocol messages.</p>
+<p><strong>Can large companies participate?</strong> Yes, as nodes on equal terms. Governance prevents any single company from controlling the standard.</p>
+<p><strong>Who runs Federated Ads?</strong> Nobody runs "the network". Independent operators run nodes. The initiative maintains the specification only.</p>
+<p><strong>How is this different from The Trade Desk's OpenAds?</strong> It is unrelated. That product is a header-bidding wrapper. Federated Ads is a federated protocol for deals, licences, revocation and receipts.</p>
+<p><strong>How does it relate to AdCP and IAB Tech Lab's agentic protocols?</strong> They are complementary. Agent protocols describe how software agents plan and buy. Federated Ads can be the federated identity, licence and receipt layer underneath.</p>
+<p><strong>What about video and connected TV?</strong> Deferred to v2. A VAST bridge offers a partial path in v1.</p>
+<p><strong>Why would an advertiser accept less precise targeting?</strong> For creative control, brand-safe community placements, transparent fees, verifiable delivery and lower regulatory risk. Contextual targeting is also improving quickly with content classification.</p>
+<hr />
+<h2 id="28-ai-assistance-disclosure">28. AI-assistance disclosure</h2>
+<p>This whitepaper was <strong>authored with Claude</strong>, an AI model developed by Anthropic.</p>
+<ul>
+<li><strong>Human direction.</strong> Suneesh Rajan initiated the project. In a structured requirements interview, he decided the federation model, tiered creative licensing and revocation, rail-agnostic settlement, signed-receipt measurement, the end-user rights, the v1 surfaces, the governance approach, the authorship form and the rename. He is accountable for the contents.</li>
+<li><strong>AI contribution.</strong>
+<ul>
+<li>Claude proposed alternatives and trade-offs, drafted the text, tables, diagrams and example protocol objects, and made recommendations where asked.</li>
+<li>For version 0.2, Claude coordinated AI research agents that searched the web for industry data, prior art, technical standards and regulation, and a separate agent that red-teamed version 0.1 from seven expert perspectives.</li>
+<li>Their findings were incorporated with citations.</li>
+</ul></li>
+<li><strong>Verification.</strong> AI-assisted research can be wrong. Figures and legal points are cited to sources, and items resting only on secondary sources are flagged as such or omitted. Readers should check primary sources before relying on any figure, legal statement or standard reference. Example protocol objects are illustrative and non-normative.</li>
+<li><strong>Why we disclose this.</strong> A proposed open standard should be open about how it was made.</li>
+</ul>
+<hr />
+<h2 id="appendix-a-glossary">Appendix A. Glossary</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Node</strong></td>
+<td>A server that speaks Federated Ads in one or more roles</td>
+</tr>
+<tr>
+<td><strong>Deal</strong></td>
+<td>Agreed terms between a buying and a selling node, signed by both</td>
+</tr>
+<tr>
+<td><strong>Standing Offer</strong></td>
+<td>A campaign that any eligible seller may claim a slice of</td>
+</tr>
+<tr>
+<td><strong>Creative Manifest</strong></td>
+<td>A signed description of a creative's assets and metadata</td>
+</tr>
+<tr>
+<td><strong>Licence</strong></td>
+<td>A time-limited, scoped, revocable right to display a creative</td>
+</tr>
+<tr>
+<td><strong>Revocation / acknowledgement</strong></td>
+<td>A signed withdrawal of a licence, and the receiver's signed proof of receipt</td>
+</tr>
+<tr>
+<td><strong>Receipt Batch</strong></td>
+<td>A signed set of aggregated delivery cells committed to a log</td>
+</tr>
+<tr>
+<td><strong>Transparency log</strong></td>
+<td>An append-only Merkle log whose checkpoints are cosigned by witnesses</td>
+</tr>
+<tr>
+<td><strong>Witness</strong></td>
+<td>An independent party that cosigns log checkpoints after checking consistency</td>
+</tr>
+<tr>
+<td><strong>Labeler</strong></td>
+<td>An independent service publishing signed judgements (brand safety, fraud, identity)</td>
+</tr>
+<tr>
+<td><strong>Verification level (V0–V4)</strong></td>
+<td>The evidence a deal requires for billing</td>
+</tr>
+<tr>
+<td><strong>Jurisdiction profile</strong></td>
+<td>Machine-readable legal rules for a jurisdiction</td>
+</tr>
+<tr>
+<td><strong>Surface profile</strong></td>
+<td>Rendering, labelling and measurement rules for a medium</td>
+</tr>
+<tr>
+<td><strong>Bridge</strong></td>
+<td>A node translating between Federated Ads and a legacy protocol</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="appendix-b-references">Appendix B. References</h2>
+<p><em>Industry and market data</em></p>
+<ol type="1">
+<li>ISBA &amp; PwC, <em>Programmatic Supply Chain Transparency Study</em> (2020). Summary: <a href="https://www.thedrum.com/news/2020/05/06/big-hole-the-value-chain-one-third-adtech-costs-unattributable-finds-isba">https://www.thedrum.com/news/2020/05/06/big-hole-the-value-chain-one-third-adtech-costs-unattributable-finds-isba</a></li>
+<li>ISBA &amp; PwC, <em>Programmatic Supply Chain Transparency Study II</em> (January 2023). <a href="https://www.isba.org.uk/system/files/media/documents/2023-01/ISBA%20%20PwC%20programmatic%20supply%20chain%20study%20II%20(summary)-%2018%20January%202023.pdf">https://www.isba.org.uk/system/files/media/documents/2023-01/ISBA%20%20PwC%20programmatic%20supply%20chain%20study%20II%20(summary)-%2018%20January%202023.pdf</a></li>
+<li>ANA, <em>Programmatic Media Supply Chain Transparency Study</em> (December 2023). <a href="https://www.ana.net/">https://www.ana.net/</a></li>
+<li>ANA / TAG TrustNet, <em>Programmatic Transparency Benchmark</em>, Q4 2025 (February 2026). <a href="https://www.ana.net/content/show/id/pr-2026-02-programatic">https://www.ana.net/content/show/id/pr-2026-02-programatic</a></li>
+<li>IAB &amp; PwC, <em>Internet Advertising Revenue Report, Full Year 2025</em> (April 2026). <a href="https://www.iab.com/wp-content/uploads/2026/04/IAB_PwC_Internet_Ad_Revenue_Report_Full_Year_2025_April_2026.pdf">https://www.iab.com/wp-content/uploads/2026/04/IAB_PwC_Internet_Ad_Revenue_Report_Full_Year_2025_April_2026.pdf</a></li>
+<li>WPP Media, <em>This Year Next Year, 2026 Midyear Forecast</em> (June 2026). <a href="https://www.wppmedia.com/news/report-this-year-next-year-midyear-2026">https://www.wppmedia.com/news/report-this-year-next-year-midyear-2026</a></li>
+<li><em>United States v. Google LLC</em> (E.D. Va.), liability opinion 17 April 2025; remedies decision September 2026. Coverage: <a href="https://www.adexchanger.com/antitrust/google-wont-have-to-break-up-its-ad-tech-business-judge-brinkema-rules/">https://www.adexchanger.com/antitrust/google-wont-have-to-break-up-its-ad-tech-business-judge-brinkema-rules/</a></li>
+<li>European Commission, Case AT.40670 (Google adtech), decision of 5 September 2025. Coverage: <a href="https://www.cnbc.com/2025/09/05/google-slapped-by-eu-with-3point45-billion-antitrust-fine.html">https://www.cnbc.com/2025/09/05/google-slapped-by-eu-with-3point45-billion-antitrust-fine.html</a></li>
+<li>Competition Bureau Canada, application against Google (November 2024). <a href="https://www.canada.ca/en/competition-bureau/news/2024/11/competition-bureau-sues-google-for-anti-competitive-conduct-in-online-advertising-in-canada.html">https://www.canada.ca/en/competition-bureau/news/2024/11/competition-bureau-sues-google-for-anti-competitive-conduct-in-online-advertising-in-canada.html</a></li>
+<li>Google, "Update on plans for Privacy Sandbox technologies" (17 October 2025). <a href="https://privacysandbox.google.com/blog/update-on-plans-for-privacy-sandbox-technologies">https://privacysandbox.google.com/blog/update-on-plans-for-privacy-sandbox-technologies</a></li>
+<li>eyeo, <em>2026 Ad Blocking Report</em> (May 2026). <a href="https://eyeo.com/wp-content/uploads/2026/05/eyeo_2026-ad-blocking-report.pdf">https://eyeo.com/wp-content/uploads/2026/05/eyeo_2026-ad-blocking-report.pdf</a></li>
+<li>Juniper Research ad fraud estimate (September 2023). Coverage: <a href="https://www.mediapost.com/publications/article/389594/22-of-all-digital-ad-spend-30-of-mobile-lost-to.html">https://www.mediapost.com/publications/article/389594/22-of-all-digital-ad-spend-30-of-mobile-lost-to.html</a></li>
+<li>OpenAI, "Our approach to advertising and expanding access" (January 2026). <a href="https://openai.com/index/our-approach-to-advertising-and-expanding-access/">https://openai.com/index/our-approach-to-advertising-and-expanding-access/</a></li>
+<li>Campaign, "Perplexity pulls plug on ads citing trust concerns" (2026). <a href="https://www.campaignlive.com/article/perplexity-pulls-plug-ads-citing-trust-concerns-ai/1949142">https://www.campaignlive.com/article/perplexity-pulls-plug-ads-citing-trust-concerns-ai/1949142</a></li>
+<li>IAB &amp; PwC, US podcast advertising revenue 2025 (April 2026). Coverage: <a href="https://radioink.com/2026/04/16/iab-digital-audio-grew-10-in-2025-as-podcasts-near-3b/">https://radioink.com/2026/04/16/iab-digital-audio-grew-10-in-2025-as-podcasts-near-3b/</a></li>
+<li>Mastodon. <a href="https://joinmastodon.org/">https://joinmastodon.org/</a></li>
+<li>TechCrunch, interview with Bluesky CEO Jay Graber (December 2024). <a href="https://techcrunch.com/2024/12/05/bluesky-ceo-jay-graber-is-reshaping-social-media-but-advertising-isnt-off-the-table">https://techcrunch.com/2024/12/05/bluesky-ceo-jay-graber-is-reshaping-social-media-but-advertising-isnt-off-the-table</a></li>
+<li>Brave, "100M monthly active users" (October 2025). <a href="https://brave.com/blog/100m-mau/">https://brave.com/blog/100m-mau/</a></li>
+<li>EthicalAds newsletter (July 2026). <a href="https://www.ethicalads.io/blog/2026/07/ethicalads-newsletter-july-2026/">https://www.ethicalads.io/blog/2026/07/ethicalads-newsletter-july-2026/</a></li>
+</ol>
+<p><em>Prior art and standards bodies</em></p>
+<ol start="20" type="1">
+<li>IAB Tech Lab, ads.cert. <a href="https://iabtechlab.com/ads-cert/">https://iabtechlab.com/ads-cert/</a></li>
+<li>BidSwitch, "OpenRTB 3.0: what is it and why is almost nobody using it yet" (2024). <a href="https://blog.bidswitch.com/openrtb-3.0-what-is-it-and-why-is-almost-nobody-using-it-yet">https://blog.bidswitch.com/openrtb-3.0-what-is-it-and-why-is-almost-nobody-using-it-yet</a></li>
+<li>AdExchanger, "Prebid.org is at a crossroads" (October 2025). <a href="https://www.adexchanger.com/publishers/prebid-org-is-at-a-crossroads-and-must-now-decide-whose-interests-it-serves/">https://www.adexchanger.com/publishers/prebid-org-is-at-a-crossroads-and-must-now-decide-whose-interests-it-serves/</a></li>
+<li>The Trade Desk, OpenAds announcement (2025). <a href="https://www.thetradedesk.com/press-room/the-trade-desk-execs-share-new-details-about-how-sell-side-solution-openads-will-work">https://www.thetradedesk.com/press-room/the-trade-desk-execs-share-new-details-about-how-sell-side-solution-openads-will-work</a></li>
+<li>W3C PAT WG, <em>Attribution Level 1</em> (Working Draft). <a href="https://www.w3.org/TR/attribution/">https://www.w3.org/TR/attribution/</a></li>
+<li>W3C, <em>Global Privacy Control</em> (Working Draft). <a href="https://www.w3.org/TR/gpc/">https://www.w3.org/TR/gpc/</a></li>
+<li>W3C Tracking Protection Working Group (closed 2019). <a href="https://www.w3.org/2011/tracking-protection/">https://www.w3.org/2011/tracking-protection/</a></li>
+<li>Coil. <a href="https://coil.com/">https://coil.com/</a></li>
+<li>AgenticAdvertising.org, Ad Context Protocol (AdCP). <a href="https://adcontextprotocol.org/">https://adcontextprotocol.org/</a></li>
+<li>IAB Tech Lab, Agentic advertising standards. <a href="https://iabtechlab.com/standards/agentic-advertising-and-ai/">https://iabtechlab.com/standards/agentic-advertising-and-ai/</a></li>
+<li>Fediverse Enhancement Proposals. <a href="https://codeberg.org/fediverse/fep">https://codeberg.org/fediverse/fep</a></li>
+<li>AT Protocol, Labels specification. <a href="https://atproto.com/specs/label">https://atproto.com/specs/label</a></li>
+<li>Mastodon 4.7 release notes (August 2026). <a href="https://blog.joinmastodon.org/2026/08/mastodon-4.7/">https://blog.joinmastodon.org/2026/08/mastodon-4.7/</a></li>
+<li>Matrix.org Foundation, "The Matrix.org Foundation at a crossroads" (February 2025). <a href="https://matrix.org/blog/2025/02/crossroads/">https://matrix.org/blog/2025/02/crossroads/</a></li>
+<li>C2PA Specifications. <a href="https://spec.c2pa.org/specifications/specifications/2.4/index.html">https://spec.c2pa.org/specifications/specifications/2.4/index.html</a></li>
+<li>Media Rating Council, <em>Viewable Ad Impression Measurement Guidelines</em>. <a href="https://www.mediaratingcouncil.org/sites/default/files/Standards/081815%20Viewable%20Ad%20Impression%20Guideline_v2.0_Final.pdf">https://www.mediaratingcouncil.org/sites/default/files/Standards/081815%20Viewable%20Ad%20Impression%20Guideline_v2.0_Final.pdf</a></li>
+<li>IAB Tech Lab, <em>Podcast Measurement Technical Guidelines v2.2</em> (2024). <a href="https://iabtechlab.com/wp-content/uploads/2024/02/PodcastMeasurement_v2.2_final.pdf">https://iabtechlab.com/wp-content/uploads/2024/02/PodcastMeasurement_v2.2_final.pdf</a></li>
+</ol>
+<p><em>Technical specifications</em></p>
+<ul>
+<li>RFC 2119 / RFC 8174 (BCP 14), Requirement keywords</li>
+<li>RFC 3339, Timestamps</li>
+<li>RFC 6962 / RFC 9162, Certificate Transparency</li>
+<li>RFC 7033, WebFinger</li>
+<li>RFC 8032, EdDSA</li>
+<li>RFC 8615, Well-Known URIs</li>
+<li>RFC 8785, JSON Canonicalization Scheme</li>
+<li>RFC 9110, HTTP Semantics</li>
+<li>RFC 9421, HTTP Message Signatures</li>
+<li>RFC 9457, Problem Details for HTTP APIs</li>
+<li>RFC 9458, Oblivious HTTP</li>
+<li>RFC 9530, Digest Fields</li>
+<li>RFC 9576 / 9577 / 9578, Privacy Pass</li>
+<li>W3C, Verifiable Credential Data Integrity 1.0; Data Integrity EdDSA Cryptosuites v1.0; Controlled Identifiers 1.0; ActivityPub; WebSub; JSON-LD 1.1</li>
+<li>C2SP, tlog-tiles, tlog-checkpoint, signed-note, tlog-witness. <a href="https://c2sp.org/">https://c2sp.org/</a></li>
+<li>IETF, Distributed Aggregation Protocol (draft-ietf-ppm-dap)</li>
+<li>IAB Tech Lab, OpenRTB 2.6, AdCOM, VAST 4.x, Content Taxonomy 3.1, Ad Product Taxonomy 2.0, GPP, ads.txt, sellers.json</li>
+</ul>
+<p><em>Law and regulation (primary texts should be consulted)</em></p>
+<ul>
+<li>Regulation (EU) 2016/679 (GDPR); CJEU C-252/21 <em>Meta v Bundeskartellamt</em>; CJEU C-604/22 <em>IAB Europe</em></li>
+<li>EDPB Opinion 08/2024 on consent-or-pay; EDPB Guidelines 2/2023 on the technical scope of Art. 5(3) ePrivacy Directive</li>
+<li>Regulation (EU) 2022/2065 (Digital Services Act); Regulation (EU) 2022/1925 (Digital Markets Act); Regulation (EU) 2024/900 (political advertising); Regulation (EU) 2024/1689 (AI Act); Regulation (EU) 2023/1114 (MiCA)</li>
+<li>European Commission, Guidelines on horizontal co-operation agreements (2023)</li>
+<li>US FTC, Enforcement Policy Statement on Deceptively Formatted Advertisements (2015); Guides Concerning Endorsements and Testimonials (2023); COPPA Rule amendments (2025)</li>
+<li>California AB 566 (2025); GENIUS Act (2025); FinCEN ruling FIN-2014-R012</li>
+<li>India: Digital Personal Data Protection Act 2023 and DPDP Rules 2025; CCPA Guidelines for Prevention and Regulation of Dark Patterns 2023; Promotion and Regulation of Online Gaming Act 2025</li>
+<li>UK: Data (Use and Access) Act 2025; Online Safety Act 2023</li>
+<li>Brazil: Law 15.211/2025 (ECA Digital)</li>
+</ul>
+<hr />
+<h2 id="appendix-c-changes-from-v01">Appendix C. Changes from v0.1</h2>
+<ul>
+<li><strong>Renamed</strong> from "OpenAds" to the Federated Ads Protocol (identifier <code>federated-ads</code>) to avoid confusion with The Trade Desk's OpenAds and other projects.</li>
+<li><strong>Added</strong> sourced industry data, a prior-art review, a market-design section (inventory, Standing Offers, pricing models, price discovery, budgets, pacing, frequency, ad decisioning), an end-to-end worked example, security and privacy considerations, a legal and regulatory map, an economics example, a comparison table, an adoption strategy, risks, success metrics and a FAQ.</li>
+<li><strong>Rebuilt measurement:</strong> aggregated receipts with k-thresholds; verification levels V0–V4; corrected the claim that fetch logs corroborate volume; correct use of Privacy Pass; IAB podcast definitions; opens made non-billable.</li>
+<li><strong>Rebuilt revocation:</strong> Licence separated from the manifest; creative approval by hash; logged, non-backdatable revocations with signed acknowledgements; honest per-surface guarantees; evidence archive.</li>
+<li><strong>Fixed the protocol design:</strong>
+<ul>
+<li>the invented proof type replaced with W3C Data Integrity <code>eddsa-jcs-2022</code>;</li>
+<li>Multikey keys;</li>
+<li>correct RFC 9421 parameters and response signing;</li>
+<li>valid SHA-256 hashes;</li>
+<li>state machines, error model, idempotency, critical extensions, registries;</li>
+<li>transparency logs with witnesses;</li>
+<li>corrected OpenRTB bridge direction;</li>
+<li>normative text moved to a separate Internet-Draft.</li>
+</ul></li>
+<li><strong>Governance:</strong> stated plainly what the initiative is today; change control; IPR path; funding principles; competition-law safeguards.</li>
+</ul>
+
+  </article>
+
+  <footer>The Federated Ads Protocol · Whitepaper v0.2 · Federated Ads Initiative · Authored with Claude (Anthropic) · Comments: github.com/federated-ads</footer>
+</div>
+
+<script>
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var map = {};
+  links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+  if (!('IntersectionObserver' in window)) return;
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (a) { a.classList.remove('active'); });
+        var a = map[e.target.id]; if (a) a.classList.add('active');
+      }
+    });
+  }, { rootMargin: '0px 0px -75% 0px' });
+  document.querySelectorAll('article h2[id]').forEach(function (h) { io.observe(h); });
+})();
+</script>
