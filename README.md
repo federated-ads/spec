@@ -46,3 +46,4 @@ This project is unrelated to The Trade Desk's "OpenAds" header-bidding wrapper, 
 - Specification and documentation text: [CC BY 4.0](LICENSE-docs)
 - Code (when published): [Apache-2.0](LICENSE)
 - Contributions are subject to the patent commitment in [CONTRIBUTING.md](CONTRIBUTING.md).
+- If the work moves to a W3C Community Group, new specification contributions follow W3C Community Group terms. Internet-Draft text is subject to the IETF Trust Legal Provisions (BCP 78 and BCP 79).

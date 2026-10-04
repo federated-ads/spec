@@ -26,7 +26,8 @@ By contributing, you agree that:
 
 1. Contributions to specification and documentation text are licensed under [CC BY 4.0](LICENSE-docs).
 2. Contributions of code are licensed under [Apache-2.0](LICENSE).
-3. You make a royalty-free patent commitment for your contributions to the specification, modelled on the [W3C Community Contributor License Agreement](https://www.w3.org/community/about/agreements/cla/). If the work moves to a W3C Community Group, the W3C CLA and Final Specification Agreement will apply from then on.
+3. You make a royalty-free patent commitment for your contributions to the specification, modelled on the [W3C Community Contributor License Agreement](https://www.w3.org/community/about/process/cla/). If the work moves to a W3C Community Group, specification contributions are made under the W3C CLA from then on, and the Final Specification Agreement applies to final reports. Text written before the group remains available under CC BY 4.0.
+4. Contributions to the Internet-Draft are subject to the IETF Trust Legal Provisions and the IPR disclosure rules of BCP 78 and BCP 79.
 
 ## AI-assisted contributions
 
@@ -34,7 +35,7 @@ AI-assisted contributions are welcome if you disclose them in the pull request a
 
 ## Conduct
 
-Be respectful and constructive, and assume good faith. Criticism of ideas is welcome; personal attacks are not.
+Be respectful and constructive, and assume good faith. Criticism of ideas is welcome; personal attacks are not. The [W3C Code of Conduct](https://www.w3.org/policies/code-of-conduct/) applies.
 
 ## Competition law
 
