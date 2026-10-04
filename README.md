@@ -12,7 +12,7 @@ The Federated Ads Protocol lets independent servers ("nodes") run by publishers,
 
 Matching is contextual by default, and the protocol carries no cross-site identifiers. People who see ads get an explanation, an opt-out, an ad-free option and a way to report abuse. One protocol covers websites, fediverse and social feeds, newsletters, podcasts and AI/chat surfaces.
 
-> **Status:** Discussion draft for public comment (whitepaper v0.2, October 2026). This is not a standard and has not been endorsed by any standards body.
+> **Status:** Discussion draft for public comment (whitepaper v0.3, October 2026). This is not a standard and has not been endorsed by any standards body.
 
 > **Authored with Claude.** The whitepaper and specification drafts were researched and drafted with Claude (Anthropic) under the direction of a human contributor, who is accountable for their contents. See §28 of the whitepaper.
 
@@ -20,7 +20,7 @@ Matching is contextual by default, and the protocol carries no cross-site identi
 
 | Document | Description |
 |---|---|
-| [Whitepaper v0.2](docs/whitepaper/federated-ads-whitepaper.md) | Problem, prior art, design, market design, measurement, legal map, economics, governance, roadmap |
+| [Whitepaper v0.3](docs/whitepaper/federated-ads-whitepaper.md) | Problem, prior art, design, market design, measurement, legal map, economics, governance, roadmap, publisher revenue |
 | [Internet-Draft](docs/ietf/) | Normative wire protocol: `draft-rajan-federated-ads-protocol` |
 | [Draft W3C Community Group charter](docs/governance/w3c-community-group-charter-draft.md) | Proposed home for the specification work |
 | [Whitepaper v0.1 (archived)](docs/whitepaper/archive/openads-whitepaper-v0.1.md) | First draft, under the earlier working name |
