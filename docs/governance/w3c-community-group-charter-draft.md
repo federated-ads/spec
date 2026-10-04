@@ -1,6 +1,6 @@
 # [DRAFT] Federated Ads Protocol Community Group Charter
 
-This draft follows the W3C Community Group charter template (https://github.com/w3c/cg-charter, `CGCharter.md`, checked 5 October 2026). Boilerplate from the template is kept word for word where it carries process meaning. Group-specific text is based on the Federated Ads Protocol whitepaper v0.2.
+This draft follows the W3C Community Group charter template (https://github.com/w3c/cg-charter, `CGCharter.md`, checked 5 October 2026). Boilerplate from the template is kept word for word where it carries process meaning. Group-specific text is based on the Federated Ads Protocol whitepaper v0.3.
 
 This Charter is a work in progress. To submit feedback, please use https://github.com/federated-ads/spec/issues, where the Charter is being developed. (Remove this sentence before the group adopts the charter.)
 
@@ -31,7 +31,9 @@ The group will define, in Specifications:
 * **Core objects and their lifecycle:** offers, deals, creative manifests, licences, revocations, receipt batches, statements and disputes, with state machines and error semantics.
 * **Signatures:** per-hop authentication with HTTP Message Signatures and end-to-end signatures on stored objects with W3C Data Integrity, without requiring a JSON-LD processor to verify.
 * **Transparency logs:** how nodes commit receipts, revocations, statements and key rotations to append-only logs, and how witnesses check them.
-* **Vocabulary:** JSON Schemas, a JSON-LD context under `https://w3id.org/federated-ads/`, and registries (surfaces, pricing models, verification levels, jurisdiction policy profiles).
+* **Vocabulary:** JSON Schemas, a JSON-LD context under `https://w3id.org/federated-ads/`, and registries (event types, pricing models, surface, settlement and jurisdiction profiles, revocation reasons, error types, taxonomy versions and critical extensions; see whitepaper section 15.10).
+* **Measurement and verification:** aggregated receipt cells with minimum-count thresholds, verification levels V0–V4, the open measurement module, and conformance levels (core, extended, verified).
+* **Market objects:** inventory descriptions (including ad-density and other quality signals), standing offers, pricing models (including cost per viewable hour), and the cooperative selling-node profile.
 * **Surface profiles:** web display and native, social and fediverse, email newsletters, podcasts and audio, and AI chat surfaces.
 * **End-user rights:** the required "why this ad" disclosure, opt-out handling (including Global Privacy Control), ad-free offers, reporting and blocking, and the minor-safe default.
 * **Bridges (non-normative mappings or normative profiles as the group decides):** to OpenRTB 2.6, AdCOM, VAST, the IAB taxonomies, ads.txt and sellers.json, and C2PA.
@@ -45,11 +47,11 @@ Where the IETF takes up the wire protocol (see Dependencies), this group will no
 * New browser or user-agent APIs. These belong in the Private Advertising Technology Community Group (PATCG) and Working Group (PATWG).
 * Cross-site identifiers, cross-publisher reach and frequency management, and individual-level conversion tracking.
 * Defining its own attribution system. The group may profile existing aggregate systems, such as the W3C Attribution API or IETF DAP.
-* Tokens, blockchains or any mandatory payment provider. Payment rails are referenced, not defined.
+* A native token or blockchain, or any mandatory payment provider. Settlement profiles, including the optional regulated-stablecoin profile, are referenced, not defined.
 * Moderating or judging publisher content.
 * Video and connected TV beyond what VAST bridging provides.
 * Any discussion of actual or planned prices, fees or commercial terms of specific participants (see the antitrust policy below).
-* Operating network infrastructure such as relays, labelers, witnesses or registries.
+* Operating network infrastructure such as relays, labelers, witnesses or run-time registry services.
 
 ## Deliverables
 
@@ -130,7 +132,7 @@ Any decisions reached at any meeting are tentative and should be recorded in a G
 
 It is the Chairs' responsibility to ensure that the decision process is fair, respects the consensus of the CG, and does not unreasonably favor or discriminate against any group participant or their employer.
 
-Group-specific rules, carried over from the whitepaper (section 23.3):
+Group-specific rules, carried over from the whitepaper (section 23.3) and CONTRIBUTING.md:
 
 * No feature is marked stable until at least two independent, interoperable implementations exist.
 * Breaking changes to a feature marked stable need at least 90 days' public notice and a migration path.
