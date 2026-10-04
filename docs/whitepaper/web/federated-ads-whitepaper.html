@@ -112,7 +112,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
     <h1>The Federated Ads Protocol</h1>
     <p class="sub">An open, federated, owner-controlled protocol for advertising on the open web</p>
     <dl class="meta">
-      <div><dt>Status</dt><dd>Draft · v0.2</dd></div>
+      <div><dt>Status</dt><dd>Draft · v0.3</dd></div>
       <div><dt>Date</dt><dd>5 October 2026</dd></div>
       <div><dt>Published by</dt><dd>Federated Ads Initiative</dd></div>
       <div><dt>Contributors</dt><dd>Suneesh Rajan; Claude (Anthropic)</dd></div>
@@ -211,6 +211,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>The result:</strong> after six years of industry engineering effort on APIs controlled by one vendor, Chrome still has third-party cookies, and no privacy-preserving replacement is widely deployed.</li>
 </ul>
 <p>The surviving multi-vendor effort is the W3C Private Advertising Technology Working Group's <em>Attribution</em> specification, which is still a Working Draft [24].</p>
+<p>Civil society and policy researchers have called for alternatives to surveillance-based advertising for years. The Norwegian Consumer Council called for a ban [57], as did Accountable Tech and a 2022 US bill [87][88]. EFF argued for putting privacy first [60], and the Panoptykon Foundation set out requirements for a privacy-friendly ad system built on publisher collaboration [56], which this paper closely follows. A European Parliament study examined the policy options [59]. What none of them could point to was an open, interoperable protocol that implements the alternative.</p>
 <h3 id="15-loss-of-creative-control">1.5 Loss of creative control</h3>
 <p>Once a creative enters the supply chain, it is copied into ad servers, exchanges, caches and CDNs that the advertiser does not control. Advertisers have many reasons to pull a creative quickly:</p>
 <ul>
@@ -309,7 +310,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <tr>
 <td><strong>Brave Ads</strong></td>
 <td>On-device matching from a downloaded catalogue; anonymous reporting via Privacy Pass-style tokens</td>
-<td>Works at scale (Brave reports 101 million monthly active users [18]), but within one browser and one operator</td>
+<td>Works at scale (Brave reports 101 million monthly active users [18]), but within one browser and one operator. Settled in its own token (BAT) [48]</td>
 <td>Local matching and anonymous tokens work technically. Federation and payment neutrality are what is missing.</td>
 </tr>
 <tr>
@@ -319,15 +320,15 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <td>One company carrying an "open" standard is fragile. Payment rails are the hardest part, so stay rail-agnostic.</td>
 </tr>
 <tr>
-<td><strong>Blockchain ad projects</strong> (AdEx, Lucidity and others)</td>
-<td>On-chain ad accounting and tokens</td>
+<td><strong>Blockchain ad projects</strong> (AdEx, Lucidity, the AdChain registry, Kochava XCHNG and others) [46][47]</td>
+<td>On-chain ad accounting, token-curated domain registries, tokenised insertion orders</td>
 <td>Pivoted or absorbed. Participants concluded what was really needed was "a better PKI"</td>
 <td>Signatures and verifiable logs are the valuable part. They need no blockchain.</td>
 </tr>
 <tr>
 <td><strong>EthicalAds, Carbon Ads</strong></td>
 <td>Contextual, privacy-respecting networks</td>
-<td>Commercially viable, small, centralised [19]</td>
+<td>Commercially viable, small, centralised; pays publishers 70% of revenue [19][81]</td>
 <td>Contextual advertising pays. Federation could let many such networks interoperate.</td>
 </tr>
 <tr>
@@ -354,8 +355,39 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <td>Fast-moving; two camps</td>
 <td>Federated Ads should not be a third agent protocol. It can be the federated identity, licence and receipt layer that agent protocols call.</td>
 </tr>
+<tr>
+<td><strong>Academic privacy-preserving ad systems</strong> (Adnostic 2010, Privad 2011, ObliviAd 2012) [37][38][39]</td>
+<td>Local matching, cryptographic billing, anonymising intermediaries, click-fraud defence without identity</td>
+<td>Prototypes and small deployments; never adopted by industry</td>
+<td>The cryptography for private billing and fraud defence has existed for 15 years. What was missing was neutral governance and a reason for incumbents to adopt it.</td>
+</tr>
+<tr>
+<td><strong>THEMIS</strong> (Brave Research, 2020–21) [40]</td>
+<td>Decentralised ad platform with zero-knowledge-verifiable campaign reports on a sidechain</td>
+<td>Research prototype</td>
+<td>Advertisers can accept privacy if reports are verifiable. Federated Ads aims for the same auditability with signed receipts and transparency logs, without a chain or token.</td>
+</tr>
+<tr>
+<td><strong>Graze ads on Bluesky feeds</strong> (2025) [41]</td>
+<td>Advertisers buy placement in topical custom feeds; feed operators approve ads; no user-data targeting</td>
+<td>Live and small (reported $1 CPM, 30% intermediary share)</td>
+<td>Advertising by community and context works on federated social networks. Federated Ads would let many such operators interoperate without a single intermediary.</td>
+</tr>
+<tr>
+<td><strong>Nostr ad proposals</strong> (NOSTR-DAN, 2023; nostrads) [42][43]</td>
+<td>Signed ad-space offers and bids over relays, with Lightning payouts</td>
+<td>NOSTR-DAN unmerged after an ad-industry reviewer objected to auction-scale traffic over relays; nostrads experimental</td>
+<td>Per-impression auctions do not fit federated transports. Deals and standing offers do (<a href="#54-why-deals-and-not-per-impression-auctions">§5.4</a>).</td>
+</tr>
+<tr>
+<td><strong>Privacy-preserving attribution research and standards</strong> (IPA → W3C Attribution; IETF DAP; serve-time attestation) [24][44][45]</td>
+<td>Aggregate, differentially private conversion measurement; signatures at serve time to resist fraud</td>
+<td>Standards in progress at W3C and IETF</td>
+<td>Receipts should be compatible with DAP and serve-time attestation rather than inventing a parallel measurement stack.</td>
+</tr>
 </tbody>
 </table></div>
+<p><strong>How Federated Ads differs from the closest work.</strong> A literature and project search (October 2026) found no existing proposal that combines domain federation, contextual-by-default matching, verifiable delivery without a blockchain, and advertiser-owned, revocable creatives. The closest academic work, THEMIS [40], provides verifiable reporting but depends on a sidechain and a token and matches on behaviour. The closest live deployment, Graze [41], is contextual and community-controlled but is a single company, not an open protocol. We found no prior work applying transparency logs to ad delivery receipts, and no prior proposal for time-limited, revocable creative licences. We make this claim cautiously, because absence of evidence in a search is not proof, and we welcome pointers to work we missed.</p>
 <p><strong>The ten lessons Federated Ads is designed around:</strong></p>
 <ol type="1">
 <li><strong>Bind identity to domains and make signing mandatory</strong>, as email authentication did.</li>
@@ -610,6 +642,9 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>Forecasts:</strong> expected impressions, sends or downloads per week by placement and context. Forecasts are always aggregated and rounded.</li>
 <li><strong>Rate card:</strong> a posted price per placement and pricing model, plus minimum spend, lead time and whether creatives need approval.</li>
 <li><strong>Avails:</strong> optional near-term availability by week.</li>
+<li><strong>Quality signals:</strong> maximum ratio of ads to content and whether the page meets the Better Ads Standards [70]; ads per hour (audio) and per issue (email); refresh policy; and a saturation limit for feeds, as Bluesky feed operators already set [82]. Buyers can filter and price on low clutter (<a href="#204-improving-publisher-revenue">§20.4</a>).</li>
+<li><strong>Floors and calendar:</strong> per-placement floor prices for each pricing model, day-parts and a seasonal rate calendar.</li>
+<li><strong>Support options:</strong> subscription, contribution and ad-free offers the publisher accepts.</li>
 </ul>
 <h3 id="62-offer-types">6.2 Offer types</h3>
 <div class="tbl"><table>
@@ -679,6 +714,11 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <td><code>sponsorship</code></td>
 <td>All</td>
 </tr>
+<tr>
+<td>Cost per viewable hour (attention), from aggregate in-view time measured by the open module [65]</td>
+<td><code>cpvh</code></td>
+<td>Web, social, AI</td>
+</tr>
 </tbody>
 </table></div>
 <h3 id="64-price-discovery">6.4 Price discovery</h3>
@@ -732,7 +772,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <p>An advertiser grants a <strong>licence to display</strong>. It does not hand over a copy. The licence is limited in time, in scope (which deal, which licensee, which surfaces) and in purpose, and it can be withdrawn.</p>
 <h3 id="72-objects">7.2 Objects</h3>
 <ul>
-<li><strong>Creative Manifest:</strong> a signed description of a creative's assets, each pinned by a content hash, plus metadata. Where the asset carries a C2PA manifest, the Creative Manifest references it [34].</li>
+<li><strong>Creative Manifest:</strong> a signed description of a creative's assets, each pinned by a content hash, plus metadata. Where the asset carries a C2PA manifest, the Creative Manifest references it [34]. Google has said its ad systems are starting to use C2PA metadata in policy enforcement [89].</li>
 <li><strong>Licence:</strong> a separate signed object linking a manifest hash to a licensee node, a deal, surfaces, an issue time, a TTL and a revocation source. Keeping the licence separate from the manifest means one creative can be licensed to many nodes, including through relays, without re-signing the creative.</li>
 <li><strong>Approval:</strong> the selling node's signed acceptance of specific creative hashes, recorded in the Deal. A changed creative gets a new hash and needs a new approval. That closes the "swap the creative after approval" loophole.</li>
 </ul>
@@ -1089,7 +1129,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li>verification signals diverge from receipts beyond the deal's tolerance (default 10%); or</li>
 <li>impressions appear after a revocation.</li>
 </ul>
-<p>The v0.2 process:</p>
+<p>The dispute process in this draft:</p>
 <ol type="1">
 <li><strong>Bilateral review</strong> within 14 days, using log proofs and verification evidence.</li>
 <li><strong>Escalation to an arbiter</strong> named in the deal, usually an auditor, whose decision binds for that deal.</li>
@@ -1204,7 +1244,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Acme Bikes Pvt Ltd&quot;</span></span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span><span class="ot">]</span></span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p>Federated Ads will propose <code>fa:Sponsorship</code> as a Fediverse Enhancement Proposal [30]. Rules for this surface:</p>
+<p>Federated Ads will propose <code>fa:Sponsorship</code> as a Fediverse Enhancement Proposal [30]. We found no existing FEP for sponsored posts, only community concept documents. On Bluesky, Graze already sells ads placed in topical custom feeds and approved by feed operators [41], which shows demand for this model. Rules for this surface:</p>
 <ul>
 <li><strong>Opt-in.</strong> Instance administrators choose whether to participate. Sponsored posts appear only in the feeds of that instance's users.</li>
 <li><strong>No federation as organic content.</strong> Sponsored posts are addressed to local users only, never federated as public posts.</li>
@@ -1236,6 +1276,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>Ineligible contexts.</strong> Conversations classified as health, mental health, crisis, politics or legal or financial distress, and accounts known to belong to minors, receive no ads by default. This matches what OpenAI announced for ChatGPT [13].</li>
 <li><strong>No emotional targeting.</strong> Sponsored units may not be selected or worded using inferences about the user's emotional state or vulnerabilities (relevant to EU AI Act Article 5).</li>
 <li><strong>Synthetic creatives</strong> are marked as AI-generated and carry provenance metadata (C2PA where available).</li>
+<li><strong>Creative integrity.</strong> Research on LLM advertising proposes merging ads into the generated answer itself, through auctions on summaries or retrieval-augmented insertion [62][63][64]. Federated Ads does not allow this by default. A licensed creative is shown as the advertiser approved it and may not be paraphrased, summarised or blended into generated text unless its Licence explicitly permits adaptation, and an adapted unit must still be labelled and kept separate from the organic answer. This answers the concern that commercial influence in AI answers must be attributable, measurable and contestable [61].</li>
 </ol>
 <h3 id="136-ai-agents-profileagent">13.6 AI agents (<code>profile:agent</code>)</h3>
 <p>When an AI agent acts for a user, for example comparing products or booking services:</p>
@@ -2112,11 +2153,168 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <h3 id="202-what-this-does-and-does-not-show">20.2 What this does and does not show</h3>
 <ul>
 <li><strong>The structural point</strong> is that every fee is declared and verifiable. The "unknown delta" cannot exist, because no unsigned hop exists.</li>
-<li><strong>Contextual inventory without identifiers may sell at lower CPMs</strong> than identity-based inventory in today's market. Publishers' gains come from a larger <em>share</em>, not necessarily a higher <em>price</em>. The net effect is an empirical question for the pilot (<a href="#24-roadmap-and-success-metrics">§24</a>).</li>
+<li><strong>Contextual inventory without identifiers is likely to sell at lower CPMs</strong> than identity-based inventory in today's market (<a href="#203-the-evidence-on-revenue-without-tracking">§20.3</a>). Publishers' gains come from a larger <em>share</em> and from the levers in <a href="#204-improving-publisher-revenue">§20.4</a>, not from a higher price per impression. The net effect is an empirical question for the pilot (<a href="#24-roadmap-and-success-metrics">§24</a>).</li>
 <li><strong>Verification has a cost.</strong> V3 and V4 add cost, so they suit larger deals. Small deals use V0–V2 with prepaid settlement.</li>
 <li><strong>Node operating costs</strong> are modest under the pointer tier. The selling node serves cached assets alongside its own content. Logs are static, cacheable tiles. The heavier costs are media bandwidth for audio and video and operating a public HTTP endpoint securely. Hosted cooperatives exist to spread those costs.</li>
 </ul>
-<h3 id="203-where-value-comes-from-for-each-side">20.3 Where value comes from for each side</h3>
+<h3 id="203-the-evidence-on-revenue-without-tracking">20.3 The evidence on revenue without tracking</h3>
+<p>Reviewers will rightly ask what publishers lose by giving up cross-site tracking. The evidence points in different directions, and we present it side by side.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Study</th>
+<th>Finding</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gu, Johnson &amp; Kobayashi, <em>PNAS</em> (2026) [51]</td>
+<td>In a regulator-overseen Chrome field experiment (over 200 million impressions, over 5,000 publishers), removing third-party cookies cut publisher revenue by <strong>29.1%</strong>, and by <strong>66% in the EU</strong>. Privacy Sandbox recovered only <strong>4.2%</strong>.</td>
+<td>The strongest and most recent evidence. Measures today's programmatic market, where buyers are built around identifiers.</td>
+</tr>
+<tr>
+<td>Ravichandran &amp; Korula, Google (2019) [50]</td>
+<td>Top publishers lost <strong>52%</strong> of revenue on average without cookies.</td>
+<td>Company study by the largest ad seller.</td>
+</tr>
+<tr>
+<td>Johnson, Shriver &amp; Du, <em>Marketing Science</em> (2020) [53]</td>
+<td>Impressions from users who opted out of tracking sold for about <strong>52% less</strong>.</td>
+<td>Peer-reviewed. Opted-out users may differ from others.</td>
+</tr>
+<tr>
+<td>Laub, Miller &amp; Skiera (2024) [52]</td>
+<td>Prices for untrackable users fall <strong>18–23%</strong>, and <strong>premium, niche and smaller publishers lose less</strong>.</td>
+<td>Directly relevant to the segment Federated Ads targets first.</td>
+</tr>
+<tr>
+<td>UK CMA market study (2020) [85]</td>
+<td>On Google's data, UK publishers earned around 70% less revenue from non-personalised ads.</td>
+<td>Based on data from the largest ad seller.</td>
+</tr>
+<tr>
+<td>Marotta, Abhishek &amp; Acquisti, WEIS (2019) [49]</td>
+<td>Cookies raised publisher revenue by only about <strong>4%</strong> per ad.</td>
+<td>Suggests much of the value of tracking goes to intermediaries.</td>
+</tr>
+<tr>
+<td>NPO / Ster, Netherlands (2020) [54]</td>
+<td>After moving to contextual-only ads, the public broadcaster reported revenue up 61% and 76% year on year in two months.</td>
+<td>Self-reported, not peer-reviewed, and from a large publisher with unusual inventory. A case study only.</td>
+</tr>
+<tr>
+<td>European Commission study (2023) [58]; Germanwatch (2025) [55]</td>
+<td>Little independent evidence that tracking-based models outperform non-tracking ones; contextual advertising has strong potential if "contextual" is defined narrowly.</td>
+<td>Policy research.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>What we conclude.</strong> In today's market, publishers who drop identifiers should expect lower prices per impression, plausibly in the range of 20–30% for the kind of publishers Federated Ads targets, and more for large general-interest sites. Federated Ads does not pretend otherwise. Its case rests on three things: a much larger share of each advertiser dollar reaching the publisher (<a href="#201-fee-stack-illustrative">§20.1</a>); revenue levers that do not need tracking (<a href="#204-improving-publisher-revenue">§20.4</a>); and the fact that identity-based revenue is itself shrinking under regulation, browser changes and ad blocking (<a href="#1-the-problem">§1</a>).</p>
+<h3 id="204-improving-publisher-revenue">20.4 Improving publisher revenue</h3>
+<p>Federated Ads cannot make the price effect in <a href="#203-the-evidence-on-revenue-without-tracking">§20.3</a> disappear. It gives publishers several levers that do not depend on tracking. The evidence behind them varies a lot in strength, and we say which is which.</p>
+<p><strong>Keep more of each dollar.</strong> Industry audits found publishers received about 65% of programmatic spend in 2022 [2]. In Federated Ads every fee is declared in the signed Deal. If a publisher's share rises from 65% to 80–86%, its revenue rises 23–32% at the same advertiser spend. At a 65% share, each percentage point of intermediary fee removed adds about 1.5% to publisher revenue. This is the largest and best-evidenced lever, but it only works if buyers bring their spend.</p>
+<p><strong>Sell formats that already command a premium.</strong> Host-read podcast ads are listed at roughly $24–26 CPM, against $12–15 for programmatic audio [83]. Newsletter sponsorships typically price at $15–30 per thousand opens [84]. These formats are contextual by nature and already sold direct. The protocol lowers the cost of selling them: standard deals, Standing Offers that many advertisers can claim, and verifiable delivery.</p>
+<p><strong>Show fewer, better ads.</strong> Long-run experiments show that ad load drives audiences away more than short tests suggest:</p>
+<ul>
+<li>On Pandora, each extra ad per hour cut listening by about 2%, and the long-run effect was three times the short-run effect [67].</li>
+<li>Google halved the ad load on mobile search, with long-term neutral or positive business impact [66].</li>
+<li>Annoying ads impose a measurable cost on users [68].</li>
+<li>Users who stop seeing ads read 21–43% more articles [69].</li>
+</ul>
+<p>Buyers increasingly measure clutter and the ratio of ads to content [4]. Selling nodes can declare ad density in their Inventory (<a href="#61-inventory-and-rate-cards">§6.1</a>), and buyers can pay more for low-clutter placements.</p>
+<p><strong>Price attention where it can be measured without identity.</strong> The IAB and MRC <em>Attention Measurement Guidelines</em> (November 2025) accept time-in-view signals and state that attention measurement does not require identifying anyone [65]. Federated Ads adds an optional <code>cpvh</code> pricing model (cost per viewable hour). The open measurement module computes it, and it appears only in aggregate receipts. We have found no independent evidence yet that attention pricing raises publisher revenue, so it is offered as an option, not a promise.</p>
+<p><strong>Prove quality.</strong> Advertisers are concentrating spend on inventory that is verified, viewable, free of fraud and not made-for-advertising:</p>
+<ul>
+<li>In late 2025, private deals made up over 92% of median programmatic spend in the ANA benchmark [4].</li>
+<li>Most of the largest made-for-advertising sites lost almost all their volume within 18 months of the ANA's 2023 study [71].</li>
+</ul>
+<p>Verification levels, signed labeler attestations and declared ad density let small publishers show the same quality signals that today only large publishers can afford.</p>
+<p><strong>Use first-party context, not cross-site profiles.</strong> A selling node may offer cohorts built from its own users' opt-in data. Each cohort is labelled with standard taxonomy IDs, following the IAB Tech Lab's Curated Audiences approach [74], and is never smaller than the receipt threshold (k = 50). Matching ads to content raises purchase intent, unless the format is obtrusive [72]. Research also finds that contextual signals recover only part of the click-through value of behavioural targeting. The same research found that ad-network revenue can be highest when behavioural targeting is not allowed, because more buyers compete for each impression [73].</p>
+<p><strong>Sell together.</strong> Cooperatives such as Ozone in the UK, Wemass in Spain and the Local Media Consortium in the US show that publishers can pool their sales [75][76][77]. Public evidence on how this affects yield is thin. Federated Ads provides a cooperative selling-node profile (<code>profile:coop</code>):</p>
+<ul>
+<li>a signed member list;</li>
+<li>a declared revenue split for each member;</li>
+<li>receipts for each member;</li>
+<li>competition-law guardrails, so members never exchange prices (<a href="#198-competition-law">§19.8</a>).</li>
+</ul>
+<p><strong>Do not rely on ads alone.</strong> The Guardian earned £126 million in digital reader revenue in 2025/26 from 1.4 million recurring supporters [78], but most publishers will not match that. Where sites have asked users to either pay or accept tracking, only about 1% paid [79]. Shared passes such as contentpass show another route: one subscription, ad-free across hundreds of sites [80]. Each selling node can advertise subscription, contribution and ad-free options through a standard endpoint. A cooperative ad-free pass can be proven with Privacy Pass tokens, without identifying the reader.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Lever</th>
+<th>Protocol support</th>
+<th>Evidence</th>
+<th>Indicative effect on publisher revenue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Higher fee share</td>
+<td>Fees declared in signed Deals</td>
+<td>Audits [1][2][4]</td>
+<td>+15% to +32% against a 65% share</td>
+</tr>
+<tr>
+<td>Premium formats</td>
+<td><code>sponsorship</code>, <code>flat</code>, <code>cpad</code>; Standing Offers</td>
+<td>Rate cards [83][84] (vendor-published)</td>
+<td>1.6–2× programmatic CPM</td>
+</tr>
+<tr>
+<td>Lower ad density</td>
+<td>Inventory <code>adDensity</code>, <code>adsPerHour</code>, <code>saturationLimit</code></td>
+<td>[66][67][68][69] (peer-reviewed or field experiments)</td>
+<td>−5% to +10% overall; better retention</td>
+</tr>
+<tr>
+<td>Attention pricing</td>
+<td><code>cpvh</code>; viewable seconds in receipts</td>
+<td>Standard [65]; outcome data vendor-only</td>
+<td>Unknown</td>
+</tr>
+<tr>
+<td>Verified quality</td>
+<td>V0–V4; labeler attestations</td>
+<td>[4][71]</td>
+<td>Keeps spend; premium unproven</td>
+</tr>
+<tr>
+<td>First-party cohorts</td>
+<td>Seller cohorts, k ≥ 50</td>
+<td>[72][73][74]</td>
+<td>Partial recovery</td>
+</tr>
+<tr>
+<td>Cooperatives</td>
+<td><code>profile:coop</code></td>
+<td>[75][76][77]</td>
+<td>Unknown</td>
+</tr>
+<tr>
+<td>Reader revenue</td>
+<td>Support-options endpoint; ad-free tokens</td>
+<td>[78][79][80]</td>
+<td>Highly variable</td>
+</tr>
+</tbody>
+</table></div>
+<p><em>All effects are indicative and derived from the cited sources. They are not additive and will be tested in the pilot.</em></p>
+<p><strong>Can these levers close the gap?</strong> It depends on the publisher.</p>
+<ul>
+<li><strong>Independent web publishers:</strong> plausibly yes, but mainly through one lever. Fee recapture is the only one with evidence of the right size. Combining the PNAS revenue loss (−29%) with a share rise from 65% to 86% leaves publishers about 6% worse off. Using the smaller loss Laub et al. found for niche publishers (−18% to −23%) leaves them about 2–8% better off. Both results assume buyers actually move spend to Federated Ads at contextual prices. <strong>Demand, not price, is the dominant risk.</strong></li>
+<li><strong>Newsletters and podcasts:</strong> the gap barely applies, because they are already sold contextually and direct. The protocol mainly lowers their cost of sales and opens them to Standing Offers.</li>
+<li><strong>Fediverse and community instances:</strong> they have no advertising revenue today, so anything is upside. Community norms will cap ad density, and the protocol encodes those caps instead of fighting them.</li>
+</ul>
+<p><strong>What remains uncertain:</strong></p>
+<ul>
+<li>Whether contextual prices rise if tracking becomes scarce across the whole market. Advocates argue they would [86], but the field experiments measured cookieless traffic competing against tracked traffic, so they cannot answer this.</li>
+<li>Whether attention pricing benefits sellers.</li>
+<li>How cooperatives affect yield.</li>
+<li>How many people pay for ad-free options when the free tier is already untracked.</li>
+<li>Whether verification costs eat the fee gain on small deals.</li>
+</ul>
+<h3 id="205-where-value-comes-from-for-each-side">20.5 Where value comes from for each side</h3>
 <div class="tbl"><table>
 <thead>
 <tr>
@@ -2480,6 +2678,7 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <p><strong>Does Federated Ads replace OpenRTB or Prebid?</strong> No. It is a different model, based on deals and federation, for parties who want it. A bridge lets existing buyers participate.</p>
 <p><strong>Does Federated Ads track users?</strong> No. Matching is contextual. Receipts are aggregated. Cross-site identifiers are prohibited in protocol messages.</p>
 <p><strong>Can large companies participate?</strong> Yes, as nodes on equal terms. Governance prevents any single company from controlling the standard.</p>
+<p><strong>Is this related to "federated learning"?</strong> No. Some advertising research uses "federated" to mean federated machine learning, where models are trained across devices or servers (for example AdFL, 2026). Here "federated" means independent servers interoperating through an open protocol, as email and ActivityPub do.</p>
 <p><strong>Who runs Federated Ads?</strong> Nobody runs "the network". Independent operators run nodes. The initiative maintains the specification only.</p>
 <p><strong>How is this different from The Trade Desk's OpenAds?</strong> It is unrelated. That product is a header-bidding wrapper. Federated Ads is a federated protocol for deals, licences, revocation and receipts.</p>
 <p><strong>How does it relate to AdCP and IAB Tech Lab's agentic protocols?</strong> They are complementary. Agent protocols describe how software agents plan and buy. Federated Ads can be the federated identity, licence and receipt layer underneath.</p>
@@ -2495,6 +2694,7 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <li>Claude proposed alternatives and trade-offs, drafted the text, tables, diagrams and example protocol objects, and made recommendations where asked.</li>
 <li>For version 0.2, Claude coordinated AI research agents that searched the web for industry data, prior art, technical standards and regulation, and a separate agent that red-teamed version 0.1 from seven expert perspectives.</li>
 <li>Their findings were incorporated with citations.</li>
+<li>For version 0.3, further AI research agents searched for similar papers and proposals and for evidence on publisher revenue. Search limits meant some requested sources could not be checked; those were left out rather than cited unverified.</li>
 </ul></li>
 <li><strong>Verification.</strong> AI-assisted research can be wrong. Figures and legal points are cited to sources, and items resting only on secondary sources are flagged as such or omitted. Readers should check primary sources before relying on any figure, legal statement or standard reference. Example protocol objects are illustrative and non-normative.</li>
 <li><strong>Why we disclose this.</strong> A proposed open standard should be open about how it was made.</li>
@@ -2611,6 +2811,65 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <li>Media Rating Council, <em>Viewable Ad Impression Measurement Guidelines</em>. <a href="https://www.mediaratingcouncil.org/sites/default/files/Standards/081815%20Viewable%20Ad%20Impression%20Guideline_v2.0_Final.pdf">https://www.mediaratingcouncil.org/sites/default/files/Standards/081815%20Viewable%20Ad%20Impression%20Guideline_v2.0_Final.pdf</a></li>
 <li>IAB Tech Lab, <em>Podcast Measurement Technical Guidelines v2.2</em> (2024). <a href="https://iabtechlab.com/wp-content/uploads/2024/02/PodcastMeasurement_v2.2_final.pdf">https://iabtechlab.com/wp-content/uploads/2024/02/PodcastMeasurement_v2.2_final.pdf</a></li>
 </ol>
+<p><em>Related research and proposals (added in v0.3)</em></p>
+<ol start="37" type="1">
+<li>V. Toubiana, A. Narayanan, D. Boneh, H. Nissenbaum, S. Barocas, "Adnostic: Privacy Preserving Targeted Advertising," NDSS 2010. <a href="https://www.ndss-symposium.org/ndss2010/adnostic-privacy-preserving-targeted-advertising/">https://www.ndss-symposium.org/ndss2010/adnostic-privacy-preserving-targeted-advertising/</a></li>
+<li>S. Guha, B. Cheng, P. Francis, "Privad: Practical Privacy in Online Advertising," USENIX NSDI 2011. <a href="https://www.usenix.org/conference/nsdi11/privad-practical-privacy-online-advertising">https://www.usenix.org/conference/nsdi11/privad-practical-privacy-online-advertising</a></li>
+<li>M. Backes, A. Kate, M. Maffei, K. Pecina, "ObliviAd: Provably Secure and Practical Online Behavioral Advertising," IEEE S&amp;P 2012. <a href="https://www.ieee-security.org/TC/SP2012/papers/4681a257.pdf">https://www.ieee-security.org/TC/SP2012/papers/4681a257.pdf</a></li>
+<li>G. Pestana, I. Querejeta-Azurmendi, P. Papadopoulos, B. Livshits, "THEMIS: A Decentralized Privacy-Preserving Ad Platform with Reporting Integrity," arXiv:2106.01940 (2021). <a href="https://arxiv.org/abs/2106.01940">https://arxiv.org/abs/2106.01940</a></li>
+<li>MediaPost, "Are Bluesky Feeds The Future Of Decentralized Media Advertising?" (23 April 2025). <a href="https://www.mediapost.com/publications/article/405169/are-bluesky-feeds-the-future-of-decentralized-medi.html">https://www.mediapost.com/publications/article/405169/are-bluesky-feeds-the-future-of-decentralized-medi.html</a></li>
+<li>Nostr NIPs, pull request #955, "NOSTR Decentralized Advertising Network (NOSTR-DAN)" (December 2023). <a href="https://github.com/nostr-protocol/nips/pull/955">https://github.com/nostr-protocol/nips/pull/955</a></li>
+<li>NostrGameEngine, nostrads. <a href="https://github.com/NostrGameEngine/nostrads">https://github.com/NostrGameEngine/nostrads</a></li>
+<li>R. Chairattana-Apirom, S. Tessaro, N. Tyagi, "Fraud Mitigation in Privacy-Preserving Attribution," IACR ePrint 2025/1891. <a href="https://eprint.iacr.org/2025/1891">https://eprint.iacr.org/2025/1891</a></li>
+<li>M. Thomson, "DAP Extensions for the Attribution API," draft-thomson-ppm-dap-attribution-01 (2026). <a href="https://datatracker.ietf.org/doc/html/draft-thomson-ppm-dap-attribution-01">https://datatracker.ietf.org/doc/html/draft-thomson-ppm-dap-attribution-01</a></li>
+<li>M. Goldin, A. Soleimani, J. Young, "The AdChain Registry" (May 2017); MetaX, "Learnings from launching the first token-curated registry." <a href="https://medium.com/metax-publication/learnings-from-metax-on-launching-the-first-token-curated-registry-c30140d5052c">https://medium.com/metax-publication/learnings-from-metax-on-launching-the-first-token-curated-registry-c30140d5052c</a></li>
+<li>Kochava, "Kochava introduces first blockchain-based digital advertising platform" (2017). <a href="https://www.kochava.com/blog/kochava-introduces-first-blockchain-based-digital-advertising-platform/">https://www.kochava.com/blog/kochava-introduces-first-blockchain-based-digital-advertising-platform/</a></li>
+<li>Brave Software, "Basic Attention Token (BAT): Blockchain Based Digital Advertising" (2017). <a href="https://basicattentiontoken.org/static-assets/documents/BasicAttentionTokenWhitePaper-4.pdf">https://basicattentiontoken.org/static-assets/documents/BasicAttentionTokenWhitePaper-4.pdf</a></li>
+<li>V. Marotta, V. Abhishek, A. Acquisti, "Online Tracking and Publishers' Revenues: An Empirical Analysis," WEIS 2019. <a href="https://weis2019.econinfosec.org/wp-content/uploads/sites/6/2019/05/WEIS_2019_paper_38.pdf">https://weis2019.econinfosec.org/wp-content/uploads/sites/6/2019/05/WEIS_2019_paper_38.pdf</a></li>
+<li>D. Ravichandran, N. Korula, "Effect of disabling third-party cookies on publisher revenue," Google (2019). <a href="https://services.google.com/fh/files/misc/disabling_third-party_cookies_publisher_revenue.pdf">https://services.google.com/fh/files/misc/disabling_third-party_cookies_publisher_revenue.pdf</a></li>
+<li>Z. Gu, G. A. Johnson, S. J. Kobayashi, "Can privacy technologies replace cookies? Ad revenue in a field experiment," PNAS 123(19) (May 2026). <a href="https://www.pnas.org/doi/10.1073/pnas.2603752123">https://www.pnas.org/doi/10.1073/pnas.2603752123</a></li>
+<li>R. Laub, K. M. Miller, B. Skiera, "The Economic Value of User Tracking for Publishers," arXiv:2303.10906 (2024). <a href="https://arxiv.org/abs/2303.10906">https://arxiv.org/abs/2303.10906</a></li>
+<li>G. A. Johnson, S. K. Shriver, S. Du, "Consumer Privacy Choice in Online Advertising: Who Opts Out and at What Cost to Industry?" Marketing Science 39(1) (2020). <a href="https://pubsonline.informs.org/doi/10.1287/mksc.2019.1198">https://pubsonline.informs.org/doi/10.1287/mksc.2019.1198</a></li>
+<li>Nieman Lab, "A Dutch public broadcaster got rid of targeted digital ads, and its revenues went way up" (2020). <a href="https://www.niemanlab.org/reading/a-dutch-public-broadcaster-got-rid-of-targeted-digital-ads-and-its-revenues-went-way-up/">https://www.niemanlab.org/reading/a-dutch-public-broadcaster-got-rid-of-targeted-digital-ads-and-its-revenues-went-way-up/</a></li>
+<li>J. Graf, L. Probst, L. Steltzner, L. Wellmer, "The Potential of Contextual Advertising Compared with Tracking-based Personalised Advertising," Germanwatch (August 2025). <a href="https://www.germanwatch.org/en/93232">https://www.germanwatch.org/en/93232</a></li>
+<li>K. Iwańska, "To Track or Not to Track? Towards privacy-friendly and sustainable online advertising," Panoptykon Foundation (November 2020). <a href="https://panoptykon.org/sites/default/files/publikacje/panoptykon_to_track_or_not_to_track_final.pdf">https://panoptykon.org/sites/default/files/publikacje/panoptykon_to_track_or_not_to_track_final.pdf</a></li>
+<li>Norwegian Consumer Council (Forbrukerrådet), "Time to Ban Surveillance-Based Advertising" (June 2021). <a href="https://storage02.forbrukerradet.no/media/2021/06/20210622-final-report-time-to-ban-surveillance-based-advertising.pdf">https://storage02.forbrukerradet.no/media/2021/06/20210622-final-report-time-to-ban-surveillance-based-advertising.pdf</a></li>
+<li>European Commission, "Study on the impact of recent developments in digital advertising on privacy, publishers and advertisers" (January 2023). <a href="https://op.europa.eu/en/publication-detail/-/publication/8b950a43-a141-11ed-b508-01aa75ed71a1/language-en">https://op.europa.eu/en/publication-detail/-/publication/8b950a43-a141-11ed-b508-01aa75ed71a1/language-en</a></li>
+<li>European Parliament (IMCO), "Online advertising: the impact of targeted advertising on advertisers, market access and consumer choice" (June 2021). <a href="https://www.europarl.europa.eu/RegData/etudes/STUD/2021/662913/IPOL_STU(2021)662913_EN.pdf">https://www.europarl.europa.eu/RegData/etudes/STUD/2021/662913/IPOL_STU(2021)662913_EN.pdf</a></li>
+<li>EFF, "Privacy First: A Better Way to Address Online Harms" (November 2023). <a href="https://www.eff.org/wp/privacy-first-better-way-address-online-harms">https://www.eff.org/wp/privacy-first-better-way-address-online-harms</a></li>
+<li>J. Qiu, Q. Mei, "Generative AI Advertising as a Problem of Trustworthy Commercial Intervention," arXiv:2605.18673 (2026). <a href="https://arxiv.org/abs/2605.18673">https://arxiv.org/abs/2605.18673</a></li>
+<li>M. Hajiaghayi, S. Lahaie, K. Rezaei, S. Shin, "Ad Auctions for LLMs via Retrieval Augmented Generation," NeurIPS 2024. <a href="https://neurips.cc/virtual/2024/poster/94948">https://neurips.cc/virtual/2024/poster/94948</a></li>
+<li>K. A. Dubey, Z. Feng, R. Kidambi, A. Mehta, D. Wang, "Auctions with LLM Summaries," KDD 2024. <a href="https://arxiv.org/abs/2404.08126">https://arxiv.org/abs/2404.08126</a></li>
+<li>P. Dütting, V. Mirrokni, R. Paes Leme, H. Xu, S. Zuo, "Mechanism Design for Large Language Models," WWW 2024. <a href="https://dl.acm.org/doi/10.1145/3589334.3645511">https://dl.acm.org/doi/10.1145/3589334.3645511</a></li>
+</ol>
+<p><em>Publisher revenue evidence (added in v0.3)</em></p>
+<ol start="65" type="1">
+<li>IAB &amp; Media Rating Council, <em>Attention Measurement Guidelines</em>, Version 1.0 (November 2025). <a href="https://www.mediaratingcouncil.org/sites/default/files/Standards/IAB_MRC_Attention_Measurement_Guidelines_November_2025.pdf">https://www.mediaratingcouncil.org/sites/default/files/Standards/IAB_MRC_Attention_Measurement_Guidelines_November_2025.pdf</a></li>
+<li>H. Hohnhold, D. O'Brien, D. Tang, "Focusing on the Long-term: It's Good for Users and Business," Proc. KDD (2015). <a href="https://doi.org/10.1145/2783258.2788583">https://doi.org/10.1145/2783258.2788583</a></li>
+<li>A. Goli, J. Huang, D. Reiley, N. Riabov, "Measuring Consumer Sensitivity to Audio Advertising: A Long-Run Field Experiment on Pandora Internet Radio," working paper (revised August 2024). <a href="https://www.davidreiley.com/papers/PandoraListenerDemandCurve.pdf">https://www.davidreiley.com/papers/PandoraListenerDemandCurve.pdf</a></li>
+<li>D. G. Goldstein, R. P. McAfee, S. Suri, "The Cost of Annoying Ads," Proc. WWW (2013). <a href="https://doi.org/10.1145/2488388.2488429">https://doi.org/10.1145/2488388.2488429</a></li>
+<li>S. Yan, K. M. Miller, B. Skiera, "How Does the Adoption of Ad Blockers Affect News Consumption?" Journal of Marketing Research (2022). <a href="https://doi.org/10.1177/00222437221076160">https://doi.org/10.1177/00222437221076160</a></li>
+<li>Coalition for Better Ads, "The Initial Better Ads Standards." <a href="https://www.betterads.org/standards/">https://www.betterads.org/standards/</a></li>
+<li>Jounce Media, <em>The State of the Open Internet 2025</em> (2025). <a href="https://jouncemedia.com/build/resources/2025_Jounce_Media_State_Of_The_Open_Internet_2afe364829.pdf">https://jouncemedia.com/build/resources/2025_Jounce_Media_State_Of_The_Open_Internet_2afe364829.pdf</a></li>
+<li>A. Goldfarb, C. Tucker, "Online Display Advertising: Targeting and Obtrusiveness," Marketing Science 30(3) (2011). <a href="https://doi.org/10.1287/mksc.1100.0583">https://doi.org/10.1287/mksc.1100.0583</a></li>
+<li>O. Rafieian, H. Yoganarasimhan, "Targeting and Privacy in Mobile Advertising," Marketing Science 40(2) (2021). <a href="https://doi.org/10.1287/mksc.2020.1235">https://doi.org/10.1287/mksc.2020.1235</a></li>
+<li>IAB Tech Lab, "Curated Audiences (formerly Seller Defined Audiences)" (updated August 2025). <a href="https://iabtechlab.com/sda/">https://iabtechlab.com/sda/</a></li>
+<li>Ozone Project. <a href="https://www.ozoneproject.com/">https://www.ozoneproject.com/</a></li>
+<li>Wemass. <a href="https://www.wemass.com/">https://www.wemass.com/</a></li>
+<li>Local Media Consortium. <a href="https://www.localmediaconsortium.com/">https://www.localmediaconsortium.com/</a></li>
+<li>Guardian Media Group, "Guardian Media Group publishes 2025/26 statutory accounts" (10 September 2026). <a href="https://www.theguardian.com/gnm-press-office/2026/sep/10/guardian-media-group-publishes-202526-statutory-accounts">https://www.theguardian.com/gnm-press-office/2026/sep/10/guardian-media-group-publishes-202526-statutory-accounts</a></li>
+<li>T. Müller-Tribbensee, K. M. Miller, B. Skiera, "Paying for Privacy: Pay-or-Tracking Walls," arXiv:2403.03610 (2024). <a href="https://arxiv.org/abs/2403.03610">https://arxiv.org/abs/2403.03610</a></li>
+<li>contentpass. <a href="https://www.contentpass.net/">https://www.contentpass.net/</a></li>
+<li>EthicalAds, Publisher Policy and Advertiser Pricing (2026). <a href="https://www.ethicalads.io/publisher-policy/">https://www.ethicalads.io/publisher-policy/</a> ; <a href="https://www.ethicalads.io/advertisers/pricing/">https://www.ethicalads.io/advertisers/pricing/</a></li>
+<li>Graze, "Sponsored Posts" documentation. <a href="https://www.graze.social/docs/sponsored-posts">https://www.graze.social/docs/sponsored-posts</a></li>
+<li>AdvertiseCast, "Podcast Advertising Rates" (vendor rate card, accessed October 2026). <a href="https://www.advertisecast.com/podcast-advertising-rates">https://www.advertisecast.com/podcast-advertising-rates</a></li>
+<li>Passionfroot, "Newsletter Advertising 101: A Brand's Guide" (June 2024). <a href="https://www.passionfroot.me/blog/newsletter-advertising-101-a-brands-guide-to-newsletter-ads">https://www.passionfroot.me/blog/newsletter-advertising-101-a-brands-guide-to-newsletter-ads</a></li>
+<li>UK Competition and Markets Authority, <em>Online platforms and digital advertising: Market study final report</em> (1 July 2020). <a href="https://assets.publishing.service.gov.uk/media/5fa557668fa8f5788db46efc/Final_report_Digital_ALT_TEXT.pdf">https://assets.publishing.service.gov.uk/media/5fa557668fa8f5788db46efc/Final_report_Digital_ALT_TEXT.pdf</a></li>
+<li>J. Ryan, A. Toner (ICCL), "The True Cost of RTB" (October 2025). <a href="https://www.iccl.ie/digital-data/the-true-cost-of-rtb/">https://www.iccl.ie/digital-data/the-true-cost-of-rtb/</a></li>
+<li>Accountable Tech, "Ban Surveillance Advertising" campaign (March 2021). <a href="https://accountabletech.org/campaign/ban-surveillance-advertising/">https://accountabletech.org/campaign/ban-surveillance-advertising/</a></li>
+<li>U.S. House of Representatives, H.R. 6416, <em>Banning Surveillance Advertising Act of 2022</em> (introduced January 2022). <a href="https://www.congress.gov/bill/117th-congress/house-bill/6416">https://www.congress.gov/bill/117th-congress/house-bill/6416</a></li>
+<li>Google, "How we're increasing transparency for gen AI content with the C2PA" (September 2024). <a href="https://blog.google/technology/ai/google-gen-ai-content-transparency-c2pa/">https://blog.google/technology/ai/google-gen-ai-content-transparency-c2pa/</a></li>
+</ol>
 <p><em>Technical specifications</em></p>
 <ul>
 <li>RFC 2119 / RFC 8174 (BCP 14), Requirement keywords</li>
@@ -2644,7 +2903,17 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <li>Brazil: Law 15.211/2025 (ECA Digital)</li>
 </ul>
 <hr />
-<h2 id="appendix-c-changes-from-v01">Appendix C. Changes from v0.1</h2>
+<h2 id="appendix-c-change-history">Appendix C. Change history</h2>
+<h3 id="changes-in-v03-5-october-2026">Changes in v0.3 (5 October 2026)</h3>
+<ul>
+<li><strong>Prior art:</strong> added academic privacy-preserving ad systems, THEMIS, Graze on Bluesky, Nostr ad proposals and privacy-preserving attribution research, plus a cautious statement of what appears to be new.</li>
+<li><strong>Economics:</strong> new <a href="#203-the-evidence-on-revenue-without-tracking">§20.3</a> presenting the evidence on revenue without tracking, including the 2026 PNAS field experiment, and new <a href="#204-improving-publisher-revenue">§20.4</a> on publisher revenue levers.</li>
+<li><strong>Protocol additions:</strong> Inventory quality signals (ad density, saturation limits), floors and support options; the <code>cpvh</code> attention pricing model; the cooperative selling-node profile.</li>
+<li><strong>AI surfaces:</strong> licensed creatives may not be paraphrased or blended into generated answers by default.</li>
+<li><strong>FAQ:</strong> clarified that "federated" does not mean federated learning.</li>
+<li><strong>References:</strong> 53 new references (37–89).</li>
+</ul>
+<h3 id="changes-from-v01">Changes from v0.1</h3>
 <ul>
 <li><strong>Renamed</strong> from "OpenAds" to the Federated Ads Protocol (identifier <code>federated-ads</code>) to avoid confusion with The Trade Desk's OpenAds and other projects.</li>
 <li><strong>Added</strong> sourced industry data, a prior-art review, a market-design section (inventory, Standing Offers, pricing models, price discovery, budgets, pacing, frequency, ad decisioning), an end-to-end worked example, security and privacy considerations, a legal and regulatory map, an economics example, a comparison table, an adoption strategy, risks, success metrics and a FAQ.</li>
@@ -2666,7 +2935,7 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 
   </article>
 
-  <footer>The Federated Ads Protocol · Whitepaper v0.2 · Federated Ads Initiative · Authored with Claude (Anthropic) · Comments: github.com/federated-ads</footer>
+  <footer>The Federated Ads Protocol · Whitepaper v0.3 · Federated Ads Initiative · Authored with Claude (Anthropic) · Comments: github.com/federated-ads</footer>
 </div>
 
 <script>
