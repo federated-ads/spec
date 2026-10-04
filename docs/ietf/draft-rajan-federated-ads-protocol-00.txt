@@ -1,0 +1,4200 @@
+
+
+
+
+Network Working Group                                           S. Rajan
+Internet-Draft                                  Federated Ads Initiative
+Intended status: Experimental                             5 October 2026
+Expires: 8 April 2027
+
+
+                       The Federated Ads Protocol
+                 draft-rajan-federated-ads-protocol-00
+
+Abstract
+
+   The Federated Ads Protocol lets independently operated servers
+   ("nodes") acting for advertisers and publishers discover each other
+   by domain name, agree advertising deals using signed offers, license
+   advertising creatives under time-limited and revocable licences,
+   report delivery using signed aggregate receipts committed to
+   witnessed transparency logs, and agree signed statements that form
+   the basis for settlement on any payment rail.  Matching is contextual
+   by default and protocol messages carry no cross-site identifiers.
+   This document specifies the wire protocol: the JSON object model, the
+   HTTP Message Signatures and Data Integrity profiles used for
+   authentication and integrity, discovery, inbox messaging, licensing
+   and revocation, receipts and transparency logs, conformance levels,
+   and the IANA registrations needed to support them.
+
+Note to Readers
+
+   _RFC Editor: please remove this section before publication._
+
+   Discussion of this document takes place in the GitHub repository at
+   https://github.com/federated-ads/spec (https://github.com/federated-
+   ads/spec), where issues can be filed at https://github.com/federated-
+   ads/spec/issues (https://github.com/federated-ads/spec/issues).  The
+   motivation, market design and policy rationale are described in the
+   companion whitepaper, which is informative.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                  [Page 1]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 8 April 2027.
+
+Copyright Notice
+
+   Copyright (c) 2026 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   5
+     1.1.  Goals . . . . . . . . . . . . . . . . . . . . . . . . . .   6
+     1.2.  Non-Goals . . . . . . . . . . . . . . . . . . . . . . . .   6
+     1.3.  Relationship to the Whitepaper  . . . . . . . . . . . . .   7
+     1.4.  Requirements Language . . . . . . . . . . . . . . . . . .   7
+     1.5.  Terminology . . . . . . . . . . . . . . . . . . . . . . .   7
+     1.6.  Roles . . . . . . . . . . . . . . . . . . . . . . . . . .   8
+   2.  Protocol Overview . . . . . . . . . . . . . . . . . . . . . .   9
+   3.  Conventions . . . . . . . . . . . . . . . . . . . . . . . . .  10
+     3.1.  JSON  . . . . . . . . . . . . . . . . . . . . . . . . . .  10
+     3.2.  Media Type  . . . . . . . . . . . . . . . . . . . . . . .  11
+     3.3.  Identifiers . . . . . . . . . . . . . . . . . . . . . . .  11
+     3.4.  Timestamps  . . . . . . . . . . . . . . . . . . . . . . .  11
+     3.5.  Money . . . . . . . . . . . . . . . . . . . . . . . . . .  11
+     3.6.  Content Hashes  . . . . . . . . . . . . . . . . . . . . .  11
+     3.7.  Canonicalization and Object Hash  . . . . . . . . . . . .  12
+     3.8.  Common Members  . . . . . . . . . . . . . . . . . . . . .  12
+   4.  Authentication  . . . . . . . . . . . . . . . . . . . . . . .  13
+     4.1.  HTTP Message Signatures Profile . . . . . . . . . . . . .  13
+       4.1.1.  Requests  . . . . . . . . . . . . . . . . . . . . . .  13
+       4.1.2.  Responses . . . . . . . . . . . . . . . . . . . . . .  14
+       4.1.3.  Verification, Clock Skew and Replay . . . . . . . . .  15
+     4.2.  Object Integrity  . . . . . . . . . . . . . . . . . . . .  15
+       4.2.1.  Proof Shape . . . . . . . . . . . . . . . . . . . . .  15
+       4.2.2.  Verification  . . . . . . . . . . . . . . . . . . . .  16
+
+
+
+Rajan                     Expires 8 April 2027                  [Page 2]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+       4.2.3.  Proof Chains for Two-Party Objects  . . . . . . . . .  16
+     4.3.  Relays  . . . . . . . . . . . . . . . . . . . . . . . . .  17
+   5.  Identity, Keys and Discovery  . . . . . . . . . . . . . . . .  17
+     5.1.  Well-Known Document . . . . . . . . . . . . . . . . . . .  17
+     5.2.  WebFinger Alternative . . . . . . . . . . . . . . . . . .  19
+     5.3.  Node Descriptor . . . . . . . . . . . . . . . . . . . . .  19
+     5.4.  Delegation  . . . . . . . . . . . . . . . . . . . . . . .  19
+     5.5.  Key Rotation  . . . . . . . . . . . . . . . . . . . . . .  19
+     5.6.  Key Revocation  . . . . . . . . . . . . . . . . . . . . .  20
+     5.7.  Caching . . . . . . . . . . . . . . . . . . . . . . . . .  20
+   6.  Objects . . . . . . . . . . . . . . . . . . . . . . . . . . .  20
+     6.1.  Shared Structures . . . . . . . . . . . . . . . . . . . .  20
+       6.1.1.  Party . . . . . . . . . . . . . . . . . . . . . . . .  20
+       6.1.2.  Object Reference  . . . . . . . . . . . . . . . . . .  21
+       6.1.3.  Targeting . . . . . . . . . . . . . . . . . . . . . .  21
+       6.1.4.  Terms . . . . . . . . . . . . . . . . . . . . . . . .  21
+     6.2.  Node  . . . . . . . . . . . . . . . . . . . . . . . . . .  24
+     6.3.  Policy  . . . . . . . . . . . . . . . . . . . . . . . . .  26
+     6.4.  Inventory . . . . . . . . . . . . . . . . . . . . . . . .  27
+     6.5.  Offer . . . . . . . . . . . . . . . . . . . . . . . . . .  28
+     6.6.  StandingOffer . . . . . . . . . . . . . . . . . . . . . .  29
+     6.7.  RFP . . . . . . . . . . . . . . . . . . . . . . . . . . .  30
+     6.8.  Claim . . . . . . . . . . . . . . . . . . . . . . . . . .  30
+     6.9.  Acceptance  . . . . . . . . . . . . . . . . . . . . . . .  31
+     6.10. CounterOffer  . . . . . . . . . . . . . . . . . . . . . .  32
+     6.11. Decline . . . . . . . . . . . . . . . . . . . . . . . . .  32
+     6.12. Deal  . . . . . . . . . . . . . . . . . . . . . . . . . .  32
+     6.13. DealAmendment . . . . . . . . . . . . . . . . . . . . . .  34
+     6.14. StatusChange  . . . . . . . . . . . . . . . . . . . . . .  35
+     6.15. CreativeManifest  . . . . . . . . . . . . . . . . . . . .  36
+     6.16. Licence . . . . . . . . . . . . . . . . . . . . . . . . .  36
+     6.17. Revocation  . . . . . . . . . . . . . . . . . . . . . . .  38
+     6.18. RevocationAck . . . . . . . . . . . . . . . . . . . . . .  39
+     6.19. SpendReport . . . . . . . . . . . . . . . . . . . . . . .  39
+     6.20. ReceiptBatch  . . . . . . . . . . . . . . . . . . . . . .  39
+     6.21. Statement . . . . . . . . . . . . . . . . . . . . . . . .  41
+     6.22. PaymentNotice . . . . . . . . . . . . . . . . . . . . . .  42
+     6.23. Dispute . . . . . . . . . . . . . . . . . . . . . . . . .  43
+     6.24. Report  . . . . . . . . . . . . . . . . . . . . . . . . .  44
+     6.25. Label . . . . . . . . . . . . . . . . . . . . . . . . . .  44
+     6.26. KeyRotation . . . . . . . . . . . . . . . . . . . . . . .  45
+     6.27. KeyRevocation . . . . . . . . . . . . . . . . . . . . . .  45
+     6.28. Ack . . . . . . . . . . . . . . . . . . . . . . . . . . .  46
+   7.  State Machines  . . . . . . . . . . . . . . . . . . . . . . .  46
+     7.1.  Offer . . . . . . . . . . . . . . . . . . . . . . . . . .  46
+     7.2.  Deal  . . . . . . . . . . . . . . . . . . . . . . . . . .  47
+     7.3.  Licence . . . . . . . . . . . . . . . . . . . . . . . . .  49
+     7.4.  Statement . . . . . . . . . . . . . . . . . . . . . . . .  49
+
+
+
+Rajan                     Expires 8 April 2027                  [Page 3]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   8.  Inbox Messaging . . . . . . . . . . . . . . . . . . . . . . .  50
+     8.1.  Delivery  . . . . . . . . . . . . . . . . . . . . . . . .  50
+     8.2.  Idempotency . . . . . . . . . . . . . . . . . . . . . . .  50
+     8.3.  Retries . . . . . . . . . . . . . . . . . . . . . . . . .  51
+     8.4.  Retrieval and Pagination  . . . . . . . . . . . . . . . .  51
+     8.5.  Errors  . . . . . . . . . . . . . . . . . . . . . . . . .  51
+   9.  Licensing and Revocation  . . . . . . . . . . . . . . . . . .  53
+     9.1.  Licence Tiers . . . . . . . . . . . . . . . . . . . . . .  53
+     9.2.  Fetching Creatives  . . . . . . . . . . . . . . . . . . .  54
+     9.3.  Renewal . . . . . . . . . . . . . . . . . . . . . . . . .  54
+     9.4.  Revocation Logging  . . . . . . . . . . . . . . . . . . .  54
+     9.5.  Revocation Deadline . . . . . . . . . . . . . . . . . . .  54
+     9.6.  Push and Acknowledgement  . . . . . . . . . . . . . . . .  55
+     9.7.  Pull  . . . . . . . . . . . . . . . . . . . . . . . . . .  55
+     9.8.  Surface Limits  . . . . . . . . . . . . . . . . . . . . .  55
+   10. Receipts and Transparency Logs  . . . . . . . . . . . . . . .  56
+     10.1.  Events . . . . . . . . . . . . . . . . . . . . . . . . .  56
+     10.2.  Windows  . . . . . . . . . . . . . . . . . . . . . . . .  56
+     10.3.  Cells  . . . . . . . . . . . . . . . . . . . . . . . . .  56
+     10.4.  k-Threshold  . . . . . . . . . . . . . . . . . . . . . .  56
+     10.5.  Cell Tree  . . . . . . . . . . . . . . . . . . . . . . .  56
+     10.6.  Log Entries  . . . . . . . . . . . . . . . . . . . . . .  57
+     10.7.  Witnessing . . . . . . . . . . . . . . . . . . . . . . .  57
+     10.8.  Proofs . . . . . . . . . . . . . . . . . . . . . . . . .  57
+     10.9.  Verification Levels  . . . . . . . . . . . . . . . . . .  58
+     10.10. Privacy Pass Binding . . . . . . . . . . . . . . . . . .  59
+   11. Disclosure and User Controls  . . . . . . . . . . . . . . . .  59
+   12. Extensibility and Versioning  . . . . . . . . . . . . . . . .  60
+     12.1.  Unknown Members  . . . . . . . . . . . . . . . . . . . .  60
+     12.2.  Versioning . . . . . . . . . . . . . . . . . . . . . . .  60
+     12.3.  Registries . . . . . . . . . . . . . . . . . . . . . . .  60
+   13. Conformance . . . . . . . . . . . . . . . . . . . . . . . . .  60
+   14. Security Considerations . . . . . . . . . . . . . . . . . . .  61
+     14.1.  Trust Model  . . . . . . . . . . . . . . . . . . . . . .  61
+     14.2.  Transport Replay and Freshness . . . . . . . . . . . . .  61
+     14.3.  Object Replay and Substitution . . . . . . . . . . . . .  61
+     14.4.  Canonicalization . . . . . . . . . . . . . . . . . . . .  62
+     14.5.  Equivocation . . . . . . . . . . . . . . . . . . . . . .  62
+     14.6.  Backdating . . . . . . . . . . . . . . . . . . . . . . .  62
+     14.7.  Impression Inflation and Click Fraud . . . . . . . . . .  62
+     14.8.  Collusion  . . . . . . . . . . . . . . . . . . . . . . .  62
+     14.9.  Malvertising . . . . . . . . . . . . . . . . . . . . . .  63
+     14.10. Server-Side Request Forgery  . . . . . . . . . . . . . .  63
+     14.11. Denial of Service  . . . . . . . . . . . . . . . . . . .  63
+     14.12. Key Compromise . . . . . . . . . . . . . . . . . . . . .  64
+     14.13. Attester Centralization  . . . . . . . . . . . . . . . .  64
+   15. Privacy Considerations  . . . . . . . . . . . . . . . . . . .  64
+     15.1.  Data Minimization and No Cross-Site Identifiers  . . . .  64
+
+
+
+Rajan                     Expires 8 April 2027                  [Page 4]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+     15.2.  Surveillance and Correlation . . . . . . . . . . . . . .  64
+     15.3.  Aggregation and Re-identification  . . . . . . . . . . .  64
+     15.4.  Secondary Use and Stored Data  . . . . . . . . . . . . .  65
+     15.5.  Disclosure through Transparency Logs . . . . . . . . . .  65
+     15.6.  Device Access  . . . . . . . . . . . . . . . . . . . . .  65
+     15.7.  User Controls  . . . . . . . . . . . . . . . . . . . . .  65
+     15.8.  Conversions  . . . . . . . . . . . . . . . . . . . . . .  65
+   16. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  65
+     16.1.  Media Type Registration  . . . . . . . . . . . . . . . .  66
+     16.2.  Well-Known URI Registration  . . . . . . . . . . . . . .  67
+     16.3.  WebFinger Link Relation  . . . . . . . . . . . . . . . .  67
+     16.4.  Federated Ads Protocol Registries  . . . . . . . . . . .  67
+       16.4.1.  Object Types . . . . . . . . . . . . . . . . . . . .  67
+       16.4.2.  Event Types  . . . . . . . . . . . . . . . . . . . .  67
+       16.4.3.  Pricing Models . . . . . . . . . . . . . . . . . . .  68
+       16.4.4.  Surface Profiles . . . . . . . . . . . . . . . . . .  69
+       16.4.5.  Settlement Profiles  . . . . . . . . . . . . . . . .  69
+       16.4.6.  Revocation Reasons . . . . . . . . . . . . . . . . .  69
+       16.4.7.  Error Types  . . . . . . . . . . . . . . . . . . . .  70
+       16.4.8.  Critical Extensions  . . . . . . . . . . . . . . . .  70
+   17. References  . . . . . . . . . . . . . . . . . . . . . . . . .  70
+     17.1.  Normative References . . . . . . . . . . . . . . . . . .  70
+     17.2.  Informative References . . . . . . . . . . . . . . . . .  72
+   Open Issues . . . . . . . . . . . . . . . . . . . . . . . . . . .  74
+   Change Log  . . . . . . . . . . . . . . . . . . . . . . . . . . .  75
+   Acknowledgments . . . . . . . . . . . . . . . . . . . . . . . . .  75
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  75
+
+1.  Introduction
+
+   Digital advertising on the open web is mediated by a small number of
+   vertically integrated intermediaries, relies heavily on cross-site
+   identifiers, and gives advertisers no interoperable means to withdraw
+   a creative once it has entered the supply chain.  Publishers that do
+   not wish to track their audiences, including independent web sites,
+   newsletters, podcasts, federated social networks and AI assistants,
+   have no neutral, interoperable way to sell advertising.
+
+   The Federated Ads Protocol ("this protocol") is a federated protocol,
+   in the tradition of electronic mail, in which independent nodes run
+   by publishers, advertisers, agencies or cooperatives exchange signed
+   JSON objects over HTTPS.  It combines existing building blocks: HTTP
+   Message Signatures [RFC9421], W3C Data Integrity [VC-DATA-INTEGRITY]
+   with the eddsa-jcs-2022 cryptosuite [VC-DI-EDDSA], W3C Controlled
+   Identifiers [CID], well-known URIs [RFC8615], Merkle-tree
+   transparency logs [RFC9162] [TLOG-TILES], and Privacy Pass [RFC9576].
+
+
+
+
+
+Rajan                     Expires 8 April 2027                  [Page 5]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   The companion whitepaper [WHITEPAPER] explains the motivation,
+   compares design alternatives, and discusses economics, governance and
+   regulation.  This document is limited to the wire protocol.  Where
+   the whitepaper is descriptive, this document is normative.
+
+1.1.  Goals
+
+   This protocol aims to:
+
+   *  allow nodes to discover each other and each other's keys, policies
+      and endpoints, starting from a domain name;
+
+   *  allow buyers and sellers to negotiate and agree deals using
+      signed, non-repudiable objects, directly or through relays that
+      cannot alter them;
+
+   *  keep advertisers in control of their creatives by granting only
+      time-limited, revocable licences to display them, and make
+      revocation fast, logged and acknowledged;
+
+   *  make delivery verifiable without per-user data, using signed
+      aggregate receipts committed to append-only logs that are cosigned
+      by independent witnesses;
+
+   *  produce doubly signed statements that serve as the basis for
+      payment on any settlement rail;
+
+   *  work for any surface (web, social, email, audio and AI/chat)
+      through surface profiles.
+
+1.2.  Non-Goals
+
+   This protocol does not attempt to:
+
+   *  support cross-publisher reach and frequency management, which
+      would require cross-site identity;
+
+   *  define a real-time, per-impression auction across nodes as the
+      default market mechanism;
+
+   *  define a token, blockchain, or mandatory payment provider;
+
+   *  support individual-level conversion tracking;
+
+   *  moderate or judge publisher content;
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                  [Page 6]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   *  define the content taxonomy, the selling node's ad-decisioning
+      algorithm, or the rendering rules for each surface, beyond the
+      minimum needed for interoperability.
+
+1.3.  Relationship to the Whitepaper
+
+   The whitepaper [WHITEPAPER] is informative.  If the whitepaper and
+   this document disagree on a protocol detail, this document takes
+   precedence, and the disagreement should be reported as an issue
+   [ISSUES].
+
+1.4.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in
+   BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.
+
+1.5.  Terminology
+
+   This document uses the following terms:
+
+   Node:  An HTTPS origin that implements this protocol and is
+      identified by the URL of its Node Descriptor.
+
+   Node Descriptor:  A signed JSON document, structured as a Controlled
+      Identifier document [CID], that lists a node's roles, keys,
+      endpoints and supported profiles (Section 5.3).
+
+   Object:  A JSON object defined by this document, carrying a type, an
+      id and, except where stated otherwise, a Data Integrity proof.
+
+   Issuer:  The node that creates and signs an object.  Identified by
+      the object's issuer member.
+
+   Object hash:  The content hash of the JCS serialization of a complete
+      object, including its proof (Section 3.7).
+
+   Deal party:  The buying node or the selling node named in a Deal.
+
+   Licensee:  The node to which a Licence grants the right to display a
+      creative.
+
+   Transparency log (log):  An append-only Merkle tree log operated by a
+      node, in the format defined by [TLOG-TILES].
+
+   Checkpoint:  A signed statement of a log's size and root hash
+
+
+
+Rajan                     Expires 8 April 2027                  [Page 7]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+      [TLOG-CHECKPOINT].
+
+   Witness:  A party that verifies the consistency of a log and cosigns
+      its checkpoints [TLOG-WITNESS].
+
+   Cell:  One row of an aggregate receipt: a count of events of one type
+      for one combination of creative, time window, context category and
+      coarse region (Section 10).
+
+   Surface:  A medium on which advertisements are presented, such as a
+      web page, social feed, email newsletter, podcast or AI/chat
+      interface.
+
+1.6.  Roles
+
+   A node declares one or more roles in its Node Descriptor.  The roles
+   are:
+
+   advertiser:  Owns creatives and issues Creative Manifests, Licences
+      and Revocations.  An advertiser often uses a buying node.
+
+   publisher:  Operates a surface on which advertisements are shown.
+
+   buying:  Acts for one or more advertisers.  Issues Offers, Standing
+      Offers, RFPs and Deals.
+
+   selling:  Acts for one or more publishers.  Publishes Policies and
+      Inventory, responds to offers, renders creatives, and issues Spend
+      Reports, Receipt Batches and Statements.
+
+   relay:  Forwards objects between nodes and may add discovery,
+      curation or credit services.  Cannot alter signed objects.
+
+   creative-host:  Stores creative assets and serves them to licensees.
+
+   witness:  Cosigns other nodes' log checkpoints after checking
+      consistency.
+
+   auditor:  Samples receipts, runs test clients, and issues
+      attestations as Labels.
+
+   labeler:  Publishes signed Labels about nodes, domains or creatives.
+
+   One organization may hold several roles.  Attesters (Privacy Pass
+   token issuers) and settlement providers are external to this protocol
+   and are not nodes unless they also implement it.
+
+
+
+
+
+Rajan                     Expires 8 April 2027                  [Page 8]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+2.  Protocol Overview
+
+   Figure 1 shows the main exchanges between a buying node and a selling
+   node.  All arrows are HTTPS requests signed as described in
+   Section 4.1; all objects carry Data Integrity proofs as described in
+   Section 4.2.
+
+    Buying node        Selling node       Creative host     Witness
+    (advertiser)       (publisher)        (advertiser)
+        |                   |                   |              |
+        |-- GET /.well-known|                   |              |
+        |   /federated-ads->|                   |              |
+        |<-- Node, Policy,  |                   |              |
+        |    Inventory -----|                   |              |
+        |                   |                   |              |
+        |-- Offer --------->|                   |              |
+        |<-- CounterOffer --|                   |              |
+        |-- Offer (rev.) -->|                   |              |
+        |<-- Acceptance ----|                   |              |
+        |-- Deal (signed) ->|                   |              |
+        |<-- Deal (counter- |                   |              |
+        |      signed) -----|                   |              |
+        |-- Licence ------->|                   |              |
+        |                   |-- fetch manifest, |              |
+        |                   |   assets -------->|              |
+        |                   |<-- bytes (hash- --|              |
+        |                   |    pinned) -------|              |
+        |<-- SpendReport ---|  (every 15 min)   |              |
+        |                   |-- checkpoint ------------------->|
+        |                   |<-- cosignature ------------------|
+        |<-- ReceiptBatch --|  (hourly)         |              |
+        |-- fetch inclusion |                   |              |
+        |   and consistency |                   |              |
+        |   proofs -------->| (seller's log)    |              |
+        |                   |                   |              |
+        |-- Revocation ---->|  (logged first)   |              |
+        |<-- RevocationAck -|  (within 60 s)    |              |
+        |                   |                   |              |
+        |<-- Statement -----|                   |              |
+        |-- Statement ----->|  (countersigned)  |              |
+        |-- PaymentNotice ->|                   |              |
+
+                    Figure 1: Overview of a direct deal
+
+   The lifecycle is:
+
+   1.  Discover.  A node is found from a domain name through the /.well-
+       known/federated-ads document or WebFinger (Section 5).
+
+
+
+Rajan                     Expires 8 April 2027                  [Page 9]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   2.  Describe.  Selling nodes publish Policy and Inventory objects.
+
+   3.  Offer.  Buying nodes send Offers to specific sellers, publish
+       Standing Offers that eligible sellers may claim, or issue RFPs.
+
+   4.  Agree.  The seller accepts, counters or declines.  An accepted
+       offer or confirmed claim becomes a Deal signed by both parties.
+
+   5.  License.  The advertiser issues a Licence for each approved
+       creative, bound to the deal, the licensee, surfaces and an
+       expiry.
+
+   6.  Serve.  The selling node selects among active deals at render
+       time using its own algorithm, renders the creative and a
+       disclosure, and counts events.
+
+   7.  Report.  The selling node sends Spend Reports for pacing and
+       Receipt Batches for billing, committing the latter to its log.
+
+   8.  Revoke.  At any time, the advertiser logs and pushes a
+       Revocation; the licensee acknowledges it with a logged
+       RevocationAck.
+
+   9.  Settle.  The parties agree a doubly signed Statement and pay off-
+       protocol, optionally recording a PaymentNotice.
+
+3.  Conventions
+
+3.1.  JSON
+
+   Objects are encoded as JSON [RFC8259] in UTF-8 and MUST conform to
+   I-JSON [RFC7493].  Receivers MUST reject objects that contain
+   duplicate member names.  Integers (counts, sizes, sequence numbers)
+   MUST be in the range 0 to 2^53-1.  Non-integer quantities (money,
+   rates, tolerances) are encoded as decimal strings, never as JSON
+   numbers.
+
+   Each object has an @context member whose value is an array of
+   strings.  The first element MUST be https://w3id.org/federated-ads/
+   v0, except in Node Descriptors, where the first element is
+   https://www.w3.org/ns/cid/v1 and the second is https://w3id.org/
+   federated-ads/v0.  Verifiers MUST treat context values as opaque
+   strings and MUST NOT require JSON-LD processing or dereference
+   context URLs.  JSON-LD processing MAY be used for vocabulary
+   extension but does not affect validity.
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 10]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+3.2.  Media Type
+
+   Objects are exchanged using the media type application/federated-
+   ads+json (Section 16.1).  Senders MUST use it in Content-Type when
+   sending an object.  Receivers MUST accept application/federated-
+   ads+json and MAY accept application/json.
+
+3.3.  Identifiers
+
+   Object identifiers (id) are absolute https URLs without a fragment
+   component, hosted at the issuer's origin.  The origin of an object's
+   id MUST equal the origin of its issuer; receivers MUST reject objects
+   for which this does not hold.  Key identifiers are https URLs with a
+   fragment, as defined in Section 5.3.  Identifiers MUST NOT exceed
+   2048 octets.  Issuers SHOULD use unguessable path components (for
+   example, at least 96 bits of randomness) for objects that are not
+   public, because identifiers appear in transparency logs
+   (Section 10.6).
+
+3.4.  Timestamps
+
+   Timestamps are strings in the date-time format of [RFC3339], in UTC,
+   with an uppercase T and a literal uppercase Z, for example
+   2026-10-05T10:00:00Z.  Fractional seconds MAY be present.  Durations
+   are integers in seconds.
+
+3.5.  Money
+
+   A monetary amount is a JSON object with two members:
+
+   amount:  A decimal string matching ^[0-9]+(\.[0-9]+)?$.  Negative
+      amounts are not permitted; credits are expressed by the containing
+      object.
+
+   currency:  A three-letter alphabetic currency code from [ISO4217].
+
+   For example: {"amount": "12.50", "currency": "USD"}.
+
+3.6.  Content Hashes
+
+   Content hashes use the Subresource Integrity syntax [SRI]: the string
+   sha256- followed by the standard base64 encoding (Section 4 of
+   [RFC4648]), with padding, of the SHA-256 digest of the content.
+   Implementations MUST support sha256.  Implementations MAY
+   additionally support sha384 and sha512.  An example hash is
+   sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ=.
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 11]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+3.7.  Canonicalization and Object Hash
+
+   Where this document requires the canonical form of an object, it is
+   the JSON Canonicalization Scheme (JCS) [RFC8785] serialization.
+
+   The object hash of an object is the content hash (Section 3.6) of the
+   JCS serialization of the complete object, including its proof member.
+   Objects that reference another object by hash (for example,
+   offerHash) use the object hash.
+
+3.8.  Common Members
+
+   All objects defined in Section 6 have the members in Table 1, unless
+   stated otherwise.
+
+       +===========+==========+====================================+
+       | Member    | Req.     | Description                        |
+       +===========+==========+====================================+
+       | @context  | REQUIRED | Array of context strings           |
+       |           |          | (Section 3.1).                     |
+       +-----------+----------+------------------------------------+
+       | type      | REQUIRED | Object type from the registry in   |
+       |           |          | Section 16.4.1.                    |
+       +-----------+----------+------------------------------------+
+       | id        | REQUIRED | Identifier (Section 3.3).  The     |
+       |           |          | deduplication key.                 |
+       +-----------+----------+------------------------------------+
+       | issuer    | REQUIRED | Node Descriptor URL of the issuer. |
+       |           |          | Absent in a Node Descriptor, where |
+       |           |          | id identifies the issuer.          |
+       +-----------+----------+------------------------------------+
+       | issuedAt  | REQUIRED | Time of issue.                     |
+       +-----------+----------+------------------------------------+
+       | expiresAt | OPTIONAL | Time after which the object has no |
+       |           |          | effect.                            |
+       +-----------+----------+------------------------------------+
+       | critical  | OPTIONAL | Array of member names that         |
+       |           |          | receivers MUST understand          |
+       |           |          | (Section 12).                      |
+       +-----------+----------+------------------------------------+
+       | proof     | REQUIRED | A Data Integrity proof, or an      |
+       |           |          | array of proofs forming a chain    |
+       |           |          | (Section 4.2).                     |
+       +-----------+----------+------------------------------------+
+
+                          Table 1: Common members
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 12]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+4.  Authentication
+
+   This protocol uses two layers of signatures.  HTTP Message Signatures
+   [RFC9421] authenticate each hop and provide freshness.  Data
+   Integrity proofs [VC-DATA-INTEGRITY] protect objects end to end,
+   across relays and over time.
+
+4.1.  HTTP Message Signatures Profile
+
+4.1.1.  Requests
+
+   Every request defined by this protocol, other than unauthenticated
+   requests for public resources (the well-known document, WebFinger,
+   public Node Descriptors, public Policy and Inventory objects, and log
+   tiles and checkpoints), MUST carry an HTTP message signature
+   [RFC9421] with the following properties:
+
+   *  The covered components MUST include "@method" and "@target-uri".
+
+   *  If the request has content, the request MUST include a Content-
+      Digest field [RFC9530] using sha-256 (other algorithms MAY be
+      added), and the covered components MUST include "content-type" and
+      "content-digest".
+
+   *  The signature parameters MUST include created, expires, keyid, alg
+      and tag.
+
+   *  alg MUST be "ed25519" ([RFC8032]; Section 3.3.6 of [RFC9421]).
+
+   *  tag MUST be "federated-ads".
+
+   *  keyid MUST be the URL of a verification method listed in the
+      authentication array of the sender's Node Descriptor.
+
+   *  expires minus created MUST NOT exceed 300 seconds.
+
+   The signature label is not significant; this document uses fa in
+   examples.  A sender MAY include a nonce parameter.
+
+   The following example uses line wrapping per [RFC8792]:
+
+
+
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 13]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   NOTE: '\' line wrapping per RFC 8792
+
+   POST /fa/inbox HTTP/1.1
+   Host: ads.example.com
+   Content-Type: application/federated-ads+json
+   Content-Digest: sha-256=:Pc1EWC05sjJPosvus5LefPh+i3TViCo38kEWdpN6o\
+     a0=:
+   Signature-Input: fa=("@method" "@target-uri" "content-type" \
+     "content-digest");created=1791187200;expires=1791187500;\
+     keyid="https://ads.acme.example/fa/node#key-2026";\
+     alg="ed25519";tag="federated-ads"
+   Signature: fa=:<base64 Ed25519 signature>:
+
+   { ... object ... }
+
+                  Figure 2: Signed request (illustrative)
+
+4.1.2.  Responses
+
+   Responses to signed requests, including error responses, MUST be
+   signed by the responding node with the same profile, except that:
+
+   *  the covered components MUST include "@status";
+
+   *  if the response has content, they MUST include "content-type" and
+      "content-digest";
+
+   *  they MUST bind the response to the request by covering
+      "@method";req, "@target-uri";req and
+      "signature";req;key="<label>", where <label> is the label of the
+      request signature (Section 2.4 of [RFC9421]).
+
+   NOTE: '\' line wrapping per RFC 8792
+
+   HTTP/1.1 202 Accepted
+   Content-Type: application/federated-ads+json
+   Content-Digest: sha-256=:<base64 digest>:
+   Signature-Input: fa=("@status" "content-type" "content-digest" \
+     "@method";req "@target-uri";req "signature";req;key="fa");\
+     created=1791187201;expires=1791187501;\
+     keyid="https://ads.example.com/fa/node#key-2026";\
+     alg="ed25519";tag="federated-ads"
+   Signature: fa=:<base64 Ed25519 signature>:
+
+                  Figure 3: Signed response (illustrative)
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 14]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+4.1.3.  Verification, Clock Skew and Replay
+
+   A receiver MUST:
+
+   1.  resolve the Node Descriptor identified by the keyid URL with its
+       fragment removed (Section 5.3), and verify that the key is listed
+       in authentication and has not been revoked (Section 5.6);
+
+   2.  verify the signature as specified in Section 3.2 of [RFC9421],
+       and verify Content-Digest against the received content;
+
+   3.  reject the message if created is more than 60 seconds in the
+       future, if the current time is more than 60 seconds after
+       expires, or if expires minus created exceeds 300 seconds;
+
+   4.  reject the message if the same signature value has already been
+       accepted within its validity window.  Receivers MUST retain
+       accepted signature values (or a hash of them) at least until 60
+       seconds after their expires.
+
+   Nodes SHOULD keep their clocks synchronized to within a few seconds
+   of UTC.  The 60-second tolerance applies throughout this document
+   wherever a time comparison is made.
+
+   Transport-level replay protection is complemented by object-level
+   deduplication: retransmissions of the same object carry a new HTTP
+   signature but the same object id (Section 8.2).
+
+4.2.  Object Integrity
+
+4.2.1.  Proof Shape
+
+   Every object, unless stated otherwise, carries a proof member
+   containing a Data Integrity proof [VC-DATA-INTEGRITY] created with
+   the eddsa-jcs-2022 cryptosuite [VC-DI-EDDSA].  The proof MUST have
+   these members:
+
+   type:  "DataIntegrityProof".
+
+   cryptosuite:  "eddsa-jcs-2022".
+
+   created:  Time of signing (Section 3.4).
+
+   verificationMethod:  URL of a verification method listed in the
+      assertionMethod array of the signer's Node Descriptor.
+
+   proofPurpose:  "assertionMethod".
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 15]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   proofValue:  The multibase-encoded signature, per [VC-DI-EDDSA].
+
+   A proof MAY additionally carry id, expires and previousProof.
+
+   "proof": {
+     "type": "DataIntegrityProof",
+     "cryptosuite": "eddsa-jcs-2022",
+     "created": "2026-10-05T10:00:00Z",
+     "verificationMethod":
+       "https://ads.acme.example/fa/node#key-2026",
+     "proofPurpose": "assertionMethod",
+     "proofValue": "z2HnFSSPPBzR36zdDgK8PbEHeXbR56YF24jwMpt3R1eH..."
+   }
+
+        Figure 4: Object proof (illustrative; proofValue truncated)
+
+4.2.2.  Verification
+
+   A receiver MUST verify every proof on an object before acting on it,
+   using the algorithm of [VC-DI-EDDSA], and MUST additionally check
+   that:
+
+   *  proofPurpose is "assertionMethod";
+
+   *  for a single proof, or the first proof of a chain, the
+      verification method's controller is the node identified by the
+      object's issuer (or, for a Node Descriptor, by its id), and the
+      method is listed in that node's assertionMethod;
+
+   *  the key was not revoked at the proof's created time (Section 5.6);
+
+   *  created is not more than 60 seconds later than the time of
+      receipt.
+
+   Objects with an invalid proof MUST be rejected with the error type
+   signature-invalid (Section 8.5).
+
+4.2.3.  Proof Chains for Two-Party Objects
+
+   Deal, DealAmendment, Statement and KeyRotation objects are signed by
+   two signers using a proof chain ([VC-DATA-INTEGRITY], proof chains).
+   The proof member is then an array of two proofs:
+
+   1.  The first proof is created by the issuer and MUST carry an id
+       (for example, a urn:uuid: URN).
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 16]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   2.  The second proof is created by the counterparty named in the
+       object (for KeyRotation, by the new key) and MUST carry a
+       previousProof member whose value is the first proof's id.  Its
+       verification method MUST be controlled by the counterparty.
+
+   A two-party object with only the first proof is a proposal.  It takes
+   effect only when both proofs are present and valid.  The counterparty
+   countersigns by adding the second proof without altering any other
+   member and returning the result to the issuer's inbox.
+
+4.3.  Relays
+
+   A relay forwards objects unaltered.  When forwarding, it signs the
+   HTTP request with its own key; the object proofs are unchanged.
+   Receivers MUST base all decisions about an object's meaning on the
+   object proofs, not on the identity of the transport sender.
+   Receivers MAY use the transport sender's identity for rate limiting
+   and abuse handling.  A relay MUST NOT modify any member of a signed
+   object; any modification invalidates the proof.
+
+5.  Identity, Keys and Discovery
+
+   A node's identity is rooted in control of a DNS name and the HTTPS
+   origin served under it.
+
+5.1.  Well-Known Document
+
+   A domain that participates in this protocol MUST serve a discovery
+   document at the well-known URI /.well-known/federated-ads
+   (Section 16.2) over HTTPS, with media type application/federated-
+   ads+json.  The document lists the domain's own node, the nodes
+   authorized to act for it, or both.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 17]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+      +==========+==========+======================================+
+      | Member   | Req.     | Description                          |
+      +==========+==========+======================================+
+      | @context | REQUIRED | As in Section 3.1.                   |
+      +----------+----------+--------------------------------------+
+      | type     | REQUIRED | "Discovery".                         |
+      +----------+----------+--------------------------------------+
+      | subject  | REQUIRED | The origin of the domain, e.g.       |
+      |          |          | https://example.com.                 |
+      +----------+----------+--------------------------------------+
+      | versions | REQUIRED | Array of supported protocol versions |
+      |          |          | (Section 12.2).                      |
+      +----------+----------+--------------------------------------+
+      | nodes    | REQUIRED | Array of entries, each with id (Node |
+      |          |          | Descriptor URL), roles (array) and   |
+      |          |          | relationship ("self" or "delegate"). |
+      +----------+----------+--------------------------------------+
+
+                   Table 2: Discovery document members
+
+   The discovery document is authenticated by TLS and does not carry a
+   proof.  Clients MUST NOT follow redirects to a different host when
+   fetching it.
+
+   {
+     "@context": ["https://w3id.org/federated-ads/v0"],
+     "type": "Discovery",
+     "subject": "https://example.com",
+     "versions": ["0.2"],
+     "nodes": [
+       { "id": "https://ads.example.com/fa/node",
+         "roles": ["publisher", "selling"],
+         "relationship": "self" },
+       { "id": "https://coop.example.net/fa/node",
+         "roles": ["selling"],
+         "relationship": "delegate" }
+     ]
+   }
+
+                        Figure 5: Discovery document
+
+
+
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 18]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+5.2.  WebFinger Alternative
+
+   A domain MAY instead, or additionally, support WebFinger [RFC7033].
+   A client queries with resource set to the domain's origin, for
+   example resource=https://example.com, and rel set to the extension
+   relation type https://w3id.org/federated-ads/rel/node ([RFC8288],
+   Section 2.1.2).  Each matching link has an href that is a Node
+   Descriptor URL and a type of application/federated-ads+json.  If both
+   mechanisms are available and disagree, the well-known document takes
+   precedence.
+
+5.3.  Node Descriptor
+
+   A Node Descriptor is a Controlled Identifier document [CID] with type
+   "Node".  Keys are expressed as verification methods of type Multikey
+   with a publicKeyMultibase value encoding an Ed25519 public key.  Keys
+   listed in assertionMethod sign objects; keys listed in authentication
+   sign HTTP messages.  A node MAY use the same key for both purposes.
+   Verification methods MAY carry the expires and revoked properties
+   defined by [CID].
+
+   The members of the Node object are defined in Section 6.2.  The Node
+   Descriptor carries a proof created with one of its own
+   assertionMethod keys; its authority derives from being served over
+   HTTPS at its id.
+
+5.4.  Delegation
+
+   When a discovery document lists a node with relationship "delegate",
+   that node MUST list the subject origin in its authorizedFor member.
+   A client MUST treat a delegate as authorized for a domain only if
+   both statements are present.  This two-sided declaration plays the
+   role that ads.txt and sellers.json play in existing advertising
+   systems.
+
+5.5.  Key Rotation
+
+   To rotate a key, a node:
+
+   1.  publishes the new key in its Node Descriptor alongside the old
+       key;
+
+   2.  issues a KeyRotation object (Section 6.26) signed first by the
+       old key and then by the new key, and appends it to its log;
+
+   3.  keeps the old key listed, with an expires value, for at least the
+       longest remaining lifetime of any object it signed with that key,
+       and in any case for at least 30 days.
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 19]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   Because KeyRotation objects carry the public keys and are logged, a
+   verifier can reconstruct a node's key history from its log and verify
+   signatures on historical objects after the old key is removed from
+   the Node Descriptor.
+
+   Nodes SHOULD use short-lived signing keys certified by an offline
+   root key that is listed in the Node Descriptor under
+   capabilityDelegation [CID] and used only to sign KeyRotation and
+   KeyRevocation objects.
+
+5.6.  Key Revocation
+
+   When a key is compromised, the node MUST issue a KeyRevocation object
+   (Section 6.27) signed by a different, unrevoked key (the offline root
+   key, if any), append it to its log, and mark the key revoked in its
+   Node Descriptor.  Proofs and HTTP signatures created by that key with
+   a created time at or after revokedAt MUST be rejected.  Objects
+   signed before revokedAt remain valid only if they were included in
+   the issuer's log, under a witnessed checkpoint, before revokedAt.
+
+5.7.  Caching
+
+   Clients MAY cache discovery documents and Node Descriptors according
+   to HTTP caching rules [RFC9110], but MUST NOT cache them for longer
+   than one hour.  On encountering an unknown keyid or
+   verificationMethod, a client MUST refetch the Node Descriptor
+   (subject to rate limiting) before rejecting the message.
+
+6.  Objects
+
+   This section defines each object type.  Each table lists members in
+   addition to the common members of Table 1.  "Req." is REQUIRED,
+   OPTIONAL or "COND." (conditionally required, as described).
+   Receivers MUST reject an object that lacks a REQUIRED member, with
+   error type malformed-object.
+
+6.1.  Shared Structures
+
+6.1.1.  Party
+
+   A Party object describes a legal entity: legalName (REQUIRED),
+   jurisdiction (REQUIRED; [ISO3166] alpha-2 country code), contact
+   (OPTIONAL email address or URL), taxId (OPTIONAL), and node (OPTIONAL
+   Node Descriptor URL).
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 20]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+6.1.2.  Object Reference
+
+   Where a member references another object by identity and content, its
+   value is an object with id and hash (the object hash).  Members whose
+   names end in Hash contain only an object hash.
+
+6.1.3.  Targeting
+
+   A Targeting object restricts where an advertisement may be delivered.
+   It MAY contain only the following members; receivers MUST reject
+   Targeting objects with any other member unless that member is a
+   registered critical extension that the receiver supports:
+
+   contexts:  Array of context category identifiers from the taxonomy
+      named by taxonomy.
+
+   taxonomy:  URL identifying the taxonomy and version.  This document
+      does not define a taxonomy; see [IAB-CONTENT-TAXONOMY] for one
+      widely used vocabulary to which taxonomies are expected to map.
+
+   languages:  Array of language tags [RFC5646].
+
+   regions:  Array of [ISO3166] country codes or first-level subdivision
+      codes (for example IN-KL).  Finer geography MUST NOT be used.
+
+   dayparts:  Array of objects with days (array of ISO weekday numbers,
+      1-7), start and end (HH:MM local time) and tz (IANA time zone).
+
+   deviceClasses:  Array of strings from desktop, mobile, tablet, tv,
+      audio, other.
+
+   surfaces:  Array of surface profile identifiers (Section 16.4.4).
+
+   Targeting MUST NOT refer to any personal data, user or device
+   identifier, or audience segment (Section 15.1).
+
+6.1.4.  Terms
+
+   Offers, Counter Offers, Standing Offers and Deals carry a Terms
+   object:
+
+    +======================+==========+===============================+
+    | Member               | Req.     | Description                   |
+    +======================+==========+===============================+
+    | inventory            | OPTIONAL | URL of the seller's Inventory |
+    |                      |          | object.                       |
+    +----------------------+----------+-------------------------------+
+    | placements           | OPTIONAL | Array of placement            |
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 21]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+    |                      |          | identifiers from that         |
+    |                      |          | Inventory.                    |
+    +----------------------+----------+-------------------------------+
+    | pricing              | REQUIRED | Object with model (from       |
+    |                      |          | Section 16.4.3) and price     |
+    |                      |          | (Money; for flat and          |
+    |                      |          | sponsorship, per unit, a      |
+    |                      |          | string such as "issue",       |
+    |                      |          | "episode", "day", "week").    |
+    +----------------------+----------+-------------------------------+
+    | budget               | REQUIRED | Money.  Delivery beyond it is |
+    |                      |          | not billable.                 |
+    +----------------------+----------+-------------------------------+
+    | flight               | REQUIRED | Object with start and end     |
+    |                      |          | timestamps.                   |
+    +----------------------+----------+-------------------------------+
+    | targeting            | REQUIRED | Targeting object              |
+    |                      |          | (Section 6.1.3).              |
+    +----------------------+----------+-------------------------------+
+    | pacing               | OPTIONAL | "even" (default), "asap", or  |
+    |                      |          | "daypart".                    |
+    +----------------------+----------+-------------------------------+
+    | frequencyCap         | OPTIONAL | Object with count and period  |
+    |                      |          | (seconds); enforced per       |
+    |                      |          | publisher only.               |
+    +----------------------+----------+-------------------------------+
+    | creatives            | OPTIONAL | Array of Creative Manifest    |
+    |                      |          | object hashes proposed or     |
+    |                      |          | approved.                     |
+    +----------------------+----------+-------------------------------+
+    | fees                 | REQUIRED | Array of all intermediary     |
+    |                      |          | fees: each with party (Node   |
+    |                      |          | URL), role, and either rate   |
+    |                      |          | (decimal string fraction of   |
+    |                      |          | spend) or amount (Money).  An |
+    |                      |          | empty array means no fees.    |
+    +----------------------+----------+-------------------------------+
+    | verification         | REQUIRED | Array of verification levels  |
+    |                      |          | (Section 10.9); MUST include  |
+    |                      |          | "V0".                         |
+    +----------------------+----------+-------------------------------+
+    | witnessPolicy        | OPTIONAL | Object with minWitnesses      |
+    |                      |          | (integer, default 1) and      |
+    |                      |          | optional witnesses (array of  |
+    |                      |          | witness key names).           |
+    +----------------------+----------+-------------------------------+
+    | settlement           | REQUIRED | Array of acceptable           |
+    |                      |          | settlement profiles           |
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 22]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+    |                      |          | (Section 16.4.5).             |
+    +----------------------+----------+-------------------------------+
+    | paymentTerms         | OPTIONAL | Object with netDays,          |
+    |                      |          | cancellationNoticeDays,       |
+    |                      |          | makeGood (string) and         |
+    |                      |          | termsRef (URL of incorporated |
+    |                      |          | terms).                       |
+    +----------------------+----------+-------------------------------+
+    | spendReportInterval  | OPTIONAL | Seconds between Spend         |
+    |                      |          | Reports.  Default 900.        |
+    +----------------------+----------+-------------------------------+
+    | receiptWindow        | OPTIONAL | Receipt Batch window in       |
+    |                      |          | seconds.  Default 3600; MUST  |
+    |                      |          | be a multiple of 3600.        |
+    +----------------------+----------+-------------------------------+
+    | kThreshold           | OPTIONAL | Minimum cell count.  Default  |
+    |                      |          | 50; MUST NOT be less than 50  |
+    |                      |          | unless both parties are the   |
+    |                      |          | same legal entity.            |
+    +----------------------+----------+-------------------------------+
+    | revocationGrace      | OPTIONAL | Seconds after a revocation    |
+    |                      |          | deadline during which         |
+    |                      |          | deliveries remain billable.   |
+    |                      |          | Default 60; maximum 300.      |
+    +----------------------+----------+-------------------------------+
+    | licenceTier          | OPTIONAL | "pointer" (default) or        |
+    |                      |          | "signed-cache".               |
+    +----------------------+----------+-------------------------------+
+    | clickParameter       | OPTIONAL | Object with name and value: a |
+    |                      |          | deal-level, non-personal      |
+    |                      |          | value appended to click-      |
+    |                      |          | through URLs for V2           |
+    |                      |          | corroboration.                |
+    +----------------------+----------+-------------------------------+
+    | disputeTolerance     | OPTIONAL | Decimal string fraction.      |
+    |                      |          | Default "0.10".               |
+    +----------------------+----------+-------------------------------+
+    | arbiter              | OPTIONAL | Node URL of the arbiter for   |
+    |                      |          | disputes.                     |
+    +----------------------+----------+-------------------------------+
+    | jurisdictionProfiles | OPTIONAL | Array of jurisdiction profile |
+    |                      |          | identifiers that apply.       |
+    +----------------------+----------+-------------------------------+
+
+                           Table 3: Terms members
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 23]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+6.2.  Node
+
+   Issued by: any node.  Public.
+
+    +======================+==========+==============================+
+    | Member               | Req.     | Description                  |
+    +======================+==========+==============================+
+    | name                 | REQUIRED | Human-readable name.         |
+    +----------------------+----------+------------------------------+
+    | roles                | REQUIRED | Array of roles               |
+    |                      |          | (Section 1.6).               |
+    +----------------------+----------+------------------------------+
+    | operator             | REQUIRED | Party operating the node.    |
+    +----------------------+----------+------------------------------+
+    | verificationMethod   | REQUIRED | Array of Multikey            |
+    |                      |          | verification methods [CID].  |
+    +----------------------+----------+------------------------------+
+    | assertionMethod      | REQUIRED | Array of verification method |
+    |                      |          | URLs.                        |
+    +----------------------+----------+------------------------------+
+    | authentication       | REQUIRED | Array of verification method |
+    |                      |          | URLs.                        |
+    +----------------------+----------+------------------------------+
+    | capabilityDelegation | OPTIONAL | Offline root key(s)          |
+    |                      |          | (Section 5.5).               |
+    +----------------------+----------+------------------------------+
+    | endpoints            | REQUIRED | Object with inbox and log    |
+    |                      |          | (REQUIRED) and optionally    |
+    |                      |          | policy, inventory, licences, |
+    |                      |          | report, adfree, witness.     |
+    +----------------------+----------+------------------------------+
+    | versions             | REQUIRED | Supported protocol versions. |
+    +----------------------+----------+------------------------------+
+    | conformance          | REQUIRED | Array of conformance tokens  |
+    |                      |          | (Section 13).                |
+    +----------------------+----------+------------------------------+
+    | surfaces             | OPTIONAL | Supported surface profiles.  |
+    +----------------------+----------+------------------------------+
+    | settlement           | OPTIONAL | Supported settlement         |
+    |                      |          | profiles.                    |
+    +----------------------+----------+------------------------------+
+    | jurisdictionProfiles | OPTIONAL | Jurisdiction profiles        |
+    |                      |          | enforced.                    |
+    +----------------------+----------+------------------------------+
+    | authorizedFor        | OPTIONAL | Array of origins for which   |
+    |                      |          | this node acts as delegate.  |
+    +----------------------+----------+------------------------------+
+    | creativeHosts        | COND.    | Array of origins from which  |
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 24]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+    |                      |          | this node's creatives may be |
+    |                      |          | fetched.  REQUIRED for nodes |
+    |                      |          | with the advertiser or       |
+    |                      |          | creative-host role.          |
+    +----------------------+----------+------------------------------+
+    | witnesses            | REQUIRED | Array of witness             |
+    |                      |          | descriptors, each with name  |
+    |                      |          | (signed-note key name), key  |
+    |                      |          | (verifier key) and node      |
+    |                      |          | (OPTIONAL URL).              |
+    +----------------------+----------+------------------------------+
+    | logOrigin            | REQUIRED | The origin line of the       |
+    |                      |          | node's log checkpoints.      |
+    +----------------------+----------+------------------------------+
+
+                          Table 4: Node members
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 25]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   {
+     "@context": ["https://www.w3.org/ns/cid/v1",
+                  "https://w3id.org/federated-ads/v0"],
+     "id": "https://ads.example.com/fa/node",
+     "type": "Node",
+     "name": "Example News selling node",
+     "issuedAt": "2026-10-01T00:00:00Z",
+     "roles": ["publisher", "selling"],
+     "operator": { "legalName": "Example Media Ltd",
+                   "jurisdiction": "IN",
+                   "contact": "ads@example.com" },
+     "verificationMethod": [{
+       "id": "https://ads.example.com/fa/node#key-2026",
+       "type": "Multikey",
+       "controller": "https://ads.example.com/fa/node",
+       "publicKeyMultibase":
+         "z6MkrJVnaZkeFzdQyMZu1cgjg7k1pZZ6pvBQ7XJPt4swbTQ2"
+     }],
+     "assertionMethod": ["https://ads.example.com/fa/node#key-2026"],
+     "authentication": ["https://ads.example.com/fa/node#key-2026"],
+     "endpoints": {
+       "inbox": "https://ads.example.com/fa/inbox",
+       "log": "https://ads.example.com/fa/log/",
+       "policy": "https://ads.example.com/fa/policy",
+       "inventory": "https://ads.example.com/fa/inventory",
+       "report": "https://ads.example.com/fa/report",
+       "adfree": "https://example.com/subscribe"
+     },
+     "logOrigin": "ads.example.com/fa/log",
+     "witnesses": [{ "name": "witness.example.org",
+                     "key": "witness.example.org+1a2b3c4d+AX..." }],
+     "versions": ["0.2"],
+     "surfaces": ["surface:web", "surface:email"],
+     "settlement": ["settle:invoice", "settle:prepaid"],
+     "jurisdictionProfiles": ["jp:in", "jp:eu"],
+     "conformance": ["federated-ads-core/0.2"],
+     "critical": [],
+     "proof": { "type": "DataIntegrityProof", "...": "..." }
+   }
+
+                         Figure 6: Node Descriptor
+
+6.3.  Policy
+
+   Issued by: selling or buying node.  Public or shared with
+   counterparties.  States what the issuer accepts or requires.
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 26]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   +======================+==========+================================+
+   | Member               | Req.     | Description                    |
+   +======================+==========+================================+
+   | taxonomy             | REQUIRED | Taxonomy URL and version.      |
+   +----------------------+----------+--------------------------------+
+   | appliesTo            | OPTIONAL | Array of placement identifiers |
+   |                      |          | or surfaces; default all.      |
+   +----------------------+----------+--------------------------------+
+   | allowCategories      | OPTIONAL | Context or ad-product          |
+   |                      |          | categories accepted.           |
+   +----------------------+----------+--------------------------------+
+   | blockCategories      | OPTIONAL | Categories refused.            |
+   +----------------------+----------+--------------------------------+
+   | sensitiveAllowed     | OPTIONAL | Sensitive categories           |
+   |                      |          | explicitly allowed (sensitive  |
+   |                      |          | is distinct from unsafe).      |
+   +----------------------+----------+--------------------------------+
+   | floors               | OPTIONAL | Array of objects with          |
+   |                      |          | placement, model and price.    |
+   +----------------------+----------+--------------------------------+
+   | creativeApproval     | REQUIRED | Boolean; whether each creative |
+   |                      |          | hash requires approval.        |
+   +----------------------+----------+--------------------------------+
+   | formats              | OPTIONAL | Accepted creative formats      |
+   |                      |          | (native, display, html5,       |
+   |                      |          | audio, script).                |
+   +----------------------+----------+--------------------------------+
+   | minVerification      | OPTIONAL | Verification levels required   |
+   |                      |          | of counterparties.             |
+   +----------------------+----------+--------------------------------+
+   | trustedLabelers      | OPTIONAL | Labeler Node URLs whose Labels |
+   |                      |          | the issuer honours.            |
+   +----------------------+----------+--------------------------------+
+   | jurisdictionProfiles | OPTIONAL | Profiles enforced.             |
+   +----------------------+----------+--------------------------------+
+
+                         Table 5: Policy members
+
+   A buying node MUST NOT send an Offer that conflicts with the
+   recipient's current Policy; a selling node MUST evaluate its Policy
+   against each Offer and creative and respond with policy-mismatch if
+   they conflict.
+
+6.4.  Inventory
+
+   Issued by: selling node.  Describes placements so buyers can plan.
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 27]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+     +============+==========+=======================================+
+     | Member     | Req.     | Description                           |
+     +============+==========+=======================================+
+     | placements | REQUIRED | Array of Placement objects (below).   |
+     +------------+----------+---------------------------------------+
+     | validUntil | OPTIONAL | Time after which forecasts are stale. |
+     +------------+----------+---------------------------------------+
+
+                         Table 6: Inventory members
+
+   A Placement has id (REQUIRED, unique within the Inventory), surface
+   (REQUIRED), format (REQUIRED), position (OPTIONAL), contexts
+   (OPTIONAL), forecast (OPTIONAL: period in seconds and volume, an
+   integer that MUST be rounded to two significant digits), rateCard
+   (OPTIONAL: array of model, price, and optional unit), minSpend
+   (OPTIONAL Money), leadTimeDays (OPTIONAL) and avails (OPTIONAL: array
+   of weekStart and volume).
+
+6.5.  Offer
+
+   Issued by: buying node.  Sent to one selling node.
+
+         +============+==========+===============================+
+         | Member     | Req.     | Description                   |
+         +============+==========+===============================+
+         | recipient  | REQUIRED | Node URL of the selling node. |
+         +------------+----------+-------------------------------+
+         | advertiser | REQUIRED | Party.                        |
+         +------------+----------+-------------------------------+
+         | payer      | OPTIONAL | Party paying, if different    |
+         |            |          | from the advertiser.          |
+         +------------+----------+-------------------------------+
+         | terms      | REQUIRED | Terms object (Section 6.1.4). |
+         +------------+----------+-------------------------------+
+         | expiresAt  | REQUIRED | Offer lapses after this time. |
+         +------------+----------+-------------------------------+
+         | previous   | OPTIONAL | Object Reference to the Offer |
+         |            |          | or CounterOffer this revises. |
+         +------------+----------+-------------------------------+
+
+                           Table 7: Offer members
+
+
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 28]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   {
+     "@context": ["https://w3id.org/federated-ads/v0",
+                  "https://w3id.org/security/data-integrity/v2"],
+     "type": "Offer",
+     "id": "https://ads.acme.example/fa/offers/0c8e5d3a",
+     "issuer": "https://ads.acme.example/fa/node",
+     "recipient": "https://ads.example.com/fa/node",
+     "issuedAt": "2026-10-04T09:00:00Z",
+     "expiresAt": "2026-10-06T09:00:00Z",
+     "advertiser": { "legalName": "Acme Bikes Pvt Ltd",
+                     "jurisdiction": "IN" },
+     "terms": {
+       "inventory": "https://ads.example.com/fa/inventory",
+       "placements": ["article-native"],
+       "pricing": { "model": "cpm",
+                    "price": { "amount": "350.00",
+                               "currency": "INR" } },
+       "budget": { "amount": "125000.00", "currency": "INR" },
+       "flight": { "start": "2026-10-05T00:00:00Z",
+                   "end": "2026-10-31T23:59:59Z" },
+       "targeting": {
+         "taxonomy": "https://w3id.org/federated-ads/tax/1",
+         "contexts": ["sports:cycling", "technology"],
+         "regions": ["IN-KL", "IN-KA"],
+         "languages": ["en", "ml"]
+       },
+       "pacing": "even",
+       "creatives": [
+         "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ="
+       ],
+       "fees": [ { "party": "https://ads.acme.example/fa/node",
+                   "role": "buying", "rate": "0.06" } ],
+       "verification": ["V0", "V1", "V2"],
+       "settlement": ["settle:invoice"],
+       "paymentTerms": { "netDays": 30 }
+     },
+     "proof": { "type": "DataIntegrityProof", "...": "..." }
+   }
+
+                              Figure 7: Offer
+
+6.6.  StandingOffer
+
+   Issued by: buying node.  Published to relays or made available at a
+   public URL; any eligible selling node may claim a share.
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 29]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+       +==============+==========+=================================+
+       | Member       | Req.     | Description                     |
+       +==============+==========+=================================+
+       | advertiser   | REQUIRED | Party.                          |
+       +--------------+----------+---------------------------------+
+       | terms        | REQUIRED | Terms; budget is the total      |
+       |              |          | budget.                         |
+       +--------------+----------+---------------------------------+
+       | perSellerCap | REQUIRED | Money; maximum budget any one   |
+       |              |          | seller may claim.               |
+       +--------------+----------+---------------------------------+
+       | eligibility  | OPTIONAL | Object with minVerification,    |
+       |              |          | requiredLabels (array of label  |
+       |              |          | values and labelers), surfaces. |
+       +--------------+----------+---------------------------------+
+       | expiresAt    | REQUIRED | No claims after this time.      |
+       +--------------+----------+---------------------------------+
+
+                       Table 8: StandingOffer members
+
+6.7.  RFP
+
+   Issued by: buying node.  Requests priced proposals.
+
+     +==============+==========+====================================+
+     | Member       | Req.     | Description                        |
+     +==============+==========+====================================+
+     | advertiser   | REQUIRED | Party.                             |
+     +--------------+----------+------------------------------------+
+     | requirements | REQUIRED | Partial Terms object; pricing and  |
+     |              |          | budget MAY be omitted; budgetRange |
+     |              |          | (two Money values) MAY be given.   |
+     +--------------+----------+------------------------------------+
+     | recipients   | OPTIONAL | Node URLs invited; absent means    |
+     |              |          | open.                              |
+     +--------------+----------+------------------------------------+
+     | expiresAt    | REQUIRED | Response deadline.                 |
+     +--------------+----------+------------------------------------+
+
+                           Table 9: RFP members
+
+   Selling nodes respond to an RFP with a CounterOffer whose inReplyTo
+   references the RFP.
+
+6.8.  Claim
+
+   Issued by: selling node, to the issuer of a Standing Offer.
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 30]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+       +===================+==========+===========================+
+       | Member            | Req.     | Description               |
+       +===================+==========+===========================+
+       | standingOffer     | REQUIRED | Object Reference.         |
+       +-------------------+----------+---------------------------+
+       | budget            | REQUIRED | Money claimed; MUST NOT   |
+       |                   |          | exceed perSellerCap.      |
+       +-------------------+----------+---------------------------+
+       | placements        | OPTIONAL | Placements offered.       |
+       +-------------------+----------+---------------------------+
+       | approvedCreatives | COND.    | Creative hashes approved; |
+       |                   |          | REQUIRED if the seller's  |
+       |                   |          | Policy requires approval. |
+       +-------------------+----------+---------------------------+
+       | expiresAt         | REQUIRED | Claim lapses if not       |
+       |                   |          | confirmed by a Deal.      |
+       +-------------------+----------+---------------------------+
+
+                         Table 10: Claim members
+
+   The buying node confirms a claim by issuing a Deal whose basis
+   references the Claim, or rejects it with a Decline.
+
+6.9.  Acceptance
+
+   Issued by: the recipient of an Offer or CounterOffer.
+
+   +===================+==========+====================================+
+   | Member            | Req.     | Description                        |
+   +===================+==========+====================================+
+   | inReplyTo         | REQUIRED | Object Reference to the Offer      |
+   |                   |          | or CounterOffer accepted.          |
+   +-------------------+----------+------------------------------------+
+   | approvedCreatives | COND.    | Creative hashes approved;          |
+   |                   |          | REQUIRED if creative approval      |
+   |                   |          | applies.                           |
+   +-------------------+----------+------------------------------------+
+   | expiresAt         | REQUIRED | Acceptance lapses if no Deal       |
+   |                   |          | is issued by this time.            |
+   +-------------------+----------+------------------------------------+
+
+                        Table 11: Acceptance members
+
+   An Acceptance accepts exactly the terms of the referenced object; the
+   hash binding prevents substitution.
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 31]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+6.10.  CounterOffer
+
+   Issued by: either party.
+
+          +===========+==========+=============================+
+          | Member    | Req.     | Description                 |
+          +===========+==========+=============================+
+          | inReplyTo | REQUIRED | Object Reference to the     |
+          |           |          | Offer, CounterOffer or RFP. |
+          +-----------+----------+-----------------------------+
+          | terms     | REQUIRED | Complete replacement Terms. |
+          +-----------+----------+-----------------------------+
+          | expiresAt | REQUIRED | Lapse time.                 |
+          +-----------+----------+-----------------------------+
+          | note      | OPTIONAL | Human-readable explanation. |
+          +-----------+----------+-----------------------------+
+
+                      Table 12: CounterOffer members
+
+6.11.  Decline
+
+   Issued by: either party.
+
+         +===========+==========+================================+
+         | Member    | Req.     | Description                    |
+         +===========+==========+================================+
+         | inReplyTo | REQUIRED | Object Reference to the Offer, |
+         |           |          | CounterOffer, RFP or Claim.    |
+         +-----------+----------+--------------------------------+
+         | reason    | REQUIRED | An error type name             |
+         |           |          | (Section 8.5) or "other".      |
+         +-----------+----------+--------------------------------+
+         | note      | OPTIONAL | Human-readable explanation.    |
+         +-----------+----------+--------------------------------+
+
+                         Table 13: Decline members
+
+6.12.  Deal
+
+   Issued by: buying node; countersigned by the selling node
+   (Section 4.2.3).
+
+
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 32]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   +===================+==========+====================================+
+   | Member            | Req.     | Description                        |
+   +===================+==========+====================================+
+   | buyer             | REQUIRED | Node URL of the buying             |
+   |                   |          | node (equal to issuer).            |
+   +-------------------+----------+------------------------------------+
+   | seller            | REQUIRED | Node URL of the selling            |
+   |                   |          | node.                              |
+   +-------------------+----------+------------------------------------+
+   | advertiser        | REQUIRED | Party.                             |
+   +-------------------+----------+------------------------------------+
+   | payer             | OPTIONAL | Party, if different.               |
+   +-------------------+----------+------------------------------------+
+   | basis             | REQUIRED | Object Reference to the            |
+   |                   |          | Acceptance or Claim.               |
+   +-------------------+----------+------------------------------------+
+   | terms             | REQUIRED | Final Terms; MUST equal            |
+   |                   |          | the accepted terms except          |
+   |                   |          | that budget for a Claim            |
+   |                   |          | is the claimed budget.             |
+   +-------------------+----------+------------------------------------+
+   | approvedCreatives | REQUIRED | Array of approved                  |
+   |                   |          | Creative Manifest hashes           |
+   |                   |          | (MAY be empty).                    |
+   +-------------------+----------+------------------------------------+
+   | settlementProfile | REQUIRED | The one profile chosen             |
+   |                   |          | from terms.settlement.             |
+   +-------------------+----------+------------------------------------+
+
+                           Table 14: Deal members
+
+   A Deal takes effect when countersigned.  The id of a Deal is stable
+   for its lifetime; changes are made with DealAmendment objects.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 33]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   {
+     "@context": ["https://w3id.org/federated-ads/v0",
+                  "https://w3id.org/security/data-integrity/v2"],
+     "type": "Deal",
+     "id": "https://ads.acme.example/fa/deals/3d9e7a1c",
+     "issuer": "https://ads.acme.example/fa/node",
+     "issuedAt": "2026-10-04T12:00:00Z",
+     "buyer": "https://ads.acme.example/fa/node",
+     "seller": "https://ads.example.com/fa/node",
+     "advertiser": { "legalName": "Acme Bikes Pvt Ltd",
+                     "jurisdiction": "IN" },
+     "basis": {
+       "id": "https://ads.example.com/fa/acceptances/91f2",
+       "hash": "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ="
+     },
+     "terms": { "...": "as accepted" },
+     "approvedCreatives": [
+       "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ="
+     ],
+     "settlementProfile": "settle:invoice",
+     "proof": [
+       { "id": "urn:uuid:0f3c6a7e-2d1b-4c8e-9a55-5b8f1f0d2e11",
+         "type": "DataIntegrityProof",
+         "cryptosuite": "eddsa-jcs-2022",
+         "verificationMethod":
+           "https://ads.acme.example/fa/node#key-2026",
+         "proofPurpose": "assertionMethod",
+         "created": "2026-10-04T12:00:00Z",
+         "proofValue": "z..." },
+       { "type": "DataIntegrityProof",
+         "cryptosuite": "eddsa-jcs-2022",
+         "verificationMethod":
+           "https://ads.example.com/fa/node#key-2026",
+         "proofPurpose": "assertionMethod",
+         "created": "2026-10-04T12:03:10Z",
+         "previousProof":
+           "urn:uuid:0f3c6a7e-2d1b-4c8e-9a55-5b8f1f0d2e11",
+         "proofValue": "z..." }
+     ]
+   }
+
+     Figure 8: Countersigned Deal (illustrative hashes and signatures)
+
+6.13.  DealAmendment
+
+   Issued by: either deal party; countersigned by the other.
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 34]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   +=================+==========+======================================+
+   | Member          | Req.     | Description                          |
+   +=================+==========+======================================+
+   | deal            | REQUIRED | Deal id.                             |
+   +-----------------+----------+--------------------------------------+
+   | sequence        | REQUIRED | Integer, starting at 1, incremented  |
+   |                 |          | per amendment.                       |
+   +-----------------+----------+--------------------------------------+
+   | previous        | COND.    | Object Reference to the previous     |
+   |                 |          | amendment; REQUIRED if sequence >    |
+   |                 |          | 1.                                   |
+   +-----------------+----------+--------------------------------------+
+   | addCreatives    | OPTIONAL | Creative hashes newly approved.      |
+   +-----------------+----------+--------------------------------------+
+   | removeCreatives | OPTIONAL | Creative hashes no longer approved.  |
+   +-----------------+----------+--------------------------------------+
+   | terms           | OPTIONAL | Replacement Terms members (a         |
+   |                 |          | partial Terms object whose members   |
+   |                 |          | replace the corresponding members).  |
+   +-----------------+----------+--------------------------------------+
+   | effectiveAt     | REQUIRED | Time the amendment takes effect.     |
+   +-----------------+----------+--------------------------------------+
+
+                      Table 15: DealAmendment members
+
+   A changed creative has a new hash and MUST be approved by a
+   DealAmendment (or a new Deal) before it is served.
+
+6.14.  StatusChange
+
+   Issued by: the party entitled to make the transition (Section 7).
+
+     +=============+==========+=====================================+
+     | Member      | Req.     | Description                         |
+     +=============+==========+=====================================+
+     | subject     | REQUIRED | Object Reference to the Offer, Deal |
+     |             |          | or Dispute.                         |
+     +-------------+----------+-------------------------------------+
+     | to          | REQUIRED | Target state name from Section 7.   |
+     +-------------+----------+-------------------------------------+
+     | effectiveAt | REQUIRED | Time of effect; MUST NOT be earlier |
+     |             |          | than issuedAt minus 60 seconds.     |
+     +-------------+----------+-------------------------------------+
+     | reason      | OPTIONAL | Human-readable reason.              |
+     +-------------+----------+-------------------------------------+
+
+                      Table 16: StatusChange members
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 35]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+6.15.  CreativeManifest
+
+   Issued by: advertiser (or its buying node acting for it).
+
+    +==============+==========+======================================+
+    | Member       | Req.     | Description                          |
+    +==============+==========+======================================+
+    | advertiser   | REQUIRED | Party.                               |
+    +--------------+----------+--------------------------------------+
+    | format       | REQUIRED | native, display, html5, audio or     |
+    |              |          | script.                              |
+    +--------------+----------+--------------------------------------+
+    | assets       | REQUIRED | Array of Asset objects (below).      |
+    +--------------+----------+--------------------------------------+
+    | text         | OPTIONAL | Object with title, body, cta,        |
+    |              |          | sponsorLabel.                        |
+    +--------------+----------+--------------------------------------+
+    | landingUrl   | REQUIRED | The pinned click-through URL.        |
+    +--------------+----------+--------------------------------------+
+    | categories   | REQUIRED | Ad product categories.               |
+    +--------------+----------+--------------------------------------+
+    | languages    | OPTIONAL | Language tags.                       |
+    +--------------+----------+--------------------------------------+
+    | aiGenerated  | OPTIONAL | Boolean; true if synthetic.          |
+    +--------------+----------+--------------------------------------+
+    | provenance   | OPTIONAL | Object with c2pa (URL) and hash of a |
+    |              |          | C2PA manifest [C2PA].                |
+    +--------------+----------+--------------------------------------+
+    | attestations | OPTIONAL | Array of Object References to Labels |
+    |              |          | (e.g., regulatory approvals).        |
+    +--------------+----------+--------------------------------------+
+
+                    Table 17: CreativeManifest members
+
+   An Asset has role (e.g., image, logo, audio, html), url (REQUIRED;
+   origin MUST be listed in the advertiser's creativeHosts), mediaType
+   (REQUIRED), hash (REQUIRED content hash), size (REQUIRED octets) and
+   optional width, height, duration (seconds) and alt.
+
+6.16.  Licence
+
+   Issued by: advertiser.  Grants the licensee the right to display one
+   creative under one deal.
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 36]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   +===============+==========+=======================================+
+   | Member        | Req.     | Description                           |
+   +===============+==========+=======================================+
+   | manifest      | REQUIRED | URL of the Creative Manifest.         |
+   +---------------+----------+---------------------------------------+
+   | manifestHash  | REQUIRED | Object hash of the Creative Manifest. |
+   +---------------+----------+---------------------------------------+
+   | licensee      | REQUIRED | Node URL of the licensee.             |
+   +---------------+----------+---------------------------------------+
+   | deal          | REQUIRED | Deal id.                              |
+   +---------------+----------+---------------------------------------+
+   | surfaces      | REQUIRED | Surfaces on which display is          |
+   |               |          | permitted.                            |
+   +---------------+----------+---------------------------------------+
+   | tier          | REQUIRED | "pointer" or "signed-cache"           |
+   |               |          | (Section 9.1).                        |
+   +---------------+----------+---------------------------------------+
+   | expiresAt     | REQUIRED | End of the licence.                   |
+   +---------------+----------+---------------------------------------+
+   | revocationLog | REQUIRED | Base URL of the issuer's log.         |
+   +---------------+----------+---------------------------------------+
+   | renew         | OPTIONAL | URL at which the licensee may request |
+   |               |          | renewal.                              |
+   +---------------+----------+---------------------------------------+
+   | renews        | OPTIONAL | id of the licence this one renews.    |
+   +---------------+----------+---------------------------------------+
+
+                        Table 18: Licence members
+
+   {
+     "@context": ["https://w3id.org/federated-ads/v0",
+                  "https://w3id.org/security/data-integrity/v2"],
+     "type": "Licence",
+     "id": "https://ads.acme.example/fa/licences/7d41b0e2",
+     "issuer": "https://ads.acme.example/fa/node",
+     "manifest": "https://ads.acme.example/fa/creatives/etour-v3",
+     "manifestHash":
+       "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ=",
+     "licensee": "https://ads.example.com/fa/node",
+     "deal": "https://ads.acme.example/fa/deals/3d9e7a1c",
+     "surfaces": ["surface:web"],
+     "tier": "pointer",
+     "issuedAt": "2026-10-05T10:00:00Z",
+     "expiresAt": "2026-10-05T10:15:00Z",
+     "revocationLog": "https://ads.acme.example/fa/log/",
+     "renew": "https://ads.acme.example/fa/licences/renew",
+     "proof": { "type": "DataIntegrityProof", "...": "..." }
+   }
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 37]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+                             Figure 9: Licence
+
+6.17.  Revocation
+
+   Issued by: the issuer of the licences revoked.
+
+    +=============+==========+=======================================+
+    | Member      | Req.     | Description                           |
+    +=============+==========+=======================================+
+    | licences    | COND.    | Array of Licence ids.                 |
+    +-------------+----------+---------------------------------------+
+    | scope       | COND.    | Object with deal and/or manifestHash: |
+    |             |          | revokes all licences issued by the    |
+    |             |          | issuer matching it.  One of licences  |
+    |             |          | or scope is REQUIRED.                 |
+    +-------------+----------+---------------------------------------+
+    | reason      | REQUIRED | Revocation reason (Section 16.4.6).   |
+    +-------------+----------+---------------------------------------+
+    | effectiveAt | REQUIRED | Requested effective time; see         |
+    |             |          | Section 9.5.                          |
+    +-------------+----------+---------------------------------------+
+    | note        | OPTIONAL | Human-readable explanation.           |
+    +-------------+----------+---------------------------------------+
+
+                       Table 19: Revocation members
+
+   {
+     "@context": ["https://w3id.org/federated-ads/v0",
+                  "https://w3id.org/security/data-integrity/v2"],
+     "type": "Revocation",
+     "id": "https://ads.acme.example/fa/revocations/5b2c",
+     "issuer": "https://ads.acme.example/fa/node",
+     "issuedAt": "2026-10-12T08:30:00Z",
+     "scope": {
+       "deal": "https://ads.acme.example/fa/deals/3d9e7a1c",
+       "manifestHash":
+         "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ="
+     },
+     "reason": "pricing-error",
+     "effectiveAt": "2026-10-12T08:30:00Z",
+     "proof": { "type": "DataIntegrityProof", "...": "..." }
+   }
+
+                           Figure 10: Revocation
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 38]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+6.18.  RevocationAck
+
+   Issued by: licensee.
+
+      +============+==========+=====================================+
+      | Member     | Req.     | Description                         |
+      +============+==========+=====================================+
+      | revocation | REQUIRED | Object Reference to the Revocation. |
+      +------------+----------+-------------------------------------+
+      | receivedAt | REQUIRED | Time the revocation was received or |
+      |            |          | observed.                           |
+      +------------+----------+-------------------------------------+
+      | ceasedAt   | REQUIRED | Time new deliveries stopped.        |
+      +------------+----------+-------------------------------------+
+      | purged     | OPTIONAL | Boolean; whether cached assets were |
+      |            |          | purged.                             |
+      +------------+----------+-------------------------------------+
+      | log        | REQUIRED | Object with origin and index of     |
+      |            |          | this ack in the licensee's log.     |
+      +------------+----------+-------------------------------------+
+
+                      Table 20: RevocationAck members
+
+6.19.  SpendReport
+
+   Issued by: selling node.  For pacing; not a billing record.
+
+      +=================+==========+===============================+
+      | Member          | Req.     | Description                   |
+      +=================+==========+===============================+
+      | deal            | REQUIRED | Deal id.                      |
+      +-----------------+----------+-------------------------------+
+      | asOf            | REQUIRED | Time of the counters.         |
+      +-----------------+----------+-------------------------------+
+      | spend           | REQUIRED | Money spent to date.          |
+      +-----------------+----------+-------------------------------+
+      | counts          | REQUIRED | Object mapping event types to |
+      |                 |          | cumulative integer counts.    |
+      +-----------------+----------+-------------------------------+
+      | budgetRemaining | REQUIRED | Money.                        |
+      +-----------------+----------+-------------------------------+
+
+                      Table 21: SpendReport members
+
+6.20.  ReceiptBatch
+
+   Issued by: selling node.  The billing record.
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 39]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+       +===================+==========+===========================+
+       | Member            | Req.     | Description               |
+       +===================+==========+===========================+
+       | deal              | REQUIRED | Deal id.                  |
+       +-------------------+----------+---------------------------+
+       | sequence          | REQUIRED | Integer, starting at 1    |
+       |                   |          | per deal, without gaps.   |
+       +-------------------+----------+---------------------------+
+       | window            | REQUIRED | Object with start and end |
+       |                   |          | (Section 10.2).           |
+       +-------------------+----------+---------------------------+
+       | kThreshold        | REQUIRED | The k used                |
+       |                   |          | (Section 10.4).           |
+       +-------------------+----------+---------------------------+
+       | totals            | REQUIRED | Object mapping event      |
+       |                   |          | types to integer totals.  |
+       +-------------------+----------+---------------------------+
+       | cells             | REQUIRED | Array of Cell objects     |
+       |                   |          | (Section 10.3).           |
+       +-------------------+----------+---------------------------+
+       | cellTree          | REQUIRED | Object with alg           |
+       |                   |          | ("rfc6962-sha256"), size  |
+       |                   |          | and root (content hash).  |
+       +-------------------+----------+---------------------------+
+       | measurementModule | OPTIONAL | Content hash of the       |
+       |                   |          | measurement module used   |
+       |                   |          | for viewability.          |
+       +-------------------+----------+---------------------------+
+       | attestation       | COND.    | Privacy Pass summary      |
+       |                   |          | (Section 10.10); REQUIRED |
+       |                   |          | if the deal requires V3.  |
+       +-------------------+----------+---------------------------+
+       | log               | REQUIRED | Object with origin and    |
+       |                   |          | index of the batch's log  |
+       |                   |          | entry.                    |
+       +-------------------+----------+---------------------------+
+
+                      Table 22: ReceiptBatch members
+
+   Because the log.index is known only after appending, the selling node
+   appends a log entry for the batch's identity first and then issues
+   the batch; see Section 10.6.
+
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 40]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   {
+     "@context": ["https://w3id.org/federated-ads/v0",
+                  "https://w3id.org/security/data-integrity/v2"],
+     "type": "ReceiptBatch",
+     "id": "https://ads.example.com/fa/receipts/8c1d22f0",
+     "issuer": "https://ads.example.com/fa/node",
+     "issuedAt": "2026-10-05T11:05:00Z",
+     "deal": "https://ads.acme.example/fa/deals/3d9e7a1c",
+     "sequence": 11,
+     "window": { "start": "2026-10-05T10:00:00Z",
+                 "end": "2026-10-05T11:00:00Z" },
+     "kThreshold": 50,
+     "totals": { "impression": 18240, "click": 97 },
+     "cells": [
+       { "creative":
+           "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ=",
+         "context": "sports:cycling", "region": "IN-KL",
+         "event": "impression", "count": 11020,
+         "salt": "q8Jb3n0mV2xY1cR7tK4wZA" },
+       { "creative":
+           "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ=",
+         "context": "technology", "region": "IN-KA",
+         "event": "impression", "count": 7220,
+         "salt": "Hn5tPq2Lw9sD0fG3jK6mXQ" },
+       { "creative":
+           "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ=",
+         "context": "*", "region": "*",
+         "event": "click", "count": 97,
+         "salt": "Zx1Cv4Bn7Mq0Wr3Ty6Ui9A" }
+     ],
+     "cellTree": { "alg": "rfc6962-sha256", "size": 3,
+                   "root": "sha256-..." },
+     "log": { "origin": "ads.example.com/fa/log", "index": 48213 },
+     "proof": { "type": "DataIntegrityProof", "...": "..." }
+   }
+
+                   Figure 11: ReceiptBatch (illustrative)
+
+6.21.  Statement
+
+   Issued by: one deal party (normally the selling node); countersigned
+   by the other (Section 4.2.3).
+
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 41]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   +===================+==========+===================================+
+   | Member            | Req.     | Description                       |
+   +===================+==========+===================================+
+   | counterparty      | REQUIRED | Node URL of the other party.      |
+   +-------------------+----------+-----------------------------------+
+   | period            | REQUIRED | Object with start and end.        |
+   +-------------------+----------+-----------------------------------+
+   | lines             | REQUIRED | Array of lines: deal, event,      |
+   |                   |          | quantity, unitPrice (Money),      |
+   |                   |          | amount (Money).                   |
+   +-------------------+----------+-----------------------------------+
+   | fees              | OPTIONAL | Array of fee lines: party, role,  |
+   |                   |          | amount.                           |
+   +-------------------+----------+-----------------------------------+
+   | receiptBatches    | REQUIRED | Array of Object References to the |
+   |                   |          | batches relied on.                |
+   +-------------------+----------+-----------------------------------+
+   | subtotal          | REQUIRED | Money.                            |
+   +-------------------+----------+-----------------------------------+
+   | tax               | OPTIONAL | Object with supplierJurisdiction, |
+   |                   |          | customerJurisdiction,             |
+   |                   |          | supplierTaxId, customerTaxId,     |
+   |                   |          | reverseCharge (boolean), amount   |
+   |                   |          | (Money).                          |
+   +-------------------+----------+-----------------------------------+
+   | total             | REQUIRED | Money.                            |
+   +-------------------+----------+-----------------------------------+
+   | settlementProfile | REQUIRED | Profile used.                     |
+   +-------------------+----------+-----------------------------------+
+   | dueDate           | OPTIONAL | Timestamp.                        |
+   +-------------------+----------+-----------------------------------+
+   | supersedes        | OPTIONAL | Object Reference to a Statement   |
+   |                   |          | this replaces.                    |
+   +-------------------+----------+-----------------------------------+
+
+                       Table 23: Statement members
+
+   All Money values in a Statement MUST use the same currency.  The
+   countersigned Statement is the authoritative basis for invoicing.
+
+6.22.  PaymentNotice
+
+   Issued by: payer.
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 42]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+        +===================+==========+==========================+
+        | Member            | Req.     | Description              |
+        +===================+==========+==========================+
+        | statement         | REQUIRED | Object Reference to the  |
+        |                   |          | countersigned Statement. |
+        +-------------------+----------+--------------------------+
+        | amount            | REQUIRED | Money paid.              |
+        +-------------------+----------+--------------------------+
+        | settlementProfile | REQUIRED | Profile used.            |
+        +-------------------+----------+--------------------------+
+        | reference         | OPTIONAL | Rail-specific payment    |
+        |                   |          | reference.               |
+        +-------------------+----------+--------------------------+
+        | paidAt            | REQUIRED | Timestamp.               |
+        +-------------------+----------+--------------------------+
+
+                      Table 24: PaymentNotice members
+
+6.23.  Dispute
+
+   Issued by: either deal party.
+
+     +===============+==========+===================================+
+     | Member        | Req.     | Description                       |
+     +===============+==========+===================================+
+     | subject       | REQUIRED | Object Reference to a             |
+     |               |          | ReceiptBatch or Statement.        |
+     +---------------+----------+-----------------------------------+
+     | grounds       | REQUIRED | "divergence", "post-revocation-   |
+     |               |          | delivery", "unlicensed-delivery", |
+     |               |          | "arithmetic" or "other".          |
+     +---------------+----------+-----------------------------------+
+     | claimedAmount | OPTIONAL | Money in dispute.                 |
+     +---------------+----------+-----------------------------------+
+     | evidence      | OPTIONAL | Array of objects with url, hash   |
+     |               |          | and description.                  |
+     +---------------+----------+-----------------------------------+
+     | respondBy     | REQUIRED | Default 14 days after issuedAt.   |
+     +---------------+----------+-----------------------------------+
+     | arbiter       | OPTIONAL | Node URL; defaults to the deal's  |
+     |               |          | arbiter.                          |
+     +---------------+----------+-----------------------------------+
+
+                        Table 25: Dispute members
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 43]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+6.24.  Report
+
+   Issued by: selling node, aggregating reports from end users.
+
+     +=========+==========+=========================================+
+     | Member  | Req.     | Description                             |
+     +=========+==========+=========================================+
+     | subject | REQUIRED | Object with one or more of deal,        |
+     |         |          | creative (hash), advertiser (Node URL). |
+     +---------+----------+-----------------------------------------+
+     | window  | REQUIRED | Object with start and end.              |
+     +---------+----------+-----------------------------------------+
+     | counts  | REQUIRED | Object mapping report categories        |
+     |         |          | (misleading, offensive, scam,           |
+     |         |          | sensitive, other) to integer counts.    |
+     +---------+----------+-----------------------------------------+
+     | action  | OPTIONAL | Action taken by the selling node, e.g.  |
+     |         |          | "paused".                               |
+     +---------+----------+-----------------------------------------+
+
+                         Table 26: Report members
+
+   Reports MUST NOT contain the identity, free text or any identifier of
+   the reporting users.
+
+6.25.  Label
+
+   Issued by: labeler or auditor.  Public unless stated otherwise.
+
+   +===========+==========+===========================================+
+   | Member    | Req.     | Description                               |
+   +===========+==========+===========================================+
+   | subject   | REQUIRED | A Node URL, an origin, or a content hash. |
+   +-----------+----------+-------------------------------------------+
+   | val       | REQUIRED | Label value (e.g., kyb-verified,          |
+   |           |          | cloaking, audit-pass).                    |
+   +-----------+----------+-------------------------------------------+
+   | neg       | OPTIONAL | Boolean; true retracts an earlier label   |
+   |           |          | with the same subject and value.          |
+   +-----------+----------+-------------------------------------------+
+   | evidence  | OPTIONAL | URL.                                      |
+   +-----------+----------+-------------------------------------------+
+   | expiresAt | OPTIONAL | As in the common members.                 |
+   +-----------+----------+-------------------------------------------+
+
+                         Table 27: Label members
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 44]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+6.26.  KeyRotation
+
+   Issued by: any node.  Logged.  Signed first by the old key and then
+   by the new key (Section 4.2.3), or by the root key followed by the
+   new key.
+
+         +=================+==========+==========================+
+         | Member          | Req.     | Description              |
+         +=================+==========+==========================+
+         | oldKey          | REQUIRED | Verification method URL. |
+         +-----------------+----------+--------------------------+
+         | oldKeyMultibase | REQUIRED | Old public key.          |
+         +-----------------+----------+--------------------------+
+         | newKey          | REQUIRED | Verification method URL. |
+         +-----------------+----------+--------------------------+
+         | newKeyMultibase | REQUIRED | New public key.          |
+         +-----------------+----------+--------------------------+
+         | purposes        | REQUIRED | Array of assertionMethod |
+         |                 |          | and/or authentication.   |
+         +-----------------+----------+--------------------------+
+         | effectiveAt     | REQUIRED | Time the new key takes   |
+         |                 |          | effect.                  |
+         +-----------------+----------+--------------------------+
+
+                       Table 28: KeyRotation members
+
+6.27.  KeyRevocation
+
+   Issued by: any node.  Logged.  Signed by a key other than the revoked
+   key.
+
+      +==============+==========+==================================+
+      | Member       | Req.     | Description                      |
+      +==============+==========+==================================+
+      | key          | REQUIRED | Verification method URL revoked. |
+      +--------------+----------+----------------------------------+
+      | keyMultibase | REQUIRED | Revoked public key.              |
+      +--------------+----------+----------------------------------+
+      | revokedAt    | REQUIRED | Time from which signatures by    |
+      |              |          | the key are invalid.             |
+      +--------------+----------+----------------------------------+
+      | reason       | OPTIONAL | "compromise", "superseded" or    |
+      |              |          | "other".                         |
+      +--------------+----------+----------------------------------+
+
+                     Table 29: KeyRevocation members
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 45]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+6.28.  Ack
+
+   Returned in the body of a 202 inbox response (Section 8).  An Ack is
+   authenticated by the response's HTTP signature and does not require a
+   proof; a node MAY include one.  Of the common members, an Ack carries
+   @context, type and issuer; id, issuedAt and proof are OPTIONAL.
+
+      +============+==========+=====================================+
+      | Member     | Req.     | Description                         |
+      +============+==========+=====================================+
+      | object     | REQUIRED | id of the received object.          |
+      +------------+----------+-------------------------------------+
+      | objectHash | REQUIRED | Object hash of the received object. |
+      +------------+----------+-------------------------------------+
+      | receivedAt | REQUIRED | Time of receipt.                    |
+      +------------+----------+-------------------------------------+
+      | status     | REQUIRED | "accepted" or "duplicate".          |
+      +------------+----------+-------------------------------------+
+
+                           Table 30: Ack members
+
+7.  State Machines
+
+   Every transition below is effected by a signed object that references
+   the object whose state it changes.  A receiver MUST reject an object
+   that would cause a transition not shown, with error type state-
+   conflict.
+
+7.1.  Offer
+
+                     CounterOffer
+             +------------------------+
+             |                        v
+      Offer  |                  +-----------+
+    ------>+------+  rev. Offer |           |
+           | Sent |<------------| Countered |
+           +------+             +-----------+
+            | | | |                 |     |
+            | | | +-- Withdrawn     |     +--> Declined
+            | | +---- Expired       +--------> Expired
+            | +------ Declined
+            +-------- Accepted --> (Deal)
+
+                          Figure 12: Offer states
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 46]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+    +===========+===========+=====================+==================+
+    | From      | To        | Effected by         | Issued by        |
+    +===========+===========+=====================+==================+
+    | (none)    | Sent      | Offer               | buyer            |
+    +-----------+-----------+---------------------+------------------+
+    | Sent      | Countered | CounterOffer        | recipient        |
+    +-----------+-----------+---------------------+------------------+
+    | Countered | Sent      | Offer with previous | buyer            |
+    +-----------+-----------+---------------------+------------------+
+    | Sent      | Accepted  | Acceptance          | recipient        |
+    +-----------+-----------+---------------------+------------------+
+    | Sent,     | Declined  | Decline             | recipient of the |
+    | Countered |           |                     | latest offer     |
+    +-----------+-----------+---------------------+------------------+
+    | Sent,     | Expired   | passage of          | (none)           |
+    | Countered |           | expiresAt           |                  |
+    +-----------+-----------+---------------------+------------------+
+    | Sent      | Withdrawn | StatusChange to:    | buyer            |
+    |           |           | "withdrawn"         |                  |
+    +-----------+-----------+---------------------+------------------+
+
+                       Table 31: Offer transitions
+
+   The same machine applies to RFP responses and Standing Offer claims,
+   with Claim in place of Acceptance.  An Accepted offer leads to a Deal
+   only if the buyer issues a Deal before the Acceptance's expiresAt.
+
+7.2.  Deal
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 47]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+                       pause
+         +--------+ ----------> +--------+
+     --->| Active |             | Paused |
+         +--------+ <---------- +--------+
+           |  |  |    resume      |    |
+           |  |  |  end,          |    |
+           |  |  |  flight end    |    |
+           |  |  +------+  +------+    |
+           |  |         v  v           |
+           |  |      +-------+         |
+           |  |      | Ended |         |
+           |  |      +-------+         |
+           |  | terminate              | terminate
+           |  +-------+    +-----------+
+           |          v    v
+           |      +------------+
+           |      | Terminated |
+           |      +------------+
+           | budget used
+           v
+     +-----------+
+     | Exhausted |
+     +-----------+
+
+                           Figure 13: Deal states
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 48]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   +===========+============+==========================================+
+   | From      | To         | Effected by                              |
+   +===========+============+==========================================+
+   | (none)    | Active     | Deal with both proofs                    |
+   +-----------+------------+------------------------------------------+
+   | Active    | Paused     | StatusChange to: "paused"                |
+   |           |            | (either party)                           |
+   +-----------+------------+------------------------------------------+
+   | Paused    | Active     | StatusChange to: "active"                |
+   |           |            | (the party that paused)                  |
+   +-----------+------------+------------------------------------------+
+   | Active    | Exhausted  | Spend reaching budget                    |
+   +-----------+------------+------------------------------------------+
+   | Exhausted | Active     | DealAmendment increasing                 |
+   |           |            | budget                                   |
+   +-----------+------------+------------------------------------------+
+   | Exhausted | Ended      | flight.end passing                       |
+   +-----------+------------+------------------------------------------+
+   | Active,   | Ended      | flight.end passing, or                   |
+   | Paused    |            | StatusChange to: "ended"                 |
+   +-----------+------------+------------------------------------------+
+   | Active,   | Terminated | StatusChange to: "terminated"            |
+   | Paused    |            | per paymentTerms                         |
+   +-----------+------------+------------------------------------------+
+
+                         Table 32: Deal transitions
+
+   A Dispute marks a Deal as disputed.  This is a flag orthogonal to the
+   states above: it pauses settlement of the disputed amount but not
+   delivery, unless a party also pauses the Deal.
+
+7.3.  Licence
+
+      Licence  +--------+  expiresAt passes  +---------+
+    ---------->| Issued |------------------->| Expired |
+               +--------+                    +---------+
+                    |      Revocation deadline
+                    +------------------------>+---------+
+                                              | Revoked |
+                                              +---------+
+
+                         Figure 14: Licence states
+
+   Renewal issues a new Licence (with renews); the old licence expires
+   normally.
+
+7.4.  Statement
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 49]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+     Statement  +----------+ countersign +---------------+
+    ----------->| Proposed |------------>| Countersigned |
+                +----------+             +---------------+
+                     |                     |          |
+             Dispute |             Dispute |          | PaymentNotice
+                     v                     v          v
+                +----------------------------+     +------+
+                |          Disputed          |     | Paid |
+                +----------------------------+     +------+
+                     |  StatusChange (resolved) on Dispute,
+                     |  then countersigned Statement
+                     +--------> Countersigned
+
+                        Figure 15: Statement states
+
+   A resolution MAY take the form of a new Statement whose supersedes
+   references the disputed one.
+
+8.  Inbox Messaging
+
+8.1.  Delivery
+
+   Each node has one inbox endpoint, listed in its Node Descriptor.  A
+   sender delivers an object by sending a signed POST request whose
+   content is exactly one object, with media type application/federated-
+   ads+json.  Receivers MUST accept content of at least 1 MiB and MAY
+   reject larger content with 413.
+
+   If the receiver has verified the HTTP signature and the object proofs
+   and has durably stored the object, it MUST respond 202 Accepted with
+   a signed response whose content is an Ack (Section 6.28).  Further
+   processing MAY be asynchronous; results (for example an Acceptance or
+   Decline) are delivered later as objects to the sender's inbox.
+   Failures detected before the object is stored are reported
+   synchronously with a signed error response (Section 8.5); failures
+   detected after a 202 are reported by delivering a Decline to the
+   sender's inbox.
+
+8.2.  Idempotency
+
+   The object id is the deduplication key.  A receiver MUST retain the
+   id and object hash of every accepted object for at least the object's
+   lifetime (until expiresAt, or for objects without expiresAt, for 90
+   days) plus 7 days.  On receiving an object whose id has been seen:
+
+   *  if the object hash is identical, the receiver MUST respond 202
+      with an Ack whose status is "duplicate", and MUST NOT process it
+      again;
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 50]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   *  otherwise, it MUST respond 409 with error type duplicate-conflict.
+
+8.3.  Retries
+
+   Delivery is at least once.  A sender that does not receive a 2xx
+   response, or receives 408, 429, 500, 502, 503 or 504, MUST retry with
+   exponential back-off: an initial delay of at least 1 second, doubling
+   on each attempt, with random jitter, and a maximum delay of 1 hour.
+   A sender SHOULD stop retrying after 72 hours or when the object
+   expires, whichever is first.  Revocations are retried under
+   Section 9.6.
+
+   A receiver that rate-limits a sender MUST respond 429 with a Retry-
+   After field (Section 10.2.3 of [RFC9110]); the sender MUST NOT retry
+   before that time.
+
+8.4.  Retrieval and Pagination
+
+   Objects are retrievable by a signed GET of their id.  A node MUST
+   serve an object only to the parties named in it, to the issuer's
+   designated auditors and arbiter, and, for public objects (Node,
+   Policy, Inventory, StandingOffer, Label, KeyRotation, KeyRevocation),
+   to anyone.  A node MUST serve Revocations to every licensee within
+   their scope.
+
+   Lists (for example, a node's Standing Offers, or Receipt Batches for
+   a deal) are returned as an object with @context, type "Collection",
+   an items array of objects, and an optional next URL.  A Collection
+   carries no proof; each item carries its own.  Cursors are opaque.
+   Servers MAY also provide a Link header field with rel="next"
+   [RFC8288].
+
+8.5.  Errors
+
+   Errors are reported using Problem Details [RFC9457] with media type
+   application/problem+json.  The type member is a URI formed by
+   appending an error type name to https://w3id.org/federated-ads/
+   errors/. The initial error types are listed in Table 33 and are
+   registered in Section 16.4.7.
+
+       +============================+========+=====================+
+       | Name                       | Status | Meaning             |
+       +============================+========+=====================+
+       | malformed-object           | 400    | Not valid JSON, not |
+       |                            |        | I-JSON, or missing  |
+       |                            |        | required members.   |
+       +----------------------------+--------+---------------------+
+       | unsupported-version        | 400    | Protocol version    |
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 51]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+       |                            |        | not supported.      |
+       +----------------------------+--------+---------------------+
+       | unknown-critical-extension | 400    | A member listed in  |
+       |                            |        | critical is not     |
+       |                            |        | understood.         |
+       +----------------------------+--------+---------------------+
+       | signature-invalid          | 401    | HTTP signature or   |
+       |                            |        | object proof        |
+       |                            |        | failed.             |
+       +----------------------------+--------+---------------------+
+       | signature-expired          | 401    | Outside the allowed |
+       |                            |        | time window.        |
+       +----------------------------+--------+---------------------+
+       | key-unknown                | 401    | keyid or            |
+       |                            |        | verification method |
+       |                            |        | not found.          |
+       +----------------------------+--------+---------------------+
+       | key-revoked                | 401    | Key revoked at the  |
+       |                            |        | signing time.       |
+       +----------------------------+--------+---------------------+
+       | digest-mismatch            | 400    | Content-Digest does |
+       |                            |        | not match.          |
+       +----------------------------+--------+---------------------+
+       | replay-detected            | 401    | Signature value     |
+       |                            |        | already used.       |
+       +----------------------------+--------+---------------------+
+       | not-authorized             | 403    | Sender is not a     |
+       |                            |        | party entitled to   |
+       |                            |        | this action.        |
+       +----------------------------+--------+---------------------+
+       | unknown-object             | 404    | Referenced object   |
+       |                            |        | not found.          |
+       +----------------------------+--------+---------------------+
+       | duplicate-conflict         | 409    | Same id, different  |
+       |                            |        | content.            |
+       +----------------------------+--------+---------------------+
+       | state-conflict             | 409    | Transition not      |
+       |                            |        | allowed.            |
+       +----------------------------+--------+---------------------+
+       | hash-mismatch              | 409    | Referenced hash     |
+       |                            |        | does not match the  |
+       |                            |        | object.             |
+       +----------------------------+--------+---------------------+
+       | offer-expired              | 410    | Offer, claim or     |
+       |                            |        | acceptance lapsed.  |
+       +----------------------------+--------+---------------------+
+       | payload-too-large          | 413    | Content too large.  |
+       +----------------------------+--------+---------------------+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 52]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+       | policy-mismatch            | 422    | Conflicts with the  |
+       |                            |        | receiver's Policy.  |
+       +----------------------------+--------+---------------------+
+       | budget-exhausted           | 422    | No budget remains.  |
+       +----------------------------+--------+---------------------+
+       | licence-expired            | 403    | Licence expired.    |
+       +----------------------------+--------+---------------------+
+       | licence-revoked            | 403    | Licence revoked.    |
+       +----------------------------+--------+---------------------+
+       | k-threshold-violation      | 422    | Receipt cells below |
+       |                            |        | k.                  |
+       +----------------------------+--------+---------------------+
+       | log-inconsistent           | 422    | Log proofs do not   |
+       |                            |        | verify.             |
+       +----------------------------+--------+---------------------+
+       | rate-limited               | 429    | Too many requests.  |
+       +----------------------------+--------+---------------------+
+
+                       Table 33: Initial error types
+
+9.  Licensing and Revocation
+
+9.1.  Licence Tiers
+
+    +==============+=============+=========+=========+================+
+    | Tier         | Asset       | Default | Maximum | Typical use    |
+    |              | retention   | TTL     | TTL     |                |
+    +==============+=============+=========+=========+================+
+    | pointer      | Only while  | 900 s   | 3600 s  | Web, social,   |
+    |              | the licence |         |         | AI             |
+    |              | is valid    |         |         |                |
+    +--------------+-------------+---------+---------+----------------+
+    | signed-cache | Until the   | 3600 s  | 86400 s | Email, podcast |
+    |              | licence     |         |         | insertion,     |
+    |              | expires     |         |         | offline        |
+    +--------------+-------------+---------+---------+----------------+
+
+                          Table 34: Licence tiers
+
+   expiresAt minus issuedAt MUST NOT exceed the maximum TTL for the
+   tier.  A licensee MUST NOT deliver a creative under an expired or
+   revoked licence, and MUST purge assets held under the pointer tier
+   when the licence ends.  A licensee holding a signed-cache licence
+   MUST implement both push and pull revocation (Section 9.6,
+   Section 9.7).
+
+   Delivery under an expired licence, or after a revocation deadline, is
+   not billable.
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 53]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+9.2.  Fetching Creatives
+
+   The licensee, not the end user's device, fetches the Creative
+   Manifest and assets, using signed GET requests.  The creative host
+   MUST serve them only to nodes that hold a valid licence for the
+   manifest.  The licensee MUST:
+
+   *  fetch only from origins listed in the advertiser's creativeHosts;
+
+   *  verify the manifest's proof and that its object hash equals
+      manifestHash;
+
+   *  verify each asset's size and content hash before use, and discard
+      assets that do not match;
+
+   *  apply the request restrictions in Section 14.10.
+
+   A licensee MAY fetch through an Oblivious HTTP relay [RFC9458] whose
+   gateway is operated by the creative host.  End-user devices MUST NOT
+   be directed to fetch creative assets from the advertiser's or
+   creative host's origin; assets are served to devices from the
+   licensee's own origin or a CDN under its control.
+
+9.3.  Renewal
+
+   To avoid placing licence checks in the rendering path, the licensee
+   SHOULD request renewal when no more than one third of the licence's
+   lifetime remains, by sending a signed POST to the licence's renew URL
+   with the current Licence id as content.  The advertiser responds with
+   a new Licence (with renews) or an error.  An advertiser MAY also push
+   renewed licences to the licensee's inbox unprompted.  Advertisers
+   MUST NOT renew a licence within the scope of a Revocation.
+
+9.4.  Revocation Logging
+
+   An advertiser MUST append a Revocation to its transparency log before
+   pushing it.  The log entry's inclusion time T_log is the earliest
+   timestamp of a witness cosignature ([TLOG-COSIGNATURE]) on a
+   checkpoint whose tree includes the entry.
+
+9.5.  Revocation Deadline
+
+   The revocation deadline D is:
+
+      D = max(effectiveAt, T_log) + revocationGrace
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 54]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   where revocationGrace is taken from the deal terms (default 60
+   seconds).  Deliveries after D are not billable.  Because T_log is
+   determined by independent witnesses, an advertiser cannot backdate a
+   revocation to avoid paying for deliveries already made.  Issuers
+   SHOULD set effectiveAt to the time of issue.
+
+9.6.  Push and Acknowledgement
+
+   After logging, the advertiser MUST post the Revocation to the inbox
+   of every licensee within its scope.  Relays that carry revocations
+   MUST forward them unaltered and SHOULD forward them ahead of other
+   traffic, after authenticating the sender.  Advertisers MUST retry
+   undelivered revocations at least every 60 seconds for the first 10
+   minutes and thereafter per Section 8.3, until acknowledged or until
+   every licence in scope has expired.
+
+   On receiving a valid Revocation, the licensee MUST:
+
+   1.  stop new deliveries of the affected creatives within 60 seconds;
+
+   2.  purge cached assets where technically possible;
+
+   3.  append a RevocationAck to its own log; and
+
+   4.  send the RevocationAck to the advertiser's inbox within 60
+       seconds of receipt.
+
+9.7.  Pull
+
+   Each licensee MUST fetch the checkpoint of the log named in
+   revocationLog at least once per licence TTL, and in any case at least
+   once per hour while it holds a licence from that log.  It MUST verify
+   consistency with the previously seen checkpoint (Section 10.8),
+   examine new entries of type Revocation, retrieve those objects, and
+   act on any that apply to its licences as if they had been pushed.
+
+9.8.  Surface Limits
+
+   Revocation guarantees that no new deliveries occur after the
+   deadline, plus purging wherever technically possible.  It does not
+   guarantee that copies already delivered to end users (for example,
+   emails already sent, episodes already downloaded, or posts already
+   federated) are removed.  Surface profiles document the specific
+   guarantees for each surface.
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 55]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+10.  Receipts and Transparency Logs
+
+10.1.  Events
+
+   Billable and informational events are registered in Section 16.4.2.
+   Selling nodes MUST count events according to the registered
+   definitions.  The open event is informational and MUST NOT be billed.
+
+10.2.  Windows
+
+   A Receipt Batch covers a window aligned to UTC hour boundaries, of
+   length receiptWindow (default one hour).  A selling node whose volume
+   would produce cells below k MAY use longer windows, up to seven days,
+   and MUST then state the window in the batch.  Batches for a deal MUST
+   be issued in sequence order, MUST NOT overlap, and SHOULD be issued
+   within one hour after the window ends.
+
+10.3.  Cells
+
+   A Cell has the members creative (content hash), context (category
+   identifier or "*"), region (as in Section 6.1.3, or "*"), event
+   (registered event type), count (integer), ivt (OPTIONAL array of
+   invalid-traffic flags) and salt (REQUIRED; at least 16 random octets,
+   base64url-encoded without padding).  An additional member hour
+   (timestamp) MAY subdivide a multi-hour window.  Each combination of
+   members other than count, ivt and salt MUST appear at most once.  For
+   each event type, the sum of count over cells MUST equal the
+   corresponding totals value.
+
+10.4.  k-Threshold
+
+   A cell with count less than kThreshold MUST be merged: first by
+   replacing region with "*", then context with "*", then by removing
+   hour.  If a fully merged cell (both "*") is still below k at the
+   maximum window length, it MAY be reported, because it reveals no more
+   than the deal total.  Receivers MUST reject batches that contain
+   other cells below k with k-threshold-violation.
+
+10.5.  Cell Tree
+
+   The cell tree is a Merkle tree computed with the Merkle Tree Hash of
+   Section 2.1.1 of [RFC9162] (equivalently, Section 2.1 of [RFC6962])
+   using SHA-256, over the sequence of cells in the order they appear in
+   cells, where the input for each leaf is the JCS serialization of the
+   cell (including its salt).  The leaf hash is therefore SHA-
+   256(0x00 || JCS(cell)).  cellTree.size is the number of cells and
+   cellTree.root is the content hash form of the root.  Salts prevent
+   parties who learn the root, or an inclusion proof for one cell, from
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 56]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   confirming guesses about other cells.  A selling node can disclose a
+   single cell and its inclusion proof to an auditor without disclosing
+   others.
+
+10.6.  Log Entries
+
+   Each node operates one append-only log in the format of [TLOG-TILES],
+   with checkpoints as in [TLOG-CHECKPOINT] signed using [SIGNED-NOTE],
+   under the origin given in logOrigin.  Each log entry is the JCS
+   serialization of a JSON object with members type (the object type),
+   id (the object id) and hash (the object hash).  Full objects are not
+   placed in the log.
+
+   A node MUST append an entry for each ReceiptBatch, Revocation,
+   RevocationAck, Statement (when countersigned), KeyRotation and
+   KeyRevocation it issues, and SHOULD append entries for SpendReports,
+   Deals and DealAmendments.  For a ReceiptBatch, the entry's hash is
+   computed over the batch with its log member omitted and before the
+   proof is added (the "batch commitment"); verifiers recompute it
+   accordingly.
+
+10.7.  Witnessing
+
+   A node MUST submit each new checkpoint to the witnesses listed in its
+   Node Descriptor using [TLOG-WITNESS], and MUST make cosigned
+   checkpoints available at its log endpoint.  At least one listed
+   witness MUST NOT be operated by the log operator.  A verifier MUST
+   accept a checkpoint only if it carries valid cosignatures from at
+   least witnessPolicy.minWitnesses witnesses (default 1) acceptable
+   under the deal's witnessPolicy.  Nodes SHOULD obtain cosignatures at
+   least every 5 minutes while entries are being appended.
+
+10.8.  Proofs
+
+   Clients compute inclusion and consistency proofs from tiles as
+   described in [TLOG-TILES].  A node MAY additionally provide the
+   following convenience endpoints, relative to its log URL:
+
+   *  proof/inclusion?hash=<base64url leaf hash>&size=<tree size>
+
+   *  proof/consistency?first=<size>&second=<size>
+
+
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 57]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   each returning a JSON object with index (for inclusion), size and
+   proof (array of base64-encoded hashes).  Verifiers MUST verify proofs
+   against a cosigned checkpoint.  A buying node SHOULD verify the
+   inclusion of every Receipt Batch and Statement it relies on, and MUST
+   verify consistency between successive checkpoints it observes from a
+   counterparty.  An inconsistency is evidence of equivocation and
+   SHOULD be published, for example as a Label.
+
+10.9.  Verification Levels
+
+   Deals declare required verification levels in terms.verification.
+
+     +=======+============================+==========================+
+     | Level | Mechanism                  | Proves                   |
+     +=======+============================+==========================+
+     | V0    | Seller-signed receipts in  | The seller asserted      |
+     |       | a witnessed log            | these numbers and cannot |
+     |       |                            | change them or show      |
+     |       |                            | different histories.     |
+     +-------+----------------------------+--------------------------+
+     | V1    | Creative-host fetch        | The seller held valid    |
+     |       | records and RevocationAcks | licences while serving   |
+     |       |                            | and honoured             |
+     |       |                            | revocations.             |
+     +-------+----------------------------+--------------------------+
+     | V2    | Advertiser counts landing- | Clicks broadly occurred; |
+     |       | page arrivals carrying     | gross inflation is       |
+     |       | clickParameter and         | detectable.              |
+     |       | compares with reported     |                          |
+     |       | clicks; statistical norms  |                          |
+     +-------+----------------------------+--------------------------+
+     | V3    | Privacy Pass tokens        | An attester vouched for  |
+     |       | redeemed for a sample of   | a client at render time. |
+     |       | renders (Section 10.10)    |                          |
+     +-------+----------------------------+--------------------------+
+     | V4    | Independent audit,         | An auditor checked a     |
+     |       | published as an audit-pass | sample, including cell   |
+     |       | Label                      | inclusion and            |
+     |       |                            | measurement module hash. |
+     +-------+----------------------------+--------------------------+
+
+                       Table 35: Verification levels
+
+   V0 is always required.  For V2, the click-through URL MUST carry only
+   the deal-level clickParameter and MUST NOT carry any value unique to
+   a click, user or device.
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 58]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+10.10.  Privacy Pass Binding
+
+   For V3, the selling node presents Privacy Pass challenges [RFC9577]
+   to a sample of clients at render time, using token type 0x0002 (Blind
+   RSA, publicly verifiable) [RFC9578].  The TokenChallenge
+   redemption_context MUST be:
+
+      redemption_context = SHA-256( dealId || 0x00 ||
+                                    creativeHash || 0x00 ||
+                                    windowStart )
+
+   where dealId is the Deal id, creativeHash is the creative's content
+   hash string, windowStart is the RFC 3339 string of the Receipt Batch
+   window.start, each encoded in UTF-8, and || denotes concatenation.
+   origin_info MUST contain the selling node's host name.
+
+   The batch's attestation member contains tokenType ("0x0002"), issuer
+   (issuer name), count (number of tokens redeemed) and tokenTree (size
+   and root, an RFC 9162 tree over the redeemed tokens in order).  The
+   selling node MUST make the tokens available to the buying node and
+   its auditors.  Verifiers MUST check token signatures against the
+   issuer's public key, check that each token's challenge digest matches
+   the expected challenge, and reject duplicate tokens.
+
+11.  Disclosure and User Controls
+
+   These requirements apply to selling nodes at all conformance levels.
+   Detailed rendering rules are left to surface profiles.
+
+   *  Every delivered advertisement MUST be accompanied by a disclosure
+      that identifies it as advertising and gives the advertiser's legal
+      name, the payer if different, the main reasons it was selected
+      (expressed in the targeting dimensions of Section 6.1.3), the
+      intermediaries and their declared fees, and how to change
+      preferences.  On audio and conversational surfaces the disclosure
+      MUST also be spoken or presented inline.
+
+   *  A selling node MUST treat Sec-GPC: 1 [GPC] as an opt-out from
+      every optional profile beyond contextual matching.
+
+   *  A selling node MUST offer end users a way to report an
+      advertisement and MUST forward reports only in aggregate as Report
+      objects.
+
+   *  Where a user's age is unknown or the user is known to be a minor,
+      only contextual delivery is permitted.
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 59]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   *  A selling node MAY advertise an ad-free offer at the adfree
+      endpoint.
+
+12.  Extensibility and Versioning
+
+12.1.  Unknown Members
+
+   Receivers MUST ignore members they do not understand, unless the
+   member's name appears in the object's critical array.  A receiver
+   that does not understand a member named in critical MUST reject the
+   object with error type unknown-critical-extension.  Names in critical
+   MUST either be registered in the Critical Extensions registry
+   (Section 16.4.8) or be absolute URIs under the extension author's
+   control.  Extension members SHOULD be named with a prefix or a URI to
+   avoid collision.  This rule ensures that new constraints, for example
+   new brand-safety rules in a Policy, cannot be silently dropped.
+
+12.2.  Versioning
+
+   The protocol version is a string MAJOR.MINOR.  This document defines
+   version 0.2.  The major version is reflected in the namespace URL
+   (v0).  Minor versions only add optional members, object types and
+   registry values.  A new major version requires both parties to
+   advertise it in versions.  Major version 0 indicates that
+   incompatible changes may occur between drafts.
+
+12.3.  Registries
+
+   Values for event types, pricing models, surface profiles, settlement
+   profiles, revocation reasons, error types, object types and critical
+   extensions are drawn from the registries in Section 16.  Receivers
+   SHOULD ignore unregistered values they do not recognize in arrays and
+   MUST reject an object whose required single-valued member (such as
+   pricing.model) has an unrecognized value, with malformed-object.
+
+13.  Conformance
+
+   A node declares conformance using tokens of the form
+   <level>/<version>, for example federated-ads-core/0.2.
+
+   federated-ads-core:  Discovery (Section 5); Node Descriptor; Policy;
+      Offer, CounterOffer, Acceptance, Decline and Deal; StatusChange
+      and DealAmendment; Licence (pointer tier); Revocation with
+      logging, push, acknowledgement and pull; ReceiptBatch in a
+      witnessed log; inbox messaging (Section 8); both signature layers
+      (Section 4); the user controls of Section 11; contextual matching
+      only; native and static display formats.
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 60]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   federated-ads-extended:  Everything in core, plus StandingOffer,
+      Claim and RFP; signed-cache tier; SpendReport; Statement and
+      PaymentNotice with at least one settlement profile; Dispute; ad-
+      free endpoint; and the sandboxed HTML5 format (Section 14.9).
+
+   federated-ads-verified:  Everything in extended, plus V3 client
+      attestation (Section 10.10) or V4 audit attestation from a labeler
+      the counterparty trusts.
+
+   Surface profiles add rendering, labelling and measurement
+   requirements.  A conformance suite and test vectors for signatures,
+   canonicalization and Merkle proofs are expected to accompany each
+   version of this document.
+
+14.  Security Considerations
+
+   This section follows the guidance of [RFC3552].
+
+14.1.  Trust Model
+
+   A node's identity is bound to control of its DNS name and TLS
+   certificate.  An attacker who takes over a domain can impersonate its
+   node.  Logged key history (Section 5.5) limits damage to records
+   created before the takeover, provided they were witnessed.  Witnesses
+   are assumed not all to collude with the log operator they witness;
+   Privacy Pass attesters are assumed not to collude with selling nodes.
+   Relays are untrusted for integrity.
+
+14.2.  Transport Replay and Freshness
+
+   HTTP signatures are bounded by created and expires, with at most 300
+   seconds of validity and 60 seconds of skew, and receivers cache
+   signature values within that window (Section 4.1.3).  Response
+   signatures bind responses to their requests with ;req, preventing an
+   attacker from substituting a response from another exchange.  Only
+   ed25519 is permitted, avoiding algorithm confusion.
+
+14.3.  Object Replay and Substitution
+
+   Objects are deduplicated by id.  Objects carry explicit recipient,
+   licensee, seller or counterparty members, so an object addressed to
+   one node cannot be replayed to another to create obligations.
+   Acceptances, Deals and Disputes reference prior objects by object
+   hash, preventing substitution of different terms.  The requirement
+   that id and issuer share an origin prevents a node from minting
+   objects in another node's namespace.
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 61]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+14.4.  Canonicalization
+
+   Object proofs depend on JCS [RFC8785].  Implementations MUST reject
+   duplicate member names and non-I-JSON values, and this protocol
+   avoids non-integer JSON numbers, removing the main sources of
+   canonicalization divergence.  Verifiers MUST NOT apply JSON-LD
+   processing before verification.
+
+14.5.  Equivocation
+
+   A node could present different histories to different counterparties,
+   for example different receipt totals to a buyer and an auditor.
+   Witness cosigning and consistency checks (Section 10.7, Section 10.8)
+   make this detectable.  Verifiers who gossip checkpoints further
+   reduce the risk.
+
+14.6.  Backdating
+
+   Receipts and revocations could be backdated to shift liability.
+   Revocation deadlines use the witness-anchored inclusion time
+   (Section 9.5).  Receipt batches are committed to the log within a
+   bounded time after their window, and verifiers SHOULD treat batches
+   committed more than 24 hours after the window ended as suspect.
+   Witness cosignature timestamps provide approximate, independent time
+   anchoring.
+
+14.7.  Impression Inflation and Click Fraud
+
+   A selling node can sign false counts.  V0 makes false counts
+   permanent and attributable but not false-proof.  Higher verification
+   levels (V2-V4) provide corroboration; prices are expected to reflect
+   the level chosen.  Click fraud through the selling node's own
+   redirect is mitigated by V2 corroboration, invalid-traffic filtering,
+   and requiring V3 for CPC deals.
+
+14.8.  Collusion
+
+   A seller and a relay could collude, but relays cannot alter signed
+   objects and all fees are declared in signed deals; buyers MAY require
+   direct delivery of receipts.  A seller and a sock-puppet advertiser
+   could launder money or fabricate demand; KYB Labels and settlement
+   through regulated providers mitigate this.  Sybil sellers farming
+   Standing Offers are limited by per-seller caps, minimum verification
+   levels for unknown sellers, labeler reputation, and prepaid or
+   holdback settlement.
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 62]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+14.9.  Malvertising
+
+   Creatives are pinned by content hash and approved by hash; a changed
+   creative needs a new approval.  At the core level only native and
+   static display formats are allowed, with SVG loaded only as an image.
+   HTML5 creatives (extended level only) MUST be rendered in an iframe
+   with sandbox="allow-scripts allow-popups allow-popups-to-escape-
+   sandbox allow-top-navigation-by-user-activation" from a dedicated
+   cookieless origin, with a Content Security Policy of default-src
+   'none' that permits no network access after load; allow-same-origin
+   MUST NOT be combined with allow-scripts.  Third-party scripts,
+   tracking pixels and unpinned assets are never permitted.  Landing-
+   page cloaking is mitigated by pinning landingUrl, optional re-
+   crawling, Labels, and voiding approval on change.
+
+14.10.  Server-Side Request Forgery
+
+   Selling nodes fetch URLs supplied by other nodes (Node Descriptors,
+   manifests, assets, logs).  Implementations MUST:
+
+   *  fetch only https URLs, and fetch creative assets only from the
+      advertiser's declared creativeHosts;
+
+   *  resolve host names and refuse connections to loopback, private,
+      link-local, unique-local, multicast and other special-purpose
+      addresses, re-checking after each redirect;
+
+   *  follow no redirects for asset fetches, and at most a small number
+      (for example 3), all within the same origin, otherwise;
+
+   *  enforce timeouts, size limits (using the manifest's declared
+      size), and media type allowlists.
+
+14.11.  Denial of Service
+
+   Inboxes are exposed to the Internet.  Receivers SHOULD verify
+   inexpensive properties (size, HTTP signature, known sender) before
+   expensive ones, rate-limit per sender with 429, and bound the number
+   of outstanding Node Descriptor fetches.  Revocation flooding is
+   limited because only the licence issuer's key can revoke; relays MUST
+   authenticate senders before prioritizing revocations.  Report
+   channels are aggregated and rate-limited; automatic takedown is
+   limited to verified scam reports.
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 63]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+14.12.  Key Compromise
+
+   Short-lived signing keys certified by an offline root, logged
+   rotation and revocation, and the rule that pre-revocation objects
+   remain valid only if witnessed before revokedAt (Section 5.6), limit
+   the impact of compromise.  An attacker holding a compromised key
+   could issue false Revocations; licensees would stop serving, which is
+   a fail-safe outcome.
+
+14.13.  Attester Centralization
+
+   V3 relies on attesters, which today are few.  V3 is optional,
+   multiple issuers are permitted, and verifiers choose which issuers to
+   accept.
+
+15.  Privacy Considerations
+
+   This section follows the structure of [RFC6973].
+
+15.1.  Data Minimization and No Cross-Site Identifiers
+
+   Protocol objects MUST NOT contain personal data about end users.  In
+   particular, they MUST NOT contain IP addresses, user agent strings,
+   cookies, device or advertising identifiers, account identifiers,
+   email addresses or their hashes, precise location, or click
+   identifiers unique to a user or event.  Targeting is restricted to
+   the dimensions in Section 6.1.3.  Receivers SHOULD reject objects
+   that appear to violate this rule.
+
+15.2.  Surveillance and Correlation
+
+   Because creatives are fetched by the licensee rather than by end-user
+   devices (Section 9.2), advertisers do not observe viewers' IP
+   addresses.  Because matching uses context and decisions are made on
+   the selling node, user context is not broadcast to bidders.  Cross-
+   publisher correlation is not supported by design.
+
+15.3.  Aggregation and Re-identification
+
+   Combinations of fine context, language, region and time can single
+   out individuals, particularly on small community sites.  Receipt
+   cells are aggregated by hour or longer, by coarse region and by
+   category; cells below k (default 50) are merged; cell tree leaves are
+   salted; and small nodes report over longer windows.  Implementers of
+   surface profiles SHOULD consider additional suppression where
+   categories are themselves sensitive.
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 64]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+15.4.  Secondary Use and Stored Data
+
+   Selling nodes process IP addresses and user agents transiently for
+   coarse geolocation and invalid-traffic filtering and MUST NOT log
+   them per user for advertising purposes.  Conversation content on AI
+   surfaces MUST NOT be sent to other nodes; only a context category
+   derived on the selling node may appear in aggregate cells.  Frequency
+   counters are first-party only.
+
+15.5.  Disclosure through Transparency Logs
+
+   Logs are public.  Log entries contain only type, identifier and hash,
+   so they disclose neither personal data nor commercial terms, but
+   identifiers and entry timing could reveal business relationships or
+   volumes.  Issuers SHOULD use unguessable identifiers (Section 3.3)
+   and MAY batch log appends.
+
+15.6.  Device Access
+
+   Viewability measurement, on-device profiles and Privacy Pass all
+   involve access to the user's device, which some jurisdictions subject
+   to consent requirements.  Core billing is therefore server-side
+   (impressions, sends, deliveries and clicks counted by the selling
+   node), and device-side features are optional.  Privacy Pass tokens
+   are unlinkable to the client by design [RFC9576], but the sampling
+   decision and timing could leak information; selling nodes SHOULD
+   sample randomly.
+
+15.7.  User Controls
+
+   The user controls in Section 11, including honoring Global Privacy
+   Control and the minor-safe default, are mandatory at every
+   conformance level.  Report objects carry only aggregate counts.
+   Block lists remain on the device or with the first party.
+
+15.8.  Conversions
+
+   This document defines no conversion measurement.  Aggregate, privacy-
+   preserving conversion measurement could be added as a profile based
+   on, for example, the Distributed Aggregation Protocol
+   [I-D.ietf-ppm-dap].  Per-user conversion pixels and per-user click
+   identifiers are prohibited.
+
+16.  IANA Considerations
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 65]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+16.1.  Media Type Registration
+
+   This document requests registration of the following media type in
+   the "Media Types" registry, following [RFC6838].
+
+   Type name:  application
+
+   Subtype name:  federated-ads+json
+
+   Required parameters:  N/A
+
+   Optional parameters:  N/A
+
+   Encoding considerations:  binary; the content is JSON [RFC8259] in
+      UTF-8.
+
+   Security considerations:  See Section 14 of this document.  Content
+      is signed with Data Integrity proofs; receivers must verify them
+      before acting.
+
+   Interoperability considerations:  Content conforms to I-JSON
+      [RFC7493].
+
+   Published specification:  This document.
+
+   Applications that use this media type:  Nodes implementing the
+      Federated Ads Protocol.
+
+   Fragment identifier considerations:  As for application/json, per
+      Section 3.1 of [RFC6839].
+
+   Additional information:  Deprecated alias names for this type: N/A.
+      Magic number(s): N/A.  File extension(s): N/A.  Macintosh file
+      type code(s): N/A.
+
+   Person and email address to contact for further information:  Suneesh
+      Rajan suneeshtr@gmail.com (mailto:suneeshtr@gmail.com)
+
+   Intended usage:  COMMON
+
+   Restrictions on usage:  None
+
+   Author:  Suneesh Rajan
+
+   Change controller:  IETF
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 66]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+16.2.  Well-Known URI Registration
+
+   This document requests registration of the following in the "Well-
+   Known URIs" registry [RFC8615]:
+
+   URI suffix:  federated-ads
+
+   Change controller:  IETF
+
+   Specification document(s):  This document, Section 5.1
+
+   Status:  permanent
+
+   Related information:  None
+
+16.3.  WebFinger Link Relation
+
+   The WebFinger relation used by this document (https://w3id.org/
+   federated-ads/rel/node) is an extension relation type ([RFC8288],
+   Section 2.1.2) and requires no IANA action.
+
+16.4.  Federated Ads Protocol Registries
+
+   This document requests that IANA create a new registry group named
+   "Federated Ads Protocol Parameters", containing the registries below.
+   Registration policies follow [RFC8126].  Designated experts should
+   check that proposed values are clearly defined, do not duplicate
+   existing values, and, for event types and surface profiles, do not
+   require or enable cross-site identifiers.  The initial contents of
+   each registry reference this document.
+
+16.4.1.  Object Types
+
+   Policy: Specification Required.  Fields: Name, Description,
+   Reference.  Initial contents: Node, Discovery, Policy, Inventory,
+   Offer, StandingOffer, RFP, Claim, Acceptance, CounterOffer, Decline,
+   Deal, DealAmendment, StatusChange, CreativeManifest, Licence,
+   Revocation, RevocationAck, SpendReport, ReceiptBatch, Statement,
+   PaymentNotice, Dispute, Report, Label, KeyRotation, KeyRevocation,
+   Ack, Collection, each as defined in Section 6 or Section 5.
+
+16.4.2.  Event Types
+
+   Policy: Specification Required.  Fields: Name, Definition, Billable,
+   Reference.
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 67]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   +===================+====================================+==========+
+   | Name              | Definition                         | Billable |
+   +===================+====================================+==========+
+   | impression        | Creative rendered in the           | Yes      |
+   |                   | placement.                         |          |
+   +-------------------+------------------------------------+----------+
+   | viewable          | Met the deal's viewability rule;   | Yes      |
+   |                   | default per [MRC-VIEWABILITY]:     |          |
+   |                   | 50% of pixels for 1 continuous     |          |
+   |                   | second (display), 30% for large    |          |
+   |                   | display, 50% for 2 seconds         |          |
+   |                   | (video).                           |          |
+   +-------------------+------------------------------------+----------+
+   | click             | User activated the call to         | Yes      |
+   |                   | action through the selling         |          |
+   |                   | node's redirect.                   |          |
+   +-------------------+------------------------------------+----------+
+   | ad_delivered      | Audio: all bytes of the ad         | Yes      |
+   |                   | delivered within a valid           |          |
+   |                   | download per [IAB-PODCAST].        |          |
+   +-------------------+------------------------------------+----------+
+   | ad_play_confirmed | Audio: client-side confirmation    | If the   |
+   |                   | of playback.                       | deal     |
+   |                   |                                    | says so  |
+   +-------------------+------------------------------------+----------+
+   | send              | Email: issue containing the ad     | Yes      |
+   |                   | sent to a deliverable address.     |          |
+   +-------------------+------------------------------------+----------+
+   | open              | Email: image load.                 | No       |
+   +-------------------+------------------------------------+----------+
+   | engagement        | Surface-specific action defined    | If the   |
+   |                   | by a surface profile.              | deal     |
+   |                   |                                    | says so  |
+   +-------------------+------------------------------------+----------+
+
+                       Table 36: Initial event types
+
+16.4.3.  Pricing Models
+
+   Policy: Specification Required.  Fields: Code, Description,
+   Reference.
+
+
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 68]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+     +=============+================================================+
+     | Code        | Description                                    |
+     +=============+================================================+
+     | cpm         | Cost per thousand impressions.                 |
+     +-------------+------------------------------------------------+
+     | vcpm        | Cost per thousand viewable impressions.        |
+     +-------------+------------------------------------------------+
+     | cpc         | Cost per click.                                |
+     +-------------+------------------------------------------------+
+     | flat        | Flat fee per unit (issue, episode, day, week). |
+     +-------------+------------------------------------------------+
+     | cpad        | Cost per delivered audio ad.                   |
+     +-------------+------------------------------------------------+
+     | sponsorship | Fixed sponsorship of a section or feed.        |
+     +-------------+------------------------------------------------+
+
+                     Table 37: Initial pricing models
+
+16.4.4.  Surface Profiles
+
+   Policy: Specification Required.  Fields: Identifier, Description,
+   Reference.  Initial contents: surface:web (web display and native),
+   surface:social (social and federated feeds), surface:email
+   (newsletters), surface:audio (podcasts and audio), surface:ai (AI and
+   chat interfaces), and profile:agent (AI agents acting for users).
+   The detailed requirements of each are to be specified in separate
+   documents; the initial entries reference [WHITEPAPER] pending those
+   documents.
+
+16.4.5.  Settlement Profiles
+
+   Policy: Specification Required.  Fields: Identifier, Description,
+   Reference.  Initial contents: settle:invoice (invoice plus bank
+   transfer or card), settle:processor (regulated payment processor),
+   settle:prepaid (prepaid escrow at a regulated provider),
+   settle:stablecoin (regulated stablecoin), and settle:micropay
+   (streaming or micro-settlement; experimental).
+
+16.4.6.  Revocation Reasons
+
+   Policy: Expert Review.  Fields: Name, Description, Reference.
+   Initial contents: legal, recall, pricing-error, rights-expired,
+   brand-safety, creative-updated, deal-ended, key-compromise, other.
+
+
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 69]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+16.4.7.  Error Types
+
+   Policy: Expert Review.  Fields: Name, Suggested HTTP Status,
+   Description, Reference.  Initial contents: the entries of Table 33.
+   The full type URI is formed by appending the name to
+   https://w3id.org/federated-ads/errors/.
+
+16.4.8.  Critical Extensions
+
+   Policy: Specification Required.  Fields: Member Name, Applicable
+   Object Types, Description, Reference.  Initial contents: none.
+
+17.  References
+
+17.1.  Normative References
+
+   [CID]      W3C, "Controlled Identifiers v1.0", May 2025,
+              <https://www.w3.org/TR/cid-1.0/>.
+
+   [ISO3166]  ISO, "Codes for the representation of names of countries
+              and their subdivisions", ISO 3166-1:2020, 2020.
+
+   [ISO4217]  ISO, "Codes for the representation of currencies",
+              ISO 4217:2015, 2015.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/rfc/rfc2119>.
+
+   [RFC3339]  Klyne, G. and C. Newman, "Date and Time on the Internet:
+              Timestamps", RFC 3339, DOI 10.17487/RFC3339, July 2002,
+              <https://www.rfc-editor.org/rfc/rfc3339>.
+
+   [RFC4648]  Josefsson, S., "The Base16, Base32, and Base64 Data
+              Encodings", RFC 4648, DOI 10.17487/RFC4648, October 2006,
+              <https://www.rfc-editor.org/rfc/rfc4648>.
+
+   [RFC6839]  Hansen, T. and A. Melnikov, "Additional Media Type
+              Structured Syntax Suffixes", RFC 6839,
+              DOI 10.17487/RFC6839, January 2013,
+              <https://www.rfc-editor.org/rfc/rfc6839>.
+
+   [RFC7033]  Jones, P., Salgueiro, G., Jones, M., and J. Smarr,
+              "WebFinger", RFC 7033, DOI 10.17487/RFC7033, September
+              2013, <https://www.rfc-editor.org/rfc/rfc7033>.
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 70]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   [RFC7493]  Bray, T., Ed., "The I-JSON Message Format", RFC 7493,
+              DOI 10.17487/RFC7493, March 2015,
+              <https://www.rfc-editor.org/rfc/rfc7493>.
+
+   [RFC8032]  Josefsson, S. and I. Liusvaara, "Edwards-Curve Digital
+              Signature Algorithm (EdDSA)", RFC 8032,
+              DOI 10.17487/RFC8032, January 2017,
+              <https://www.rfc-editor.org/rfc/rfc8032>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
+
+   [RFC8259]  Bray, T., Ed., "The JavaScript Object Notation (JSON) Data
+              Interchange Format", STD 90, RFC 8259,
+              DOI 10.17487/RFC8259, December 2017,
+              <https://www.rfc-editor.org/rfc/rfc8259>.
+
+   [RFC8288]  Nottingham, M., "Web Linking", RFC 8288,
+              DOI 10.17487/RFC8288, October 2017,
+              <https://www.rfc-editor.org/rfc/rfc8288>.
+
+   [RFC8615]  Nottingham, M., "Well-Known Uniform Resource Identifiers
+              (URIs)", RFC 8615, DOI 10.17487/RFC8615, May 2019,
+              <https://www.rfc-editor.org/rfc/rfc8615>.
+
+   [RFC8785]  Rundgren, A., Jordan, B., and S. Erdtman, "JSON
+              Canonicalization Scheme (JCS)", RFC 8785,
+              DOI 10.17487/RFC8785, June 2020,
+              <https://www.rfc-editor.org/rfc/rfc8785>.
+
+   [RFC9110]  Fielding, R., Ed., Nottingham, M., Ed., and J. Reschke,
+              Ed., "HTTP Semantics", STD 97, RFC 9110,
+              DOI 10.17487/RFC9110, June 2022,
+              <https://www.rfc-editor.org/rfc/rfc9110>.
+
+   [RFC9162]  Laurie, B., Messeri, E., and R. Stradling, "Certificate
+              Transparency Version 2.0", RFC 9162, DOI 10.17487/RFC9162,
+              December 2021, <https://www.rfc-editor.org/rfc/rfc9162>.
+
+   [RFC9421]  Backman, A., Ed., Richer, J., Ed., and M. Sporny, "HTTP
+              Message Signatures", RFC 9421, DOI 10.17487/RFC9421,
+              February 2024, <https://www.rfc-editor.org/rfc/rfc9421>.
+
+   [RFC9457]  Nottingham, M., Wilde, E., and S. Dalal, "Problem Details
+              for HTTP APIs", RFC 9457, DOI 10.17487/RFC9457, July 2023,
+              <https://www.rfc-editor.org/rfc/rfc9457>.
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 71]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   [RFC9530]  Polli, R. and L. Pardue, "Digest Fields", RFC 9530,
+              DOI 10.17487/RFC9530, February 2024,
+              <https://www.rfc-editor.org/rfc/rfc9530>.
+
+   [RFC9577]  Pauly, T., Valdez, S., and C. A. Wood, "The Privacy Pass
+              HTTP Authentication Scheme", RFC 9577,
+              DOI 10.17487/RFC9577, June 2024,
+              <https://www.rfc-editor.org/rfc/rfc9577>.
+
+   [RFC9578]  Celi, S., Davidson, A., Valdez, S., and C. A. Wood,
+              "Privacy Pass Issuance Protocols", RFC 9578,
+              DOI 10.17487/RFC9578, June 2024,
+              <https://www.rfc-editor.org/rfc/rfc9578>.
+
+   [SIGNED-NOTE]
+              C2SP, "Note", n.d., <https://c2sp.org/signed-note>.
+
+   [SRI]      W3C, "Subresource Integrity", June 2016,
+              <https://www.w3.org/TR/SRI/>.
+
+   [TLOG-CHECKPOINT]
+              C2SP, "Transparency Log Checkpoints", n.d.,
+              <https://c2sp.org/tlog-checkpoint>.
+
+   [TLOG-COSIGNATURE]
+              C2SP, "Transparency Log Cosignatures", n.d.,
+              <https://c2sp.org/tlog-cosignature>.
+
+   [TLOG-TILES]
+              C2SP, "Tiled Transparency Logs", n.d.,
+              <https://c2sp.org/tlog-tiles>.
+
+   [TLOG-WITNESS]
+              C2SP, "Transparency Log Witness Protocol", n.d.,
+              <https://c2sp.org/tlog-witness>.
+
+   [VC-DATA-INTEGRITY]
+              W3C, "Verifiable Credential Data Integrity 1.0", May 2025,
+              <https://www.w3.org/TR/vc-data-integrity/>.
+
+   [VC-DI-EDDSA]
+              W3C, "Data Integrity EdDSA Cryptosuites v1.0", May 2025,
+              <https://www.w3.org/TR/vc-di-eddsa/>.
+
+17.2.  Informative References
+
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 72]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   [C2PA]     Coalition for Content Provenance and Authenticity, "C2PA
+              Technical Specification", n.d.,
+              <https://c2pa.org/specifications/>.
+
+   [GPC]      W3C, "Global Privacy Control (GPC)", n.d.,
+              <https://www.w3.org/TR/gpc/>.
+
+   [I-D.ietf-ppm-dap]
+              Geoghegan, T., Patton, C., Pitman, B., Rescorla, E., and
+              C. A. Wood, "Distributed Aggregation Protocol for Privacy
+              Preserving Measurement", Work in Progress, Internet-Draft,
+              draft-ietf-ppm-dap-19, 6 July 2026,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-ppm-dap-
+              19>.
+
+   [IAB-CONTENT-TAXONOMY]
+              IAB Technology Laboratory, "Content Taxonomy 3.1", n.d.,
+              <https://iabtechlab.com/standards/content-taxonomy/>.
+
+   [IAB-PODCAST]
+              IAB Technology Laboratory, "Podcast Measurement Technical
+              Guidelines, Version 2.2", n.d.,
+              <https://iabtechlab.com/standards/podcast-measurement-
+              guidelines/>.
+
+   [ISSUES]   Federated Ads Initiative, "Federated Ads Protocol
+              specification issue tracker", n.d.,
+              <https://github.com/federated-ads/spec/issues>.
+
+   [MRC-VIEWABILITY]
+              Media Rating Council, "Viewable Ad Impression Measurement
+              Guidelines", n.d.,
+              <https://mediaratingcouncil.org/standards-and-guidelines>.
+
+   [RFC3552]  Rescorla, E. and B. Korver, "Guidelines for Writing RFC
+              Text on Security Considerations", BCP 72, RFC 3552,
+              DOI 10.17487/RFC3552, July 2003,
+              <https://www.rfc-editor.org/rfc/rfc3552>.
+
+   [RFC5646]  Phillips, A., Ed. and M. Davis, Ed., "Tags for Identifying
+              Languages", BCP 47, RFC 5646, DOI 10.17487/RFC5646,
+              September 2009, <https://www.rfc-editor.org/rfc/rfc5646>.
+
+   [RFC6838]  Freed, N., Klensin, J., and T. Hansen, "Media Type
+              Specifications and Registration Procedures", BCP 13,
+              RFC 6838, DOI 10.17487/RFC6838, January 2013,
+              <https://www.rfc-editor.org/rfc/rfc6838>.
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 73]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   [RFC6962]  Laurie, B., Langley, A., and E. Kasper, "Certificate
+              Transparency", RFC 6962, DOI 10.17487/RFC6962, June 2013,
+              <https://www.rfc-editor.org/rfc/rfc6962>.
+
+   [RFC6973]  Cooper, A., Tschofenig, H., Aboba, B., Peterson, J.,
+              Morris, J., Hansen, M., and R. Smith, "Privacy
+              Considerations for Internet Protocols", RFC 6973,
+              DOI 10.17487/RFC6973, July 2013,
+              <https://www.rfc-editor.org/rfc/rfc6973>.
+
+   [RFC8126]  Cotton, M., Leiba, B., and T. Narten, "Guidelines for
+              Writing an IANA Considerations Section in RFCs", BCP 26,
+              RFC 8126, DOI 10.17487/RFC8126, June 2017,
+              <https://www.rfc-editor.org/rfc/rfc8126>.
+
+   [RFC8792]  Watsen, K., Auerswald, E., Farrel, A., and Q. Wu,
+              "Handling Long Lines in Content of Internet-Drafts and
+              RFCs", RFC 8792, DOI 10.17487/RFC8792, June 2020,
+              <https://www.rfc-editor.org/rfc/rfc8792>.
+
+   [RFC9458]  Thomson, M. and C. A. Wood, "Oblivious HTTP", RFC 9458,
+              DOI 10.17487/RFC9458, January 2024,
+              <https://www.rfc-editor.org/rfc/rfc9458>.
+
+   [RFC9576]  Davidson, A., Iyengar, J., and C. A. Wood, "The Privacy
+              Pass Architecture", RFC 9576, DOI 10.17487/RFC9576, June
+              2024, <https://www.rfc-editor.org/rfc/rfc9576>.
+
+   [WHITEPAPER]
+              Federated Ads Initiative, "The Federated Ads Protocol:
+              Whitepaper, Version 0.2", October 2026,
+              <https://github.com/federated-ads/spec>.
+
+Open Issues
+
+   _RFC Editor: please remove this section before publication._
+
+   Open issues are tracked at [ISSUES].  Issues known at the time of
+   writing include:
+
+   1.   Several objects not listed in the whitepaper were added for
+        completeness: Discovery, DealAmendment, StatusChange, Ack and
+        Collection.  Feedback is sought on whether they should be
+        merged.
+
+   2.   The Privacy Pass redemption_context adds 0x00 separators to the
+        whitepaper's concatenation to make the encoding unambiguous.
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 74]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
+   3.   The content taxonomy and jurisdiction profiles are referenced
+        but not defined; a registry or separate document is needed.
+
+   4.   Whether the C2SP specifications are sufficiently stable as
+        normative references, or whether an IETF transparency log
+        specification should be used instead.
+
+   5.   Whether the log should hold only hashes (as specified) or also
+        selected public objects such as Revocations.
+
+   6.   Surface profile documents, including the ActivityPub sponsorship
+        extension and the AT Protocol labeler binding.
+
+   7.   Who should act as Privacy Pass attesters for V3.
+
+   8.   Dispute resolution evidence and arbiter procedures.
+
+   9.   Bridge profiles for OpenRTB 2.6 and VAST 4.x.
+
+   10.  Media type and well-known URI registration review.
+
+Change Log
+
+   _RFC Editor: please remove this section before publication._
+
+   draft-rajan-federated-ads-protocol-00:  Initial version, derived from
+      whitepaper version 0.2.
+
+Acknowledgments
+
+   The design draws on ads.cert, ads.txt and sellers.json from IAB Tech
+   Lab; on email authentication; on Certificate Transparency and the
+   C2SP transparency log specifications; on ActivityPub and the AT
+   Protocol; and on Privacy Pass.
+
+   AI-assistance disclosure: this document was drafted with the
+   assistance of Claude, an AI model made by Anthropic, under the
+   direction of the author, who set its goals, made the design
+   decisions, and is responsible for its content.  Any errors are the
+   author's.
+
+Author's Address
+
+   Suneesh Rajan
+   Federated Ads Initiative
+   Email: suneeshtr@gmail.com
+
+
+
+
+
+Rajan                     Expires 8 April 2027                 [Page 75]

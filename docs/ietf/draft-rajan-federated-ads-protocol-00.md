@@ -1,0 +1,2566 @@
+---
+title: "The Federated Ads Protocol"
+abbrev: "Federated Ads Protocol"
+docname: draft-rajan-federated-ads-protocol-00
+category: exp
+submissiontype: IETF
+ipr: trust200902
+area: ART
+keyword:
+  - advertising
+  - federation
+  - HTTP Message Signatures
+  - Data Integrity
+  - transparency log
+  - licensing
+  - revocation
+  - privacy
+v: 3
+date: 2026-10-05
+stand_alone: yes
+pi: [toc, sortrefs, symrefs]
+
+author:
+  -
+    fullname: Suneesh Rajan
+    organization: Federated Ads Initiative
+    email: suneeshtr@gmail.com
+
+normative:
+  RFC3339:
+  RFC4648:
+  RFC6839:
+  RFC7033:
+  RFC7493:
+  RFC8032:
+  RFC8259:
+  RFC8288:
+  RFC8615:
+  RFC8785:
+  RFC9110:
+  RFC9162:
+  RFC9421:
+  RFC9457:
+  RFC9530:
+  RFC9577:
+  RFC9578:
+  VC-DATA-INTEGRITY:
+    title: "Verifiable Credential Data Integrity 1.0"
+    target: https://www.w3.org/TR/vc-data-integrity/
+    author:
+      - org: W3C
+    date: 2025-05
+  VC-DI-EDDSA:
+    title: "Data Integrity EdDSA Cryptosuites v1.0"
+    target: https://www.w3.org/TR/vc-di-eddsa/
+    author:
+      - org: W3C
+    date: 2025-05
+  CID:
+    title: "Controlled Identifiers v1.0"
+    target: https://www.w3.org/TR/cid-1.0/
+    author:
+      - org: W3C
+    date: 2025-05
+  SRI:
+    title: "Subresource Integrity"
+    target: https://www.w3.org/TR/SRI/
+    author:
+      - org: W3C
+    date: 2016-06
+  TLOG-TILES:
+    title: "Tiled Transparency Logs"
+    target: https://c2sp.org/tlog-tiles
+    author:
+      - org: C2SP
+  TLOG-CHECKPOINT:
+    title: "Transparency Log Checkpoints"
+    target: https://c2sp.org/tlog-checkpoint
+    author:
+      - org: C2SP
+  SIGNED-NOTE:
+    title: "Note"
+    target: https://c2sp.org/signed-note
+    author:
+      - org: C2SP
+  TLOG-WITNESS:
+    title: "Transparency Log Witness Protocol"
+    target: https://c2sp.org/tlog-witness
+    author:
+      - org: C2SP
+  TLOG-COSIGNATURE:
+    title: "Transparency Log Cosignatures"
+    target: https://c2sp.org/tlog-cosignature
+    author:
+      - org: C2SP
+  ISO4217:
+    title: "Codes for the representation of currencies"
+    author:
+      - org: ISO
+    seriesinfo:
+      ISO: "4217:2015"
+    date: 2015
+  ISO3166:
+    title: "Codes for the representation of names of countries and their subdivisions"
+    author:
+      - org: ISO
+    seriesinfo:
+      ISO: "3166-1:2020"
+    date: 2020
+
+informative:
+  RFC3552:
+  RFC5646:
+  RFC6838:
+  RFC6962:
+  RFC6973:
+  RFC8126:
+  RFC8792:
+  RFC9458:
+  RFC9576:
+  I-D.ietf-ppm-dap:
+  WHITEPAPER:
+    title: "The Federated Ads Protocol: Whitepaper, Version 0.2"
+    target: https://github.com/federated-ads/spec
+    author:
+      - org: Federated Ads Initiative
+    date: 2026-10
+  GPC:
+    title: "Global Privacy Control (GPC)"
+    target: https://www.w3.org/TR/gpc/
+    author:
+      - org: W3C
+  IAB-CONTENT-TAXONOMY:
+    title: "Content Taxonomy 3.1"
+    target: https://iabtechlab.com/standards/content-taxonomy/
+    author:
+      - org: IAB Technology Laboratory
+  MRC-VIEWABILITY:
+    title: "Viewable Ad Impression Measurement Guidelines"
+    target: https://mediaratingcouncil.org/standards-and-guidelines
+    author:
+      - org: Media Rating Council
+  IAB-PODCAST:
+    title: "Podcast Measurement Technical Guidelines, Version 2.2"
+    target: https://iabtechlab.com/standards/podcast-measurement-guidelines/
+    author:
+      - org: IAB Technology Laboratory
+  C2PA:
+    title: "C2PA Technical Specification"
+    target: https://c2pa.org/specifications/
+    author:
+      - org: Coalition for Content Provenance and Authenticity
+  ISSUES:
+    title: "Federated Ads Protocol specification issue tracker"
+    target: https://github.com/federated-ads/spec/issues
+    author:
+      - org: Federated Ads Initiative
+
+--- abstract
+
+The Federated Ads Protocol lets independently operated servers
+("nodes") acting for advertisers and publishers discover each other
+by domain name, agree advertising deals using signed offers, license
+advertising creatives under time-limited and revocable licences,
+report delivery using signed aggregate receipts committed to
+witnessed transparency logs, and agree signed statements that form
+the basis for settlement on any payment rail.  Matching is contextual
+by default and protocol messages carry no cross-site identifiers.
+This document specifies the wire protocol: the JSON object model,
+the HTTP Message Signatures and Data Integrity profiles used for
+authentication and integrity, discovery, inbox messaging, licensing
+and revocation, receipts and transparency logs, conformance levels,
+and the IANA registrations needed to support them.
+
+--- note_Note_to_Readers
+
+*RFC Editor: please remove this section before publication.*
+
+Discussion of this document takes place in the GitHub repository at
+<https://github.com/federated-ads/spec>, where issues can be filed
+at <https://github.com/federated-ads/spec/issues>.  The motivation,
+market design and policy rationale are described in the companion
+whitepaper, which is informative.
+
+--- middle
+
+# Introduction {#intro}
+
+Digital advertising on the open web is mediated by a small number of
+vertically integrated intermediaries, relies heavily on cross-site
+identifiers, and gives advertisers no interoperable means to withdraw
+a creative once it has entered the supply chain.  Publishers that do
+not wish to track their audiences, including independent web sites,
+newsletters, podcasts, federated social networks and AI assistants,
+have no neutral, interoperable way to sell advertising.
+
+The Federated Ads Protocol ("this protocol") is a federated protocol,
+in the tradition of electronic mail, in which independent nodes run by
+publishers, advertisers, agencies or cooperatives exchange signed JSON
+objects over HTTPS.  It combines existing building blocks: HTTP
+Message Signatures {{RFC9421}}, W3C Data Integrity
+{{VC-DATA-INTEGRITY}} with the `eddsa-jcs-2022` cryptosuite
+{{VC-DI-EDDSA}}, W3C Controlled Identifiers {{CID}}, well-known URIs
+{{RFC8615}}, Merkle-tree transparency logs {{RFC9162}} {{TLOG-TILES}},
+and Privacy Pass {{RFC9576}}.
+
+The companion whitepaper {{WHITEPAPER}} explains the motivation,
+compares design alternatives, and discusses economics, governance and
+regulation.  This document is limited to the wire protocol.  Where the
+whitepaper is descriptive, this document is normative.
+
+## Goals {#goals}
+
+This protocol aims to:
+
+* allow nodes to discover each other and each other's keys, policies
+  and endpoints, starting from a domain name;
+* allow buyers and sellers to negotiate and agree deals using signed,
+  non-repudiable objects, directly or through relays that cannot alter
+  them;
+* keep advertisers in control of their creatives by granting only
+  time-limited, revocable licences to display them, and make
+  revocation fast, logged and acknowledged;
+* make delivery verifiable without per-user data, using signed
+  aggregate receipts committed to append-only logs that are cosigned by
+  independent witnesses;
+* produce doubly signed statements that serve as the basis for
+  payment on any settlement rail;
+* work for any surface (web, social, email, audio and AI/chat) through
+  surface profiles.
+
+## Non-Goals {#non-goals}
+
+This protocol does not attempt to:
+
+* support cross-publisher reach and frequency management, which would
+  require cross-site identity;
+* define a real-time, per-impression auction across nodes as the
+  default market mechanism;
+* define a token, blockchain, or mandatory payment provider;
+* support individual-level conversion tracking;
+* moderate or judge publisher content;
+* define the content taxonomy, the selling node's ad-decisioning
+  algorithm, or the rendering rules for each surface, beyond the
+  minimum needed for interoperability.
+
+## Relationship to the Whitepaper
+
+The whitepaper {{WHITEPAPER}} is informative.  If the whitepaper and
+this document disagree on a protocol detail, this document takes
+precedence, and the disagreement should be reported as an issue
+{{ISSUES}}.
+
+## Requirements Language
+
+{::boilerplate bcp14-tagged}
+
+## Terminology {#terminology}
+
+This document uses the following terms:
+
+Node:
+: An HTTPS origin that implements this protocol and is identified by
+  the URL of its Node Descriptor.
+
+Node Descriptor:
+: A signed JSON document, structured as a Controlled Identifier
+  document {{CID}}, that lists a node's roles, keys, endpoints and
+  supported profiles ({{node}}).
+
+Object:
+: A JSON object defined by this document, carrying a `type`, an `id`
+  and, except where stated otherwise, a Data Integrity proof.
+
+Issuer:
+: The node that creates and signs an object.  Identified by the
+  object's `issuer` member.
+
+Object hash:
+: The content hash of the JCS serialization of a complete object,
+  including its proof ({{object-hash}}).
+
+Deal party:
+: The buying node or the selling node named in a Deal.
+
+Licensee:
+: The node to which a Licence grants the right to display a creative.
+
+Transparency log (log):
+: An append-only Merkle tree log operated by a node, in the format
+  defined by {{TLOG-TILES}}.
+
+Checkpoint:
+: A signed statement of a log's size and root hash {{TLOG-CHECKPOINT}}.
+
+Witness:
+: A party that verifies the consistency of a log and cosigns its
+  checkpoints {{TLOG-WITNESS}}.
+
+Cell:
+: One row of an aggregate receipt: a count of events of one type for
+  one combination of creative, time window, context category and
+  coarse region ({{receipts}}).
+
+Surface:
+: A medium on which advertisements are presented, such as a web page,
+  social feed, email newsletter, podcast or AI/chat interface.
+
+## Roles {#roles}
+
+A node declares one or more roles in its Node Descriptor.  The roles
+are:
+
+`advertiser`:
+: Owns creatives and issues Creative Manifests, Licences and
+  Revocations.  An advertiser often uses a buying node.
+
+`publisher`:
+: Operates a surface on which advertisements are shown.
+
+`buying`:
+: Acts for one or more advertisers.  Issues Offers, Standing Offers,
+  RFPs and Deals.
+
+`selling`:
+: Acts for one or more publishers.  Publishes Policies and Inventory,
+  responds to offers, renders creatives, and issues Spend Reports,
+  Receipt Batches and Statements.
+
+`relay`:
+: Forwards objects between nodes and may add discovery, curation or
+  credit services.  Cannot alter signed objects.
+
+`creative-host`:
+: Stores creative assets and serves them to licensees.
+
+`witness`:
+: Cosigns other nodes' log checkpoints after checking consistency.
+
+`auditor`:
+: Samples receipts, runs test clients, and issues attestations as
+  Labels.
+
+`labeler`:
+: Publishes signed Labels about nodes, domains or creatives.
+
+One organization may hold several roles.  Attesters (Privacy Pass
+token issuers) and settlement providers are external to this protocol
+and are not nodes unless they also implement it.
+
+# Protocol Overview {#overview}
+
+{{fig-flow}} shows the main exchanges between a buying node and a
+selling node.  All arrows are HTTPS requests signed as described in
+{{http-sig}}; all objects carry Data Integrity proofs as described in
+{{object-integrity}}.
+
+~~~ ascii-art
+ Buying node        Selling node       Creative host     Witness
+ (advertiser)       (publisher)        (advertiser)
+     |                   |                   |              |
+     |-- GET /.well-known|                   |              |
+     |   /federated-ads->|                   |              |
+     |<-- Node, Policy,  |                   |              |
+     |    Inventory -----|                   |              |
+     |                   |                   |              |
+     |-- Offer --------->|                   |              |
+     |<-- CounterOffer --|                   |              |
+     |-- Offer (rev.) -->|                   |              |
+     |<-- Acceptance ----|                   |              |
+     |-- Deal (signed) ->|                   |              |
+     |<-- Deal (counter- |                   |              |
+     |      signed) -----|                   |              |
+     |-- Licence ------->|                   |              |
+     |                   |-- fetch manifest, |              |
+     |                   |   assets -------->|              |
+     |                   |<-- bytes (hash- --|              |
+     |                   |    pinned) -------|              |
+     |<-- SpendReport ---|  (every 15 min)   |              |
+     |                   |-- checkpoint ------------------->|
+     |                   |<-- cosignature ------------------|
+     |<-- ReceiptBatch --|  (hourly)         |              |
+     |-- fetch inclusion |                   |              |
+     |   and consistency |                   |              |
+     |   proofs -------->| (seller's log)    |              |
+     |                   |                   |              |
+     |-- Revocation ---->|  (logged first)   |              |
+     |<-- RevocationAck -|  (within 60 s)    |              |
+     |                   |                   |              |
+     |<-- Statement -----|                   |              |
+     |-- Statement ----->|  (countersigned)  |              |
+     |-- PaymentNotice ->|                   |              |
+~~~
+{: #fig-flow title="Overview of a direct deal"}
+
+The lifecycle is:
+
+1. Discover.  A node is found from a domain name through the
+   `/.well-known/federated-ads` document or WebFinger ({{discovery}}).
+2. Describe.  Selling nodes publish Policy and Inventory objects.
+3. Offer.  Buying nodes send Offers to specific sellers, publish
+   Standing Offers that eligible sellers may claim, or issue RFPs.
+4. Agree.  The seller accepts, counters or declines.  An accepted
+   offer or confirmed claim becomes a Deal signed by both parties.
+5. License.  The advertiser issues a Licence for each approved
+   creative, bound to the deal, the licensee, surfaces and an expiry.
+6. Serve.  The selling node selects among active deals at render time
+   using its own algorithm, renders the creative and a disclosure, and
+   counts events.
+7. Report.  The selling node sends Spend Reports for pacing and Receipt
+   Batches for billing, committing the latter to its log.
+8. Revoke.  At any time, the advertiser logs and pushes a Revocation;
+   the licensee acknowledges it with a logged RevocationAck.
+9. Settle.  The parties agree a doubly signed Statement and pay
+   off-protocol, optionally recording a PaymentNotice.
+
+# Conventions {#conventions}
+
+## JSON {#json}
+
+Objects are encoded as JSON {{RFC8259}} in UTF-8 and MUST conform to
+I-JSON {{RFC7493}}.  Receivers MUST reject objects that contain
+duplicate member names.  Integers (counts, sizes, sequence numbers)
+MUST be in the range 0 to 2^53-1.  Non-integer quantities (money,
+rates, tolerances) are encoded as decimal strings, never as JSON
+numbers.
+
+Each object has an `@context` member whose value is an array of
+strings.  The first element MUST be
+`https://w3id.org/federated-ads/v0`, except in Node Descriptors, where
+the first element is `https://www.w3.org/ns/cid/v1` and the second is
+`https://w3id.org/federated-ads/v0`.  Verifiers MUST treat context
+values as opaque strings and MUST NOT require JSON-LD processing or
+dereference context URLs.  JSON-LD processing MAY be used for
+vocabulary extension but does not affect validity.
+
+## Media Type {#media-type-conv}
+
+Objects are exchanged using the media type
+`application/federated-ads+json` ({{iana-media-type}}).  Senders MUST
+use it in `Content-Type` when sending an object.  Receivers MUST
+accept `application/federated-ads+json` and MAY accept
+`application/json`.
+
+## Identifiers {#object-ids}
+
+Object identifiers (`id`) are absolute `https` URLs without a fragment
+component, hosted at the issuer's origin.  The origin of an object's
+`id` MUST equal the origin of its `issuer`; receivers MUST reject
+objects for which this does not hold.  Key identifiers are `https`
+URLs with a fragment, as defined in {{node}}.  Identifiers MUST NOT
+exceed 2048 octets.  Issuers SHOULD use unguessable path components
+(for example, at least 96 bits of randomness) for objects that are
+not public, because identifiers appear in transparency logs
+({{log-entries}}).
+
+## Timestamps {#timestamps}
+
+Timestamps are strings in the `date-time` format of {{RFC3339}}, in
+UTC, with an uppercase `T` and a literal uppercase `Z`, for example
+`2026-10-05T10:00:00Z`.  Fractional seconds MAY be present.
+Durations are integers in seconds.
+
+## Money {#money}
+
+A monetary amount is a JSON object with two members:
+
+`amount`:
+: A decimal string matching `^[0-9]+(\.[0-9]+)?$`.  Negative amounts
+  are not permitted; credits are expressed by the containing object.
+
+`currency`:
+: A three-letter alphabetic currency code from {{ISO4217}}.
+
+For example: `{"amount": "12.50", "currency": "USD"}`.
+
+## Content Hashes {#hashes}
+
+Content hashes use the Subresource Integrity syntax {{SRI}}: the
+string `sha256-` followed by the standard base64 encoding
+({{Section 4 of RFC4648}}), with padding, of the SHA-256 digest of
+the content.  Implementations MUST support `sha256`.  Implementations
+MAY additionally support `sha384` and `sha512`.  An example hash is
+`sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ=`.
+
+## Canonicalization and Object Hash {#object-hash}
+
+Where this document requires the canonical form of an object, it is
+the JSON Canonicalization Scheme (JCS) {{RFC8785}} serialization.
+
+The object hash of an object is the content hash ({{hashes}}) of the
+JCS serialization of the complete object, including its `proof`
+member.  Objects that reference another object by hash (for example,
+`offerHash`) use the object hash.
+
+## Common Members {#common-members}
+
+All objects defined in {{objects}} have the members in
+{{tab-common}}, unless stated otherwise.
+
+| Member | Req. | Description |
+|---|---|---|
+| `@context` | REQUIRED | Array of context strings ({{json}}). |
+| `type` | REQUIRED | Object type from the registry in {{iana-object-types}}. |
+| `id` | REQUIRED | Identifier ({{object-ids}}). The deduplication key. |
+| `issuer` | REQUIRED | Node Descriptor URL of the issuer. Absent in a Node Descriptor, where `id` identifies the issuer. |
+| `issuedAt` | REQUIRED | Time of issue. |
+| `expiresAt` | OPTIONAL | Time after which the object has no effect. |
+| `critical` | OPTIONAL | Array of member names that receivers MUST understand ({{extensibility}}). |
+| `proof` | REQUIRED | A Data Integrity proof, or an array of proofs forming a chain ({{object-integrity}}). |
+{: #tab-common title="Common members"}
+
+# Authentication {#auth}
+
+This protocol uses two layers of signatures.  HTTP Message Signatures
+{{RFC9421}} authenticate each hop and provide freshness.  Data
+Integrity proofs {{VC-DATA-INTEGRITY}} protect objects end to end,
+across relays and over time.
+
+## HTTP Message Signatures Profile {#http-sig}
+
+### Requests {#http-sig-req}
+
+Every request defined by this protocol, other than unauthenticated
+requests for public resources (the well-known document, WebFinger,
+public Node Descriptors, public Policy and Inventory objects, and log
+tiles and checkpoints), MUST carry an HTTP message signature
+{{RFC9421}} with the following properties:
+
+* The covered components MUST include `"@method"` and
+  `"@target-uri"`.
+* If the request has content, the request MUST include a
+  `Content-Digest` field {{RFC9530}} using `sha-256` (other algorithms
+  MAY be added), and the covered components MUST include
+  `"content-type"` and `"content-digest"`.
+* The signature parameters MUST include `created`, `expires`, `keyid`,
+  `alg` and `tag`.
+* `alg` MUST be `"ed25519"` ({{RFC8032}}; {{Section 3.3.6 of RFC9421}}).
+* `tag` MUST be `"federated-ads"`.
+* `keyid` MUST be the URL of a verification method listed in the
+  `authentication` array of the sender's Node Descriptor.
+* `expires` minus `created` MUST NOT exceed 300 seconds.
+
+The signature label is not significant; this document uses `fa` in
+examples.  A sender MAY include a `nonce` parameter.
+
+The following example uses line wrapping per {{RFC8792}}:
+
+~~~ http-message
+NOTE: '\' line wrapping per RFC 8792
+
+POST /fa/inbox HTTP/1.1
+Host: ads.example.com
+Content-Type: application/federated-ads+json
+Content-Digest: sha-256=:Pc1EWC05sjJPosvus5LefPh+i3TViCo38kEWdpN6o\
+  a0=:
+Signature-Input: fa=("@method" "@target-uri" "content-type" \
+  "content-digest");created=1791187200;expires=1791187500;\
+  keyid="https://ads.acme.example/fa/node#key-2026";\
+  alg="ed25519";tag="federated-ads"
+Signature: fa=:<base64 Ed25519 signature>:
+
+{ ... object ... }
+~~~
+{: title="Signed request (illustrative)"}
+
+### Responses {#http-sig-resp}
+
+Responses to signed requests, including error responses, MUST be
+signed by the responding node with the same profile, except that:
+
+* the covered components MUST include `"@status"`;
+* if the response has content, they MUST include `"content-type"` and
+  `"content-digest"`;
+* they MUST bind the response to the request by covering
+  `"@method";req`, `"@target-uri";req` and
+  `"signature";req;key="<label>"`, where `<label>` is the label of the
+  request signature ({{Section 2.4 of RFC9421}}).
+
+~~~ http-message
+NOTE: '\' line wrapping per RFC 8792
+
+HTTP/1.1 202 Accepted
+Content-Type: application/federated-ads+json
+Content-Digest: sha-256=:<base64 digest>:
+Signature-Input: fa=("@status" "content-type" "content-digest" \
+  "@method";req "@target-uri";req "signature";req;key="fa");\
+  created=1791187201;expires=1791187501;\
+  keyid="https://ads.example.com/fa/node#key-2026";\
+  alg="ed25519";tag="federated-ads"
+Signature: fa=:<base64 Ed25519 signature>:
+~~~
+{: title="Signed response (illustrative)"}
+
+### Verification, Clock Skew and Replay {#http-sig-verify}
+
+A receiver MUST:
+
+1. resolve the Node Descriptor identified by the `keyid` URL with its
+   fragment removed ({{node}}), and verify that the key is listed in
+   `authentication` and has not been revoked ({{key-revocation}});
+2. verify the signature as specified in {{Section 3.2 of RFC9421}},
+   and verify `Content-Digest` against the received content;
+3. reject the message if `created` is more than 60 seconds in the
+   future, if the current time is more than 60 seconds after
+   `expires`, or if `expires` minus `created` exceeds 300 seconds;
+4. reject the message if the same signature value has already been
+   accepted within its validity window.  Receivers MUST retain
+   accepted signature values (or a hash of them) at least until 60
+   seconds after their `expires`.
+
+Nodes SHOULD keep their clocks synchronized to within a few seconds
+of UTC.  The 60-second tolerance applies throughout this document
+wherever a time comparison is made.
+
+Transport-level replay protection is complemented by object-level
+deduplication: retransmissions of the same object carry a new HTTP
+signature but the same object `id` ({{idempotency}}).
+
+## Object Integrity {#object-integrity}
+
+### Proof Shape {#proof-shape}
+
+Every object, unless stated otherwise, carries a `proof` member
+containing a Data Integrity proof {{VC-DATA-INTEGRITY}} created with
+the `eddsa-jcs-2022` cryptosuite {{VC-DI-EDDSA}}.  The proof MUST have
+these members:
+
+`type`:
+: `"DataIntegrityProof"`.
+
+`cryptosuite`:
+: `"eddsa-jcs-2022"`.
+
+`created`:
+: Time of signing ({{timestamps}}).
+
+`verificationMethod`:
+: URL of a verification method listed in the `assertionMethod` array
+  of the signer's Node Descriptor.
+
+`proofPurpose`:
+: `"assertionMethod"`.
+
+`proofValue`:
+: The multibase-encoded signature, per {{VC-DI-EDDSA}}.
+
+A proof MAY additionally carry `id`, `expires` and `previousProof`.
+
+~~~ json
+"proof": {
+  "type": "DataIntegrityProof",
+  "cryptosuite": "eddsa-jcs-2022",
+  "created": "2026-10-05T10:00:00Z",
+  "verificationMethod":
+    "https://ads.acme.example/fa/node#key-2026",
+  "proofPurpose": "assertionMethod",
+  "proofValue": "z2HnFSSPPBzR36zdDgK8PbEHeXbR56YF24jwMpt3R1eH..."
+}
+~~~
+{: title="Object proof (illustrative; proofValue truncated)"}
+
+### Verification {#proof-verify}
+
+A receiver MUST verify every proof on an object before acting on it,
+using the algorithm of {{VC-DI-EDDSA}}, and MUST additionally check
+that:
+
+* `proofPurpose` is `"assertionMethod"`;
+* for a single proof, or the first proof of a chain, the verification
+  method's controller is the node identified by the object's `issuer`
+  (or, for a Node Descriptor, by its `id`), and the method is listed
+  in that node's `assertionMethod`;
+* the key was not revoked at the proof's `created` time
+  ({{key-revocation}});
+* `created` is not more than 60 seconds later than the time of
+  receipt.
+
+Objects with an invalid proof MUST be rejected with the error type
+`signature-invalid` ({{errors}}).
+
+### Proof Chains for Two-Party Objects {#proof-chains}
+
+Deal, DealAmendment, Statement and KeyRotation objects are signed by
+two signers using a proof chain ({{VC-DATA-INTEGRITY}}, proof
+chains).  The `proof` member is then an array of two proofs:
+
+1. The first proof is created by the issuer and MUST carry an `id`
+   (for example, a `urn:uuid:` URN).
+2. The second proof is created by the counterparty named in the
+   object (for KeyRotation, by the new key) and MUST carry a
+   `previousProof` member whose value is the first proof's `id`.  Its
+   verification method MUST be controlled by the counterparty.
+
+A two-party object with only the first proof is a proposal.  It takes
+effect only when both proofs are present and valid.  The counterparty
+countersigns by adding the second proof without altering any other
+member and returning the result to the issuer's inbox.
+
+## Relays {#relays}
+
+A relay forwards objects unaltered.  When forwarding, it signs the
+HTTP request with its own key; the object proofs are unchanged.
+Receivers MUST base all decisions about an object's meaning on the
+object proofs, not on the identity of the transport sender.
+Receivers MAY use the transport sender's identity for rate limiting
+and abuse handling.  A relay MUST NOT modify any member of a signed
+object; any modification invalidates the proof.
+
+# Identity, Keys and Discovery {#discovery}
+
+A node's identity is rooted in control of a DNS name and the HTTPS
+origin served under it.
+
+## Well-Known Document {#well-known}
+
+A domain that participates in this protocol MUST serve a discovery
+document at the well-known URI `/.well-known/federated-ads`
+({{iana-well-known}}) over HTTPS, with media type
+`application/federated-ads+json`.  The document lists the domain's
+own node, the nodes authorized to act for it, or both.
+
+| Member | Req. | Description |
+|---|---|---|
+| `@context` | REQUIRED | As in {{json}}. |
+| `type` | REQUIRED | `"Discovery"`. |
+| `subject` | REQUIRED | The origin of the domain, e.g. `https://example.com`. |
+| `versions` | REQUIRED | Array of supported protocol versions ({{versioning}}). |
+| `nodes` | REQUIRED | Array of entries, each with `id` (Node Descriptor URL), `roles` (array) and `relationship` (`"self"` or `"delegate"`). |
+{: title="Discovery document members"}
+
+The discovery document is authenticated by TLS and does not carry a
+proof.  Clients MUST NOT follow redirects to a different host when
+fetching it.
+
+~~~ json
+{
+  "@context": ["https://w3id.org/federated-ads/v0"],
+  "type": "Discovery",
+  "subject": "https://example.com",
+  "versions": ["0.2"],
+  "nodes": [
+    { "id": "https://ads.example.com/fa/node",
+      "roles": ["publisher", "selling"],
+      "relationship": "self" },
+    { "id": "https://coop.example.net/fa/node",
+      "roles": ["selling"],
+      "relationship": "delegate" }
+  ]
+}
+~~~
+{: title="Discovery document"}
+
+## WebFinger Alternative {#webfinger}
+
+A domain MAY instead, or additionally, support WebFinger {{RFC7033}}.
+A client queries with `resource` set to the domain's origin, for
+example `resource=https://example.com`, and `rel` set to the
+extension relation type `https://w3id.org/federated-ads/rel/node`
+({{RFC8288}}, Section 2.1.2).  Each matching link has an `href` that
+is a Node Descriptor URL and a `type` of
+`application/federated-ads+json`.  If both mechanisms are available
+and disagree, the well-known document takes precedence.
+
+## Node Descriptor {#node}
+
+A Node Descriptor is a Controlled Identifier document {{CID}} with
+`type` `"Node"`.  Keys are expressed as verification methods of type
+`Multikey` with a `publicKeyMultibase` value encoding an Ed25519
+public key.  Keys listed in `assertionMethod` sign objects; keys
+listed in `authentication` sign HTTP messages.  A node MAY use the
+same key for both purposes.  Verification methods MAY carry the
+`expires` and `revoked` properties defined by {{CID}}.
+
+The members of the Node object are defined in {{obj-node}}.  The Node
+Descriptor carries a proof created with one of its own
+`assertionMethod` keys; its authority derives from being served over
+HTTPS at its `id`.
+
+## Delegation {#delegation}
+
+When a discovery document lists a node with `relationship`
+`"delegate"`, that node MUST list the subject origin in its
+`authorizedFor` member.  A client MUST treat a delegate as authorized
+for a domain only if both statements are present.  This two-sided
+declaration plays the role that ads.txt and sellers.json play in
+existing advertising systems.
+
+## Key Rotation {#key-rotation}
+
+To rotate a key, a node:
+
+1. publishes the new key in its Node Descriptor alongside the old key;
+2. issues a KeyRotation object ({{obj-keyrotation}}) signed first by
+   the old key and then by the new key, and appends it to its log;
+3. keeps the old key listed, with an `expires` value, for at least
+   the longest remaining lifetime of any object it signed with that
+   key, and in any case for at least 30 days.
+
+Because KeyRotation objects carry the public keys and are logged, a
+verifier can reconstruct a node's key history from its log and
+verify signatures on historical objects after the old key is removed
+from the Node Descriptor.
+
+Nodes SHOULD use short-lived signing keys certified by an offline
+root key that is listed in the Node Descriptor under
+`capabilityDelegation` {{CID}} and used only to sign KeyRotation and
+KeyRevocation objects.
+
+## Key Revocation {#key-revocation}
+
+When a key is compromised, the node MUST issue a KeyRevocation object
+({{obj-keyrevocation}}) signed by a different, unrevoked key (the
+offline root key, if any), append it to its log, and mark the key
+`revoked` in its Node Descriptor.  Proofs and HTTP signatures created
+by that key with a `created` time at or after `revokedAt` MUST be
+rejected.  Objects signed before `revokedAt` remain valid only if they
+were included in the issuer's log, under a witnessed checkpoint,
+before `revokedAt`.
+
+## Caching {#caching}
+
+Clients MAY cache discovery documents and Node Descriptors according
+to HTTP caching rules {{RFC9110}}, but MUST NOT cache them for longer
+than one hour.  On encountering an unknown `keyid` or
+`verificationMethod`, a client MUST refetch the Node Descriptor
+(subject to rate limiting) before rejecting the message.
+
+# Objects {#objects}
+
+This section defines each object type.  Each table lists members in
+addition to the common members of {{tab-common}}.  "Req." is
+REQUIRED, OPTIONAL or "COND." (conditionally required, as described).
+Receivers MUST reject an object that lacks a REQUIRED member, with
+error type `malformed-object`.
+
+## Shared Structures {#shared}
+
+### Party
+
+A Party object describes a legal entity: `legalName` (REQUIRED),
+`jurisdiction` (REQUIRED; {{ISO3166}} alpha-2 country code), `contact`
+(OPTIONAL email address or URL), `taxId` (OPTIONAL), and `node`
+(OPTIONAL Node Descriptor URL).
+
+### Object Reference
+
+Where a member references another object by identity and content, its
+value is an object with `id` and `hash` (the object hash).  Members
+whose names end in `Hash` contain only an object hash.
+
+### Targeting {#targeting}
+
+A Targeting object restricts where an advertisement may be delivered.
+It MAY contain only the following members; receivers MUST reject
+Targeting objects with any other member unless that member is a
+registered critical extension that the receiver supports:
+
+`contexts`:
+: Array of context category identifiers from the taxonomy named by
+  `taxonomy`.
+
+`taxonomy`:
+: URL identifying the taxonomy and version.  This document does not
+  define a taxonomy; see {{IAB-CONTENT-TAXONOMY}} for one widely used
+  vocabulary to which taxonomies are expected to map.
+
+`languages`:
+: Array of language tags {{RFC5646}}.
+
+`regions`:
+: Array of {{ISO3166}} country codes or first-level subdivision codes
+  (for example `IN-KL`).  Finer geography MUST NOT be used.
+
+`dayparts`:
+: Array of objects with `days` (array of ISO weekday numbers, 1-7),
+  `start` and `end` (`HH:MM` local time) and `tz` (IANA time zone).
+
+`deviceClasses`:
+: Array of strings from `desktop`, `mobile`, `tablet`, `tv`, `audio`,
+  `other`.
+
+`surfaces`:
+: Array of surface profile identifiers ({{iana-surfaces}}).
+
+Targeting MUST NOT refer to any personal data, user or device
+identifier, or audience segment ({{no-identifiers}}).
+
+### Terms {#terms}
+
+Offers, Counter Offers, Standing Offers and Deals carry a Terms
+object:
+
+| Member | Req. | Description |
+|---|---|---|
+| `inventory` | OPTIONAL | URL of the seller's Inventory object. |
+| `placements` | OPTIONAL | Array of placement identifiers from that Inventory. |
+| `pricing` | REQUIRED | Object with `model` (from {{iana-pricing}}) and `price` (Money; for `flat` and `sponsorship`, per `unit`, a string such as `"issue"`, `"episode"`, `"day"`, `"week"`). |
+| `budget` | REQUIRED | Money. Delivery beyond it is not billable. |
+| `flight` | REQUIRED | Object with `start` and `end` timestamps. |
+| `targeting` | REQUIRED | Targeting object ({{targeting}}). |
+| `pacing` | OPTIONAL | `"even"` (default), `"asap"`, or `"daypart"`. |
+| `frequencyCap` | OPTIONAL | Object with `count` and `period` (seconds); enforced per publisher only. |
+| `creatives` | OPTIONAL | Array of Creative Manifest object hashes proposed or approved. |
+| `fees` | REQUIRED | Array of all intermediary fees: each with `party` (Node URL), `role`, and either `rate` (decimal string fraction of spend) or `amount` (Money). An empty array means no fees. |
+| `verification` | REQUIRED | Array of verification levels ({{verification-levels}}); MUST include `"V0"`. |
+| `witnessPolicy` | OPTIONAL | Object with `minWitnesses` (integer, default 1) and optional `witnesses` (array of witness key names). |
+| `settlement` | REQUIRED | Array of acceptable settlement profiles ({{iana-settlement}}). |
+| `paymentTerms` | OPTIONAL | Object with `netDays`, `cancellationNoticeDays`, `makeGood` (string) and `termsRef` (URL of incorporated terms). |
+| `spendReportInterval` | OPTIONAL | Seconds between Spend Reports. Default 900. |
+| `receiptWindow` | OPTIONAL | Receipt Batch window in seconds. Default 3600; MUST be a multiple of 3600. |
+| `kThreshold` | OPTIONAL | Minimum cell count. Default 50; MUST NOT be less than 50 unless both parties are the same legal entity. |
+| `revocationGrace` | OPTIONAL | Seconds after a revocation deadline during which deliveries remain billable. Default 60; maximum 300. |
+| `licenceTier` | OPTIONAL | `"pointer"` (default) or `"signed-cache"`. |
+| `clickParameter` | OPTIONAL | Object with `name` and `value`: a deal-level, non-personal value appended to click-through URLs for V2 corroboration. |
+| `disputeTolerance` | OPTIONAL | Decimal string fraction. Default `"0.10"`. |
+| `arbiter` | OPTIONAL | Node URL of the arbiter for disputes. |
+| `jurisdictionProfiles` | OPTIONAL | Array of jurisdiction profile identifiers that apply. |
+{: #tab-terms title="Terms members"}
+
+## Node {#obj-node}
+
+Issued by: any node.  Public.
+
+| Member | Req. | Description |
+|---|---|---|
+| `name` | REQUIRED | Human-readable name. |
+| `roles` | REQUIRED | Array of roles ({{roles}}). |
+| `operator` | REQUIRED | Party operating the node. |
+| `verificationMethod` | REQUIRED | Array of Multikey verification methods {{CID}}. |
+| `assertionMethod` | REQUIRED | Array of verification method URLs. |
+| `authentication` | REQUIRED | Array of verification method URLs. |
+| `capabilityDelegation` | OPTIONAL | Offline root key(s) ({{key-rotation}}). |
+| `endpoints` | REQUIRED | Object with `inbox` and `log` (REQUIRED) and optionally `policy`, `inventory`, `licences`, `report`, `adfree`, `witness`. |
+| `versions` | REQUIRED | Supported protocol versions. |
+| `conformance` | REQUIRED | Array of conformance tokens ({{conformance}}). |
+| `surfaces` | OPTIONAL | Supported surface profiles. |
+| `settlement` | OPTIONAL | Supported settlement profiles. |
+| `jurisdictionProfiles` | OPTIONAL | Jurisdiction profiles enforced. |
+| `authorizedFor` | OPTIONAL | Array of origins for which this node acts as delegate. |
+| `creativeHosts` | COND. | Array of origins from which this node's creatives may be fetched. REQUIRED for nodes with the `advertiser` or `creative-host` role. |
+| `witnesses` | REQUIRED | Array of witness descriptors, each with `name` (signed-note key name), `key` (verifier key) and `node` (OPTIONAL URL). |
+| `logOrigin` | REQUIRED | The origin line of the node's log checkpoints. |
+{: title="Node members"}
+
+~~~ json
+{
+  "@context": ["https://www.w3.org/ns/cid/v1",
+               "https://w3id.org/federated-ads/v0"],
+  "id": "https://ads.example.com/fa/node",
+  "type": "Node",
+  "name": "Example News selling node",
+  "issuedAt": "2026-10-01T00:00:00Z",
+  "roles": ["publisher", "selling"],
+  "operator": { "legalName": "Example Media Ltd",
+                "jurisdiction": "IN",
+                "contact": "ads@example.com" },
+  "verificationMethod": [{
+    "id": "https://ads.example.com/fa/node#key-2026",
+    "type": "Multikey",
+    "controller": "https://ads.example.com/fa/node",
+    "publicKeyMultibase":
+      "z6MkrJVnaZkeFzdQyMZu1cgjg7k1pZZ6pvBQ7XJPt4swbTQ2"
+  }],
+  "assertionMethod": ["https://ads.example.com/fa/node#key-2026"],
+  "authentication": ["https://ads.example.com/fa/node#key-2026"],
+  "endpoints": {
+    "inbox": "https://ads.example.com/fa/inbox",
+    "log": "https://ads.example.com/fa/log/",
+    "policy": "https://ads.example.com/fa/policy",
+    "inventory": "https://ads.example.com/fa/inventory",
+    "report": "https://ads.example.com/fa/report",
+    "adfree": "https://example.com/subscribe"
+  },
+  "logOrigin": "ads.example.com/fa/log",
+  "witnesses": [{ "name": "witness.example.org",
+                  "key": "witness.example.org+1a2b3c4d+AX..." }],
+  "versions": ["0.2"],
+  "surfaces": ["surface:web", "surface:email"],
+  "settlement": ["settle:invoice", "settle:prepaid"],
+  "jurisdictionProfiles": ["jp:in", "jp:eu"],
+  "conformance": ["federated-ads-core/0.2"],
+  "critical": [],
+  "proof": { "type": "DataIntegrityProof", "...": "..." }
+}
+~~~
+{: title="Node Descriptor"}
+
+## Policy {#obj-policy}
+
+Issued by: selling or buying node.  Public or shared with
+counterparties.  States what the issuer accepts or requires.
+
+| Member | Req. | Description |
+|---|---|---|
+| `taxonomy` | REQUIRED | Taxonomy URL and version. |
+| `appliesTo` | OPTIONAL | Array of placement identifiers or surfaces; default all. |
+| `allowCategories` | OPTIONAL | Context or ad-product categories accepted. |
+| `blockCategories` | OPTIONAL | Categories refused. |
+| `sensitiveAllowed` | OPTIONAL | Sensitive categories explicitly allowed (sensitive is distinct from unsafe). |
+| `floors` | OPTIONAL | Array of objects with `placement`, `model` and `price`. |
+| `creativeApproval` | REQUIRED | Boolean; whether each creative hash requires approval. |
+| `formats` | OPTIONAL | Accepted creative formats (`native`, `display`, `html5`, `audio`, `script`). |
+| `minVerification` | OPTIONAL | Verification levels required of counterparties. |
+| `trustedLabelers` | OPTIONAL | Labeler Node URLs whose Labels the issuer honours. |
+| `jurisdictionProfiles` | OPTIONAL | Profiles enforced. |
+{: title="Policy members"}
+
+A buying node MUST NOT send an Offer that conflicts with the
+recipient's current Policy; a selling node MUST evaluate its Policy
+against each Offer and creative and respond with `policy-mismatch` if
+they conflict.
+
+## Inventory {#obj-inventory}
+
+Issued by: selling node.  Describes placements so buyers can plan.
+
+| Member | Req. | Description |
+|---|---|---|
+| `placements` | REQUIRED | Array of Placement objects (below). |
+| `validUntil` | OPTIONAL | Time after which forecasts are stale. |
+{: title="Inventory members"}
+
+A Placement has `id` (REQUIRED, unique within the Inventory),
+`surface` (REQUIRED), `format` (REQUIRED), `position` (OPTIONAL),
+`contexts` (OPTIONAL), `forecast` (OPTIONAL: `period` in seconds and
+`volume`, an integer that MUST be rounded to two significant digits),
+`rateCard` (OPTIONAL: array of `model`, `price`, and optional `unit`),
+`minSpend` (OPTIONAL Money), `leadTimeDays` (OPTIONAL) and
+`avails` (OPTIONAL: array of `weekStart` and `volume`).
+
+## Offer {#obj-offer}
+
+Issued by: buying node.  Sent to one selling node.
+
+| Member | Req. | Description |
+|---|---|---|
+| `recipient` | REQUIRED | Node URL of the selling node. |
+| `advertiser` | REQUIRED | Party. |
+| `payer` | OPTIONAL | Party paying, if different from the advertiser. |
+| `terms` | REQUIRED | Terms object ({{terms}}). |
+| `expiresAt` | REQUIRED | Offer lapses after this time. |
+| `previous` | OPTIONAL | Object Reference to the Offer or CounterOffer this revises. |
+{: title="Offer members"}
+
+~~~ json
+{
+  "@context": ["https://w3id.org/federated-ads/v0",
+               "https://w3id.org/security/data-integrity/v2"],
+  "type": "Offer",
+  "id": "https://ads.acme.example/fa/offers/0c8e5d3a",
+  "issuer": "https://ads.acme.example/fa/node",
+  "recipient": "https://ads.example.com/fa/node",
+  "issuedAt": "2026-10-04T09:00:00Z",
+  "expiresAt": "2026-10-06T09:00:00Z",
+  "advertiser": { "legalName": "Acme Bikes Pvt Ltd",
+                  "jurisdiction": "IN" },
+  "terms": {
+    "inventory": "https://ads.example.com/fa/inventory",
+    "placements": ["article-native"],
+    "pricing": { "model": "cpm",
+                 "price": { "amount": "350.00",
+                            "currency": "INR" } },
+    "budget": { "amount": "125000.00", "currency": "INR" },
+    "flight": { "start": "2026-10-05T00:00:00Z",
+                "end": "2026-10-31T23:59:59Z" },
+    "targeting": {
+      "taxonomy": "https://w3id.org/federated-ads/tax/1",
+      "contexts": ["sports:cycling", "technology"],
+      "regions": ["IN-KL", "IN-KA"],
+      "languages": ["en", "ml"]
+    },
+    "pacing": "even",
+    "creatives": [
+      "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ="
+    ],
+    "fees": [ { "party": "https://ads.acme.example/fa/node",
+                "role": "buying", "rate": "0.06" } ],
+    "verification": ["V0", "V1", "V2"],
+    "settlement": ["settle:invoice"],
+    "paymentTerms": { "netDays": 30 }
+  },
+  "proof": { "type": "DataIntegrityProof", "...": "..." }
+}
+~~~
+{: title="Offer"}
+
+## StandingOffer {#obj-standingoffer}
+
+Issued by: buying node.  Published to relays or made available at a
+public URL; any eligible selling node may claim a share.
+
+| Member | Req. | Description |
+|---|---|---|
+| `advertiser` | REQUIRED | Party. |
+| `terms` | REQUIRED | Terms; `budget` is the total budget. |
+| `perSellerCap` | REQUIRED | Money; maximum budget any one seller may claim. |
+| `eligibility` | OPTIONAL | Object with `minVerification`, `requiredLabels` (array of label values and labelers), `surfaces`. |
+| `expiresAt` | REQUIRED | No claims after this time. |
+{: title="StandingOffer members"}
+
+## RFP {#obj-rfp}
+
+Issued by: buying node.  Requests priced proposals.
+
+| Member | Req. | Description |
+|---|---|---|
+| `advertiser` | REQUIRED | Party. |
+| `requirements` | REQUIRED | Partial Terms object; `pricing` and `budget` MAY be omitted; `budgetRange` (two Money values) MAY be given. |
+| `recipients` | OPTIONAL | Node URLs invited; absent means open. |
+| `expiresAt` | REQUIRED | Response deadline. |
+{: title="RFP members"}
+
+Selling nodes respond to an RFP with a CounterOffer whose `inReplyTo`
+references the RFP.
+
+## Claim {#obj-claim}
+
+Issued by: selling node, to the issuer of a Standing Offer.
+
+| Member | Req. | Description |
+|---|---|---|
+| `standingOffer` | REQUIRED | Object Reference. |
+| `budget` | REQUIRED | Money claimed; MUST NOT exceed `perSellerCap`. |
+| `placements` | OPTIONAL | Placements offered. |
+| `approvedCreatives` | COND. | Creative hashes approved; REQUIRED if the seller's Policy requires approval. |
+| `expiresAt` | REQUIRED | Claim lapses if not confirmed by a Deal. |
+{: title="Claim members"}
+
+The buying node confirms a claim by issuing a Deal whose `basis`
+references the Claim, or rejects it with a Decline.
+
+## Acceptance {#obj-acceptance}
+
+Issued by: the recipient of an Offer or CounterOffer.
+
+| Member | Req. | Description |
+|---|---|---|
+| `inReplyTo` | REQUIRED | Object Reference to the Offer or CounterOffer accepted. |
+| `approvedCreatives` | COND. | Creative hashes approved; REQUIRED if creative approval applies. |
+| `expiresAt` | REQUIRED | Acceptance lapses if no Deal is issued by this time. |
+{: title="Acceptance members"}
+
+An Acceptance accepts exactly the terms of the referenced object; the
+hash binding prevents substitution.
+
+## CounterOffer {#obj-counteroffer}
+
+Issued by: either party.
+
+| Member | Req. | Description |
+|---|---|---|
+| `inReplyTo` | REQUIRED | Object Reference to the Offer, CounterOffer or RFP. |
+| `terms` | REQUIRED | Complete replacement Terms. |
+| `expiresAt` | REQUIRED | Lapse time. |
+| `note` | OPTIONAL | Human-readable explanation. |
+{: title="CounterOffer members"}
+
+## Decline {#obj-decline}
+
+Issued by: either party.
+
+| Member | Req. | Description |
+|---|---|---|
+| `inReplyTo` | REQUIRED | Object Reference to the Offer, CounterOffer, RFP or Claim. |
+| `reason` | REQUIRED | An error type name ({{errors}}) or `"other"`. |
+| `note` | OPTIONAL | Human-readable explanation. |
+{: title="Decline members"}
+
+## Deal {#obj-deal}
+
+Issued by: buying node; countersigned by the selling node ({{proof-chains}}).
+
+| Member | Req. | Description |
+|---|---|---|
+| `buyer` | REQUIRED | Node URL of the buying node (equal to `issuer`). |
+| `seller` | REQUIRED | Node URL of the selling node. |
+| `advertiser` | REQUIRED | Party. |
+| `payer` | OPTIONAL | Party, if different. |
+| `basis` | REQUIRED | Object Reference to the Acceptance or Claim. |
+| `terms` | REQUIRED | Final Terms; MUST equal the accepted terms except that `budget` for a Claim is the claimed budget. |
+| `approvedCreatives` | REQUIRED | Array of approved Creative Manifest hashes (MAY be empty). |
+| `settlementProfile` | REQUIRED | The one profile chosen from `terms.settlement`. |
+{: title="Deal members"}
+
+A Deal takes effect when countersigned.  The `id` of a Deal is stable
+for its lifetime; changes are made with DealAmendment objects.
+
+~~~ json
+{
+  "@context": ["https://w3id.org/federated-ads/v0",
+               "https://w3id.org/security/data-integrity/v2"],
+  "type": "Deal",
+  "id": "https://ads.acme.example/fa/deals/3d9e7a1c",
+  "issuer": "https://ads.acme.example/fa/node",
+  "issuedAt": "2026-10-04T12:00:00Z",
+  "buyer": "https://ads.acme.example/fa/node",
+  "seller": "https://ads.example.com/fa/node",
+  "advertiser": { "legalName": "Acme Bikes Pvt Ltd",
+                  "jurisdiction": "IN" },
+  "basis": {
+    "id": "https://ads.example.com/fa/acceptances/91f2",
+    "hash": "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ="
+  },
+  "terms": { "...": "as accepted" },
+  "approvedCreatives": [
+    "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ="
+  ],
+  "settlementProfile": "settle:invoice",
+  "proof": [
+    { "id": "urn:uuid:0f3c6a7e-2d1b-4c8e-9a55-5b8f1f0d2e11",
+      "type": "DataIntegrityProof",
+      "cryptosuite": "eddsa-jcs-2022",
+      "verificationMethod":
+        "https://ads.acme.example/fa/node#key-2026",
+      "proofPurpose": "assertionMethod",
+      "created": "2026-10-04T12:00:00Z",
+      "proofValue": "z..." },
+    { "type": "DataIntegrityProof",
+      "cryptosuite": "eddsa-jcs-2022",
+      "verificationMethod":
+        "https://ads.example.com/fa/node#key-2026",
+      "proofPurpose": "assertionMethod",
+      "created": "2026-10-04T12:03:10Z",
+      "previousProof":
+        "urn:uuid:0f3c6a7e-2d1b-4c8e-9a55-5b8f1f0d2e11",
+      "proofValue": "z..." }
+  ]
+}
+~~~
+{: title="Countersigned Deal (illustrative hashes and signatures)"}
+
+## DealAmendment {#obj-dealamendment}
+
+Issued by: either deal party; countersigned by the other.
+
+| Member | Req. | Description |
+|---|---|---|
+| `deal` | REQUIRED | Deal `id`. |
+| `sequence` | REQUIRED | Integer, starting at 1, incremented per amendment. |
+| `previous` | COND. | Object Reference to the previous amendment; REQUIRED if `sequence` > 1. |
+| `addCreatives` | OPTIONAL | Creative hashes newly approved. |
+| `removeCreatives` | OPTIONAL | Creative hashes no longer approved. |
+| `terms` | OPTIONAL | Replacement Terms members (a partial Terms object whose members replace the corresponding members). |
+| `effectiveAt` | REQUIRED | Time the amendment takes effect. |
+{: title="DealAmendment members"}
+
+A changed creative has a new hash and MUST be approved by a
+DealAmendment (or a new Deal) before it is served.
+
+## StatusChange {#obj-statuschange}
+
+Issued by: the party entitled to make the transition ({{state}}).
+
+| Member | Req. | Description |
+|---|---|---|
+| `subject` | REQUIRED | Object Reference to the Offer, Deal or Dispute. |
+| `to` | REQUIRED | Target state name from {{state}}. |
+| `effectiveAt` | REQUIRED | Time of effect; MUST NOT be earlier than `issuedAt` minus 60 seconds. |
+| `reason` | OPTIONAL | Human-readable reason. |
+{: title="StatusChange members"}
+
+## CreativeManifest {#obj-manifest}
+
+Issued by: advertiser (or its buying node acting for it).
+
+| Member | Req. | Description |
+|---|---|---|
+| `advertiser` | REQUIRED | Party. |
+| `format` | REQUIRED | `native`, `display`, `html5`, `audio` or `script`. |
+| `assets` | REQUIRED | Array of Asset objects (below). |
+| `text` | OPTIONAL | Object with `title`, `body`, `cta`, `sponsorLabel`. |
+| `landingUrl` | REQUIRED | The pinned click-through URL. |
+| `categories` | REQUIRED | Ad product categories. |
+| `languages` | OPTIONAL | Language tags. |
+| `aiGenerated` | OPTIONAL | Boolean; true if synthetic. |
+| `provenance` | OPTIONAL | Object with `c2pa` (URL) and `hash` of a C2PA manifest {{C2PA}}. |
+| `attestations` | OPTIONAL | Array of Object References to Labels (e.g., regulatory approvals). |
+{: title="CreativeManifest members"}
+
+An Asset has `role` (e.g., `image`, `logo`, `audio`, `html`),
+`url` (REQUIRED; origin MUST be listed in the advertiser's
+`creativeHosts`), `mediaType` (REQUIRED), `hash` (REQUIRED content
+hash), `size` (REQUIRED octets) and optional `width`, `height`,
+`duration` (seconds) and `alt`.
+
+## Licence {#obj-licence}
+
+Issued by: advertiser.  Grants the licensee the right to display one
+creative under one deal.
+
+| Member | Req. | Description |
+|---|---|---|
+| `manifest` | REQUIRED | URL of the Creative Manifest. |
+| `manifestHash` | REQUIRED | Object hash of the Creative Manifest. |
+| `licensee` | REQUIRED | Node URL of the licensee. |
+| `deal` | REQUIRED | Deal `id`. |
+| `surfaces` | REQUIRED | Surfaces on which display is permitted. |
+| `tier` | REQUIRED | `"pointer"` or `"signed-cache"` ({{licence-tiers}}). |
+| `expiresAt` | REQUIRED | End of the licence. |
+| `revocationLog` | REQUIRED | Base URL of the issuer's log. |
+| `renew` | OPTIONAL | URL at which the licensee may request renewal. |
+| `renews` | OPTIONAL | `id` of the licence this one renews. |
+{: title="Licence members"}
+
+~~~ json
+{
+  "@context": ["https://w3id.org/federated-ads/v0",
+               "https://w3id.org/security/data-integrity/v2"],
+  "type": "Licence",
+  "id": "https://ads.acme.example/fa/licences/7d41b0e2",
+  "issuer": "https://ads.acme.example/fa/node",
+  "manifest": "https://ads.acme.example/fa/creatives/etour-v3",
+  "manifestHash":
+    "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ=",
+  "licensee": "https://ads.example.com/fa/node",
+  "deal": "https://ads.acme.example/fa/deals/3d9e7a1c",
+  "surfaces": ["surface:web"],
+  "tier": "pointer",
+  "issuedAt": "2026-10-05T10:00:00Z",
+  "expiresAt": "2026-10-05T10:15:00Z",
+  "revocationLog": "https://ads.acme.example/fa/log/",
+  "renew": "https://ads.acme.example/fa/licences/renew",
+  "proof": { "type": "DataIntegrityProof", "...": "..." }
+}
+~~~
+{: title="Licence"}
+
+## Revocation {#obj-revocation}
+
+Issued by: the issuer of the licences revoked.
+
+| Member | Req. | Description |
+|---|---|---|
+| `licences` | COND. | Array of Licence `id`s. |
+| `scope` | COND. | Object with `deal` and/or `manifestHash`: revokes all licences issued by the issuer matching it. One of `licences` or `scope` is REQUIRED. |
+| `reason` | REQUIRED | Revocation reason ({{iana-revocation-reasons}}). |
+| `effectiveAt` | REQUIRED | Requested effective time; see {{revocation-deadline}}. |
+| `note` | OPTIONAL | Human-readable explanation. |
+{: title="Revocation members"}
+
+~~~ json
+{
+  "@context": ["https://w3id.org/federated-ads/v0",
+               "https://w3id.org/security/data-integrity/v2"],
+  "type": "Revocation",
+  "id": "https://ads.acme.example/fa/revocations/5b2c",
+  "issuer": "https://ads.acme.example/fa/node",
+  "issuedAt": "2026-10-12T08:30:00Z",
+  "scope": {
+    "deal": "https://ads.acme.example/fa/deals/3d9e7a1c",
+    "manifestHash":
+      "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ="
+  },
+  "reason": "pricing-error",
+  "effectiveAt": "2026-10-12T08:30:00Z",
+  "proof": { "type": "DataIntegrityProof", "...": "..." }
+}
+~~~
+{: title="Revocation"}
+
+## RevocationAck {#obj-revocationack}
+
+Issued by: licensee.
+
+| Member | Req. | Description |
+|---|---|---|
+| `revocation` | REQUIRED | Object Reference to the Revocation. |
+| `receivedAt` | REQUIRED | Time the revocation was received or observed. |
+| `ceasedAt` | REQUIRED | Time new deliveries stopped. |
+| `purged` | OPTIONAL | Boolean; whether cached assets were purged. |
+| `log` | REQUIRED | Object with `origin` and `index` of this ack in the licensee's log. |
+{: title="RevocationAck members"}
+
+## SpendReport {#obj-spendreport}
+
+Issued by: selling node.  For pacing; not a billing record.
+
+| Member | Req. | Description |
+|---|---|---|
+| `deal` | REQUIRED | Deal `id`. |
+| `asOf` | REQUIRED | Time of the counters. |
+| `spend` | REQUIRED | Money spent to date. |
+| `counts` | REQUIRED | Object mapping event types to cumulative integer counts. |
+| `budgetRemaining` | REQUIRED | Money. |
+{: title="SpendReport members"}
+
+## ReceiptBatch {#obj-receiptbatch}
+
+Issued by: selling node.  The billing record.
+
+| Member | Req. | Description |
+|---|---|---|
+| `deal` | REQUIRED | Deal `id`. |
+| `sequence` | REQUIRED | Integer, starting at 1 per deal, without gaps. |
+| `window` | REQUIRED | Object with `start` and `end` ({{windows}}). |
+| `kThreshold` | REQUIRED | The k used ({{k-threshold}}). |
+| `totals` | REQUIRED | Object mapping event types to integer totals. |
+| `cells` | REQUIRED | Array of Cell objects ({{cells}}). |
+| `cellTree` | REQUIRED | Object with `alg` (`"rfc6962-sha256"`), `size` and `root` (content hash). |
+| `measurementModule` | OPTIONAL | Content hash of the measurement module used for viewability. |
+| `attestation` | COND. | Privacy Pass summary ({{privacy-pass}}); REQUIRED if the deal requires V3. |
+| `log` | REQUIRED | Object with `origin` and `index` of the batch's log entry. |
+{: title="ReceiptBatch members"}
+
+Because the `log.index` is known only after appending, the selling
+node appends a log entry for the batch's identity first and then
+issues the batch; see {{log-entries}}.
+
+~~~ json
+{
+  "@context": ["https://w3id.org/federated-ads/v0",
+               "https://w3id.org/security/data-integrity/v2"],
+  "type": "ReceiptBatch",
+  "id": "https://ads.example.com/fa/receipts/8c1d22f0",
+  "issuer": "https://ads.example.com/fa/node",
+  "issuedAt": "2026-10-05T11:05:00Z",
+  "deal": "https://ads.acme.example/fa/deals/3d9e7a1c",
+  "sequence": 11,
+  "window": { "start": "2026-10-05T10:00:00Z",
+              "end": "2026-10-05T11:00:00Z" },
+  "kThreshold": 50,
+  "totals": { "impression": 18240, "click": 97 },
+  "cells": [
+    { "creative":
+        "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ=",
+      "context": "sports:cycling", "region": "IN-KL",
+      "event": "impression", "count": 11020,
+      "salt": "q8Jb3n0mV2xY1cR7tK4wZA" },
+    { "creative":
+        "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ=",
+      "context": "technology", "region": "IN-KA",
+      "event": "impression", "count": 7220,
+      "salt": "Hn5tPq2Lw9sD0fG3jK6mXQ" },
+    { "creative":
+        "sha256-LJpNdR1icOVWU9oFx6AudeMrsiNfhqPDpjdn2UZhUJQ=",
+      "context": "*", "region": "*",
+      "event": "click", "count": 97,
+      "salt": "Zx1Cv4Bn7Mq0Wr3Ty6Ui9A" }
+  ],
+  "cellTree": { "alg": "rfc6962-sha256", "size": 3,
+                "root": "sha256-..." },
+  "log": { "origin": "ads.example.com/fa/log", "index": 48213 },
+  "proof": { "type": "DataIntegrityProof", "...": "..." }
+}
+~~~
+{: title="ReceiptBatch (illustrative)"}
+
+## Statement {#obj-statement}
+
+Issued by: one deal party (normally the selling node); countersigned
+by the other ({{proof-chains}}).
+
+| Member | Req. | Description |
+|---|---|---|
+| `counterparty` | REQUIRED | Node URL of the other party. |
+| `period` | REQUIRED | Object with `start` and `end`. |
+| `lines` | REQUIRED | Array of lines: `deal`, `event`, `quantity`, `unitPrice` (Money), `amount` (Money). |
+| `fees` | OPTIONAL | Array of fee lines: `party`, `role`, `amount`. |
+| `receiptBatches` | REQUIRED | Array of Object References to the batches relied on. |
+| `subtotal` | REQUIRED | Money. |
+| `tax` | OPTIONAL | Object with `supplierJurisdiction`, `customerJurisdiction`, `supplierTaxId`, `customerTaxId`, `reverseCharge` (boolean), `amount` (Money). |
+| `total` | REQUIRED | Money. |
+| `settlementProfile` | REQUIRED | Profile used. |
+| `dueDate` | OPTIONAL | Timestamp. |
+| `supersedes` | OPTIONAL | Object Reference to a Statement this replaces. |
+{: title="Statement members"}
+
+All Money values in a Statement MUST use the same currency.  The
+countersigned Statement is the authoritative basis for invoicing.
+
+## PaymentNotice {#obj-paymentnotice}
+
+Issued by: payer.
+
+| Member | Req. | Description |
+|---|---|---|
+| `statement` | REQUIRED | Object Reference to the countersigned Statement. |
+| `amount` | REQUIRED | Money paid. |
+| `settlementProfile` | REQUIRED | Profile used. |
+| `reference` | OPTIONAL | Rail-specific payment reference. |
+| `paidAt` | REQUIRED | Timestamp. |
+{: title="PaymentNotice members"}
+
+## Dispute {#obj-dispute}
+
+Issued by: either deal party.
+
+| Member | Req. | Description |
+|---|---|---|
+| `subject` | REQUIRED | Object Reference to a ReceiptBatch or Statement. |
+| `grounds` | REQUIRED | `"divergence"`, `"post-revocation-delivery"`, `"unlicensed-delivery"`, `"arithmetic"` or `"other"`. |
+| `claimedAmount` | OPTIONAL | Money in dispute. |
+| `evidence` | OPTIONAL | Array of objects with `url`, `hash` and `description`. |
+| `respondBy` | REQUIRED | Default 14 days after `issuedAt`. |
+| `arbiter` | OPTIONAL | Node URL; defaults to the deal's `arbiter`. |
+{: title="Dispute members"}
+
+## Report {#obj-report}
+
+Issued by: selling node, aggregating reports from end users.
+
+| Member | Req. | Description |
+|---|---|---|
+| `subject` | REQUIRED | Object with one or more of `deal`, `creative` (hash), `advertiser` (Node URL). |
+| `window` | REQUIRED | Object with `start` and `end`. |
+| `counts` | REQUIRED | Object mapping report categories (`misleading`, `offensive`, `scam`, `sensitive`, `other`) to integer counts. |
+| `action` | OPTIONAL | Action taken by the selling node, e.g. `"paused"`. |
+{: title="Report members"}
+
+Reports MUST NOT contain the identity, free text or any identifier of
+the reporting users.
+
+## Label {#obj-label}
+
+Issued by: labeler or auditor.  Public unless stated otherwise.
+
+| Member | Req. | Description |
+|---|---|---|
+| `subject` | REQUIRED | A Node URL, an origin, or a content hash. |
+| `val` | REQUIRED | Label value (e.g., `kyb-verified`, `cloaking`, `audit-pass`). |
+| `neg` | OPTIONAL | Boolean; true retracts an earlier label with the same subject and value. |
+| `evidence` | OPTIONAL | URL. |
+| `expiresAt` | OPTIONAL | As in the common members. |
+{: title="Label members"}
+
+## KeyRotation {#obj-keyrotation}
+
+Issued by: any node.  Logged.  Signed first by the old key and then by
+the new key ({{proof-chains}}), or by the root key followed by the new
+key.
+
+| Member | Req. | Description |
+|---|---|---|
+| `oldKey` | REQUIRED | Verification method URL. |
+| `oldKeyMultibase` | REQUIRED | Old public key. |
+| `newKey` | REQUIRED | Verification method URL. |
+| `newKeyMultibase` | REQUIRED | New public key. |
+| `purposes` | REQUIRED | Array of `assertionMethod` and/or `authentication`. |
+| `effectiveAt` | REQUIRED | Time the new key takes effect. |
+{: title="KeyRotation members"}
+
+## KeyRevocation {#obj-keyrevocation}
+
+Issued by: any node.  Logged.  Signed by a key other than the revoked
+key.
+
+| Member | Req. | Description |
+|---|---|---|
+| `key` | REQUIRED | Verification method URL revoked. |
+| `keyMultibase` | REQUIRED | Revoked public key. |
+| `revokedAt` | REQUIRED | Time from which signatures by the key are invalid. |
+| `reason` | OPTIONAL | `"compromise"`, `"superseded"` or `"other"`. |
+{: title="KeyRevocation members"}
+
+## Ack {#obj-ack}
+
+Returned in the body of a `202` inbox response ({{inbox}}).  An Ack
+is authenticated by the response's HTTP signature and does not
+require a proof; a node MAY include one.  Of the common members, an
+Ack carries `@context`, `type` and `issuer`; `id`, `issuedAt` and
+`proof` are OPTIONAL.
+
+| Member | Req. | Description |
+|---|---|---|
+| `object` | REQUIRED | `id` of the received object. |
+| `objectHash` | REQUIRED | Object hash of the received object. |
+| `receivedAt` | REQUIRED | Time of receipt. |
+| `status` | REQUIRED | `"accepted"` or `"duplicate"`. |
+{: title="Ack members"}
+
+# State Machines {#state}
+
+Every transition below is effected by a signed object that references
+the object whose state it changes.  A receiver MUST reject an object
+that would cause a transition not shown, with error type
+`state-conflict`.
+
+## Offer
+
+~~~ ascii-art
+                  CounterOffer
+          +------------------------+
+          |                        v
+   Offer  |                  +-----------+
+ ------>+------+  rev. Offer |           |
+        | Sent |<------------| Countered |
+        +------+             +-----------+
+         | | | |                 |     |
+         | | | +-- Withdrawn     |     +--> Declined
+         | | +---- Expired       +--------> Expired
+         | +------ Declined
+         +-------- Accepted --> (Deal)
+~~~
+{: title="Offer states"}
+
+| From | To | Effected by | Issued by |
+|---|---|---|---|
+| (none) | Sent | Offer | buyer |
+| Sent | Countered | CounterOffer | recipient |
+| Countered | Sent | Offer with `previous` | buyer |
+| Sent | Accepted | Acceptance | recipient |
+| Sent, Countered | Declined | Decline | recipient of the latest offer |
+| Sent, Countered | Expired | passage of `expiresAt` | (none) |
+| Sent | Withdrawn | StatusChange `to: "withdrawn"` | buyer |
+{: title="Offer transitions"}
+
+The same machine applies to RFP responses and Standing Offer claims,
+with Claim in place of Acceptance.  An Accepted offer leads to a Deal
+only if the buyer issues a Deal before the Acceptance's `expiresAt`.
+
+## Deal
+
+~~~ ascii-art
+                    pause
+      +--------+ ----------> +--------+
+  --->| Active |             | Paused |
+      +--------+ <---------- +--------+
+        |  |  |    resume      |    |
+        |  |  |  end,          |    |
+        |  |  |  flight end    |    |
+        |  |  +------+  +------+    |
+        |  |         v  v           |
+        |  |      +-------+         |
+        |  |      | Ended |         |
+        |  |      +-------+         |
+        |  | terminate              | terminate
+        |  +-------+    +-----------+
+        |          v    v
+        |      +------------+
+        |      | Terminated |
+        |      +------------+
+        | budget used
+        v
+  +-----------+
+  | Exhausted |
+  +-----------+
+~~~
+{: title="Deal states"}
+
+| From | To | Effected by |
+|---|---|---|
+| (none) | Active | Deal with both proofs |
+| Active | Paused | StatusChange `to: "paused"` (either party) |
+| Paused | Active | StatusChange `to: "active"` (the party that paused) |
+| Active | Exhausted | Spend reaching `budget` |
+| Exhausted | Active | DealAmendment increasing `budget` |
+| Exhausted | Ended | `flight.end` passing |
+| Active, Paused | Ended | `flight.end` passing, or StatusChange `to: "ended"` |
+| Active, Paused | Terminated | StatusChange `to: "terminated"` per `paymentTerms` |
+{: title="Deal transitions"}
+
+A Dispute marks a Deal as disputed.  This is a flag orthogonal to the
+states above: it pauses settlement of the disputed amount but not
+delivery, unless a party also pauses the Deal.
+
+## Licence
+
+~~~ ascii-art
+   Licence  +--------+  expiresAt passes  +---------+
+ ---------->| Issued |------------------->| Expired |
+            +--------+                    +---------+
+                 |      Revocation deadline
+                 +------------------------>+---------+
+                                           | Revoked |
+                                           +---------+
+~~~
+{: title="Licence states"}
+
+Renewal issues a new Licence (with `renews`); the old licence expires
+normally.
+
+## Statement
+
+~~~ ascii-art
+  Statement  +----------+ countersign +---------------+
+ ----------->| Proposed |------------>| Countersigned |
+             +----------+             +---------------+
+                  |                     |          |
+          Dispute |             Dispute |          | PaymentNotice
+                  v                     v          v
+             +----------------------------+     +------+
+             |          Disputed          |     | Paid |
+             +----------------------------+     +------+
+                  |  StatusChange (resolved) on Dispute,
+                  |  then countersigned Statement
+                  +--------> Countersigned
+~~~
+{: title="Statement states"}
+
+A resolution MAY take the form of a new Statement whose `supersedes`
+references the disputed one.
+
+# Inbox Messaging {#inbox}
+
+## Delivery {#delivery}
+
+Each node has one inbox endpoint, listed in its Node Descriptor.  A
+sender delivers an object by sending a signed `POST` request whose
+content is exactly one object, with media type
+`application/federated-ads+json`.  Receivers MUST accept content of at
+least 1 MiB and MAY reject larger content with `413`.
+
+If the receiver has verified the HTTP signature and the object proofs
+and has durably stored the object, it MUST respond `202 Accepted` with
+a signed response whose content is an Ack ({{obj-ack}}).  Further
+processing MAY be asynchronous; results (for example an Acceptance or
+Decline) are delivered later as objects to the sender's inbox.
+Failures detected before the object is stored are reported
+synchronously with a signed error response ({{errors}}); failures
+detected after a `202` are reported by delivering a Decline to the
+sender's inbox.
+
+## Idempotency {#idempotency}
+
+The object `id` is the deduplication key.  A receiver MUST retain the
+`id` and object hash of every accepted object for at least the
+object's lifetime (until `expiresAt`, or for objects without
+`expiresAt`, for 90 days) plus 7 days.  On receiving an object whose
+`id` has been seen:
+
+* if the object hash is identical, the receiver MUST respond `202`
+  with an Ack whose `status` is `"duplicate"`, and MUST NOT process it
+  again;
+* otherwise, it MUST respond `409` with error type
+  `duplicate-conflict`.
+
+## Retries {#retries}
+
+Delivery is at least once.  A sender that does not receive a `2xx`
+response, or receives `408`, `429`, `500`, `502`, `503` or `504`, MUST
+retry with exponential back-off: an initial delay of at least 1
+second, doubling on each attempt, with random jitter, and a maximum
+delay of 1 hour.  A sender SHOULD stop retrying after 72 hours or when
+the object expires, whichever is first.  Revocations are retried
+under {{revocation-push}}.
+
+A receiver that rate-limits a sender MUST respond `429` with a
+`Retry-After` field ({{Section 10.2.3 of RFC9110}}); the sender MUST
+NOT retry before that time.
+
+## Retrieval and Pagination {#retrieval}
+
+Objects are retrievable by a signed `GET` of their `id`.  A node MUST
+serve an object only to the parties named in it, to the issuer's
+designated auditors and arbiter, and, for public objects (Node,
+Policy, Inventory, StandingOffer, Label, KeyRotation, KeyRevocation),
+to anyone.  A node MUST serve Revocations to every licensee within
+their scope.
+
+Lists (for example, a node's Standing Offers, or Receipt Batches for
+a deal) are returned as an object with `@context`, `type`
+`"Collection"`, an `items` array of objects, and an optional `next`
+URL.  A Collection carries no proof; each item carries its own.  Cursors are opaque.
+Servers MAY also provide a `Link` header field with `rel="next"`
+{{RFC8288}}.
+
+## Errors {#errors}
+
+Errors are reported using Problem Details {{RFC9457}} with media type
+`application/problem+json`.  The `type` member is a URI formed by
+appending an error type name to `https://w3id.org/federated-ads/errors/`.
+The initial error types are listed in {{tab-errors}} and are
+registered in {{iana-errors}}.
+
+| Name | Status | Meaning |
+|---|---|---|
+| `malformed-object` | 400 | Not valid JSON, not I-JSON, or missing required members. |
+| `unsupported-version` | 400 | Protocol version not supported. |
+| `unknown-critical-extension` | 400 | A member listed in `critical` is not understood. |
+| `signature-invalid` | 401 | HTTP signature or object proof failed. |
+| `signature-expired` | 401 | Outside the allowed time window. |
+| `key-unknown` | 401 | `keyid` or verification method not found. |
+| `key-revoked` | 401 | Key revoked at the signing time. |
+| `digest-mismatch` | 400 | `Content-Digest` does not match. |
+| `replay-detected` | 401 | Signature value already used. |
+| `not-authorized` | 403 | Sender is not a party entitled to this action. |
+| `unknown-object` | 404 | Referenced object not found. |
+| `duplicate-conflict` | 409 | Same `id`, different content. |
+| `state-conflict` | 409 | Transition not allowed. |
+| `hash-mismatch` | 409 | Referenced hash does not match the object. |
+| `offer-expired` | 410 | Offer, claim or acceptance lapsed. |
+| `payload-too-large` | 413 | Content too large. |
+| `policy-mismatch` | 422 | Conflicts with the receiver's Policy. |
+| `budget-exhausted` | 422 | No budget remains. |
+| `licence-expired` | 403 | Licence expired. |
+| `licence-revoked` | 403 | Licence revoked. |
+| `k-threshold-violation` | 422 | Receipt cells below k. |
+| `log-inconsistent` | 422 | Log proofs do not verify. |
+| `rate-limited` | 429 | Too many requests. |
+{: #tab-errors title="Initial error types"}
+
+# Licensing and Revocation {#licensing}
+
+## Licence Tiers {#licence-tiers}
+
+| Tier | Asset retention | Default TTL | Maximum TTL | Typical use |
+|---|---|---|---|---|
+| `pointer` | Only while the licence is valid | 900 s | 3600 s | Web, social, AI |
+| `signed-cache` | Until the licence expires | 3600 s | 86400 s | Email, podcast insertion, offline |
+{: title="Licence tiers"}
+
+`expiresAt` minus `issuedAt` MUST NOT exceed the maximum TTL for the
+tier.  A licensee MUST NOT deliver a creative under an expired or
+revoked licence, and MUST purge assets held under the `pointer` tier
+when the licence ends.  A licensee holding a `signed-cache` licence
+MUST implement both push and pull revocation ({{revocation-push}},
+{{revocation-pull}}).
+
+Delivery under an expired licence, or after a revocation deadline, is
+not billable.
+
+## Fetching Creatives {#fetching}
+
+The licensee, not the end user's device, fetches the Creative
+Manifest and assets, using signed `GET` requests.  The creative host
+MUST serve them only to nodes that hold a valid licence for the
+manifest.  The licensee MUST:
+
+* fetch only from origins listed in the advertiser's `creativeHosts`;
+* verify the manifest's proof and that its object hash equals
+  `manifestHash`;
+* verify each asset's size and content hash before use, and discard
+  assets that do not match;
+* apply the request restrictions in {{sec-ssrf}}.
+
+A licensee MAY fetch through an Oblivious HTTP relay {{RFC9458}} whose
+gateway is operated by the creative host.  End-user devices MUST NOT
+be directed to fetch creative assets from the advertiser's or creative
+host's origin; assets are served to devices from the licensee's own
+origin or a CDN under its control.
+
+## Renewal {#renewal}
+
+To avoid placing licence checks in the rendering path, the licensee
+SHOULD request renewal when no more than one third of the licence's
+lifetime remains, by sending a signed `POST` to the licence's `renew`
+URL with the current Licence `id` as content.  The advertiser responds
+with a new Licence (with `renews`) or an error.  An advertiser MAY
+also push renewed licences to the licensee's inbox unprompted.
+Advertisers MUST NOT renew a licence within the scope of a
+Revocation.
+
+## Revocation Logging {#revocation-logging}
+
+An advertiser MUST append a Revocation to its transparency log before
+pushing it.  The log entry's inclusion time T_log is the earliest
+timestamp of a witness cosignature ({{TLOG-COSIGNATURE}}) on a
+checkpoint whose tree includes the entry.
+
+## Revocation Deadline {#revocation-deadline}
+
+The revocation deadline D is:
+
+~~~
+   D = max(effectiveAt, T_log) + revocationGrace
+~~~
+
+where `revocationGrace` is taken from the deal terms (default 60
+seconds).  Deliveries after D are not billable.  Because T_log is
+determined by independent witnesses, an advertiser cannot backdate a
+revocation to avoid paying for deliveries already made.  Issuers
+SHOULD set `effectiveAt` to the time of issue.
+
+## Push and Acknowledgement {#revocation-push}
+
+After logging, the advertiser MUST post the Revocation to the inbox
+of every licensee within its scope.  Relays that carry revocations
+MUST forward them unaltered and SHOULD forward them ahead of other
+traffic, after authenticating the sender.  Advertisers MUST retry
+undelivered revocations at least every 60 seconds for the first 10
+minutes and thereafter per {{retries}}, until acknowledged or until
+every licence in scope has expired.
+
+On receiving a valid Revocation, the licensee MUST:
+
+1. stop new deliveries of the affected creatives within 60 seconds;
+2. purge cached assets where technically possible;
+3. append a RevocationAck to its own log; and
+4. send the RevocationAck to the advertiser's inbox within 60 seconds
+   of receipt.
+
+## Pull {#revocation-pull}
+
+Each licensee MUST fetch the checkpoint of the log named in
+`revocationLog` at least once per licence TTL, and in any case at
+least once per hour while it holds a licence from that log.  It MUST
+verify consistency with the previously seen checkpoint
+({{log-proofs}}), examine new entries of type `Revocation`, retrieve
+those objects, and act on any that apply to its licences as if they
+had been pushed.
+
+## Surface Limits
+
+Revocation guarantees that no new deliveries occur after the
+deadline, plus purging wherever technically possible.  It does not
+guarantee that copies already delivered to end users (for example,
+emails already sent, episodes already downloaded, or posts already
+federated) are removed.  Surface profiles document the specific
+guarantees for each surface.
+
+# Receipts and Transparency Logs {#receipts}
+
+## Events {#events}
+
+Billable and informational events are registered in
+{{iana-event-types}}.  Selling nodes MUST count events according to
+the registered definitions.  The `open` event is informational and
+MUST NOT be billed.
+
+## Windows {#windows}
+
+A Receipt Batch covers a window aligned to UTC hour boundaries, of
+length `receiptWindow` (default one hour).  A selling node whose
+volume would produce cells below k MAY use longer windows, up to
+seven days, and MUST then state the window in the batch.  Batches for
+a deal MUST be issued in `sequence` order, MUST NOT overlap, and
+SHOULD be issued within one hour after the window ends.
+
+## Cells {#cells}
+
+A Cell has the members `creative` (content hash), `context`
+(category identifier or `"*"`), `region` (as in {{targeting}}, or
+`"*"`), `event` (registered event type), `count` (integer), `ivt`
+(OPTIONAL array of invalid-traffic flags) and `salt` (REQUIRED; at
+least 16 random octets, base64url-encoded without padding).  An
+additional member `hour` (timestamp) MAY subdivide a multi-hour
+window.  Each combination of members other than `count`, `ivt` and
+`salt` MUST appear at most once.  For each event type, the sum of
+`count` over cells MUST equal the corresponding `totals` value.
+
+## k-Threshold {#k-threshold}
+
+A cell with `count` less than `kThreshold` MUST be merged: first by
+replacing `region` with `"*"`, then `context` with `"*"`, then by
+removing `hour`.  If a fully merged cell (both `"*"`) is still below
+k at the maximum window length, it MAY be reported, because it reveals
+no more than the deal total.  Receivers MUST reject batches that
+contain other cells below k with `k-threshold-violation`.
+
+## Cell Tree {#cell-tree}
+
+The cell tree is a Merkle tree computed with the Merkle Tree Hash of
+{{Section 2.1.1 of RFC9162}} (equivalently, {{Section 2.1 of RFC6962}})
+using SHA-256, over the sequence of
+cells in the order they appear in `cells`, where the input for each
+leaf is the JCS serialization of the cell (including its salt).  The
+leaf hash is therefore SHA-256(0x00 || JCS(cell)).  `cellTree.size`
+is the number of cells and `cellTree.root` is the content hash form of
+the root.  Salts prevent parties who learn the root, or an inclusion
+proof for one cell, from confirming guesses about other cells.  A
+selling node can disclose a single cell and its inclusion proof to an
+auditor without disclosing others.
+
+## Log Entries {#log-entries}
+
+Each node operates one append-only log in the format of
+{{TLOG-TILES}}, with checkpoints as in {{TLOG-CHECKPOINT}} signed using
+{{SIGNED-NOTE}}, under the origin given in `logOrigin`.  Each log
+entry is the JCS serialization of a JSON object with members `type`
+(the object type), `id` (the object `id`) and `hash` (the object
+hash).  Full objects are not placed in the log.
+
+A node MUST append an entry for each ReceiptBatch, Revocation,
+RevocationAck, Statement (when countersigned), KeyRotation and
+KeyRevocation it issues, and SHOULD append entries for SpendReports,
+Deals and DealAmendments.  For a ReceiptBatch, the entry's `hash` is
+computed over the batch with its `log` member omitted and before the
+proof is added (the "batch commitment"); verifiers recompute it
+accordingly.
+
+## Witnessing {#witnessing}
+
+A node MUST submit each new checkpoint to the witnesses listed in its
+Node Descriptor using {{TLOG-WITNESS}}, and MUST make cosigned
+checkpoints available at its log endpoint.  At least one listed
+witness MUST NOT be operated by the log operator.  A verifier MUST
+accept a checkpoint only if it carries valid cosignatures from at
+least `witnessPolicy.minWitnesses` witnesses (default 1) acceptable
+under the deal's `witnessPolicy`.  Nodes SHOULD obtain cosignatures
+at least every 5 minutes while entries are being appended.
+
+## Proofs {#log-proofs}
+
+Clients compute inclusion and consistency proofs from tiles as
+described in {{TLOG-TILES}}.  A node MAY additionally provide the
+following convenience endpoints, relative to its `log` URL:
+
+* `proof/inclusion?hash=<base64url leaf hash>&size=<tree size>`
+* `proof/consistency?first=<size>&second=<size>`
+
+each returning a JSON object with `index` (for inclusion), `size` and
+`proof` (array of base64-encoded hashes).  Verifiers MUST verify
+proofs against a cosigned checkpoint.  A buying node SHOULD verify the
+inclusion of every Receipt Batch and Statement it relies on, and MUST
+verify consistency between successive checkpoints it observes from a
+counterparty.  An inconsistency is evidence of equivocation and SHOULD
+be published, for example as a Label.
+
+## Verification Levels {#verification-levels}
+
+Deals declare required verification levels in `terms.verification`.
+
+| Level | Mechanism | Proves |
+|---|---|---|
+| `V0` | Seller-signed receipts in a witnessed log | The seller asserted these numbers and cannot change them or show different histories. |
+| `V1` | Creative-host fetch records and RevocationAcks | The seller held valid licences while serving and honoured revocations. |
+| `V2` | Advertiser counts landing-page arrivals carrying `clickParameter` and compares with reported clicks; statistical norms | Clicks broadly occurred; gross inflation is detectable. |
+| `V3` | Privacy Pass tokens redeemed for a sample of renders ({{privacy-pass}}) | An attester vouched for a client at render time. |
+| `V4` | Independent audit, published as an `audit-pass` Label | An auditor checked a sample, including cell inclusion and measurement module hash. |
+{: title="Verification levels"}
+
+`V0` is always required.  For `V2`, the click-through URL MUST carry
+only the deal-level `clickParameter` and MUST NOT carry any value
+unique to a click, user or device.
+
+## Privacy Pass Binding {#privacy-pass}
+
+For `V3`, the selling node presents Privacy Pass challenges
+{{RFC9577}} to a sample of clients at render time, using token type
+0x0002 (Blind RSA, publicly verifiable) {{RFC9578}}.  The
+TokenChallenge `redemption_context` MUST be:
+
+~~~
+   redemption_context = SHA-256( dealId || 0x00 ||
+                                 creativeHash || 0x00 ||
+                                 windowStart )
+~~~
+
+where `dealId` is the Deal `id`, `creativeHash` is the creative's
+content hash string, `windowStart` is the RFC 3339 string of the
+Receipt Batch `window.start`, each encoded in UTF-8, and `||` denotes
+concatenation.  `origin_info` MUST contain the selling node's host
+name.
+
+The batch's `attestation` member contains `tokenType` (`"0x0002"`),
+`issuer` (issuer name), `count` (number of tokens redeemed) and
+`tokenTree` (`size` and `root`, an RFC 9162 tree over the redeemed
+tokens in order).  The selling node MUST make the tokens available to
+the buying node and its auditors.  Verifiers MUST check token
+signatures against the issuer's public key, check that each token's
+challenge digest matches the expected challenge, and reject duplicate
+tokens.
+
+# Disclosure and User Controls {#user-controls}
+
+These requirements apply to selling nodes at all conformance levels.
+Detailed rendering rules are left to surface profiles.
+
+* Every delivered advertisement MUST be accompanied by a disclosure
+  that identifies it as advertising and gives the advertiser's legal
+  name, the payer if different, the main reasons it was selected
+  (expressed in the targeting dimensions of {{targeting}}), the
+  intermediaries and their declared fees, and how to change
+  preferences.  On audio and conversational surfaces the disclosure
+  MUST also be spoken or presented inline.
+* A selling node MUST treat `Sec-GPC: 1` {{GPC}} as an opt-out from
+  every optional profile beyond contextual matching.
+* A selling node MUST offer end users a way to report an
+  advertisement and MUST forward reports only in aggregate as Report
+  objects.
+* Where a user's age is unknown or the user is known to be a minor,
+  only contextual delivery is permitted.
+* A selling node MAY advertise an ad-free offer at the `adfree`
+  endpoint.
+
+# Extensibility and Versioning {#extensibility}
+
+## Unknown Members
+
+Receivers MUST ignore members they do not understand, unless the
+member's name appears in the object's `critical` array.  A receiver
+that does not understand a member named in `critical` MUST reject the
+object with error type `unknown-critical-extension`.  Names in
+`critical` MUST either be registered in the Critical Extensions
+registry ({{iana-critical}}) or be absolute URIs under the extension
+author's control.  Extension members SHOULD be named with a prefix or
+a URI to avoid collision.  This rule ensures that new constraints, for
+example new brand-safety rules in a Policy, cannot be silently dropped.
+
+## Versioning {#versioning}
+
+The protocol version is a string `MAJOR.MINOR`.  This document defines
+version `0.2`.  The major version is reflected in the namespace URL
+(`v0`).  Minor versions only add optional members, object types and
+registry values.  A new major version requires both parties to
+advertise it in `versions`.  Major version 0 indicates that
+incompatible changes may occur between drafts.
+
+## Registries
+
+Values for event types, pricing models, surface profiles, settlement
+profiles, revocation reasons, error types, object types and critical
+extensions are drawn from the registries in {{iana}}.  Receivers
+SHOULD ignore unregistered values they do not recognize in arrays and
+MUST reject an object whose required single-valued member (such as
+`pricing.model`) has an unrecognized value, with `malformed-object`.
+
+# Conformance {#conformance}
+
+A node declares conformance using tokens of the form
+`<level>/<version>`, for example `federated-ads-core/0.2`.
+
+federated-ads-core:
+: Discovery ({{discovery}}); Node Descriptor; Policy; Offer,
+  CounterOffer, Acceptance, Decline and Deal; StatusChange and
+  DealAmendment; Licence (pointer tier); Revocation with logging,
+  push, acknowledgement and pull; ReceiptBatch in a witnessed log;
+  inbox messaging ({{inbox}}); both signature layers ({{auth}}); the
+  user controls of {{user-controls}}; contextual matching only; native
+  and static display formats.
+
+federated-ads-extended:
+: Everything in core, plus StandingOffer, Claim and RFP;
+  signed-cache tier; SpendReport; Statement and PaymentNotice with at
+  least one settlement profile; Dispute; ad-free endpoint; and the
+  sandboxed HTML5 format ({{sec-malvertising}}).
+
+federated-ads-verified:
+: Everything in extended, plus `V3` client attestation
+  ({{privacy-pass}}) or `V4` audit attestation from a labeler the
+  counterparty trusts.
+
+Surface profiles add rendering, labelling and measurement
+requirements.  A conformance suite and test vectors for signatures,
+canonicalization and Merkle proofs are expected to accompany each
+version of this document.
+
+# Security Considerations {#security}
+
+This section follows the guidance of {{RFC3552}}.
+
+## Trust Model
+
+A node's identity is bound to control of its DNS name and TLS
+certificate.  An attacker who takes over a domain can impersonate its
+node.  Logged key history ({{key-rotation}}) limits damage to records
+created before the takeover, provided they were witnessed.
+Witnesses are assumed not all to collude with the log operator they
+witness; Privacy Pass attesters are assumed not to collude with
+selling nodes.  Relays are untrusted for integrity.
+
+## Transport Replay and Freshness
+
+HTTP signatures are bounded by `created` and `expires`, with at most
+300 seconds of validity and 60 seconds of skew, and receivers cache
+signature values within that window ({{http-sig-verify}}).  Response
+signatures bind responses to their requests with `;req`, preventing
+an attacker from substituting a response from another exchange.
+Only `ed25519` is permitted, avoiding algorithm confusion.
+
+## Object Replay and Substitution
+
+Objects are deduplicated by `id`.  Objects carry explicit
+`recipient`, `licensee`, `seller` or `counterparty` members, so an
+object addressed to one node cannot be replayed to another to create
+obligations.  Acceptances, Deals and Disputes reference prior objects
+by object hash, preventing substitution of different terms.  The
+requirement that `id` and `issuer` share an origin prevents a node
+from minting objects in another node's namespace.
+
+## Canonicalization
+
+Object proofs depend on JCS {{RFC8785}}.  Implementations MUST reject
+duplicate member names and non-I-JSON values, and this protocol
+avoids non-integer JSON numbers, removing the main sources of
+canonicalization divergence.  Verifiers MUST NOT apply JSON-LD
+processing before verification.
+
+## Equivocation
+
+A node could present different histories to different
+counterparties, for example different receipt totals to a buyer and
+an auditor.  Witness cosigning and consistency checks
+({{witnessing}}, {{log-proofs}}) make this detectable.  Verifiers who
+gossip checkpoints further reduce the risk.
+
+## Backdating
+
+Receipts and revocations could be backdated to shift liability.
+Revocation deadlines use the witness-anchored inclusion time
+({{revocation-deadline}}).  Receipt batches are committed to the log
+within a bounded time after their window, and verifiers SHOULD treat
+batches committed more than 24 hours after the window ended as
+suspect.  Witness cosignature timestamps provide approximate,
+independent time anchoring.
+
+## Impression Inflation and Click Fraud
+
+A selling node can sign false counts.  V0 makes false counts
+permanent and attributable but not false-proof.  Higher verification
+levels (V2-V4) provide corroboration; prices are expected to reflect
+the level chosen.  Click fraud through the selling node's own redirect
+is mitigated by V2 corroboration, invalid-traffic filtering, and
+requiring V3 for CPC deals.
+
+## Collusion
+
+A seller and a relay could collude, but relays cannot alter signed
+objects and all fees are declared in signed deals; buyers MAY require
+direct delivery of receipts.  A seller and a sock-puppet advertiser
+could launder money or fabricate demand; KYB Labels and settlement
+through regulated providers mitigate this.  Sybil sellers farming
+Standing Offers are limited by per-seller caps, minimum verification
+levels for unknown sellers, labeler reputation, and prepaid or
+holdback settlement.
+
+## Malvertising {#sec-malvertising}
+
+Creatives are pinned by content hash and approved by hash; a changed
+creative needs a new approval.  At the core level only native and
+static display formats are allowed, with SVG loaded only as an image.
+HTML5 creatives (extended level only) MUST be rendered in an iframe
+with `sandbox="allow-scripts allow-popups
+allow-popups-to-escape-sandbox
+allow-top-navigation-by-user-activation"` from a dedicated cookieless
+origin, with a Content Security Policy of `default-src 'none'` that
+permits no network access after load; `allow-same-origin` MUST NOT be
+combined with `allow-scripts`.  Third-party scripts, tracking pixels
+and unpinned assets are never permitted.  Landing-page cloaking is
+mitigated by pinning `landingUrl`, optional re-crawling, Labels, and
+voiding approval on change.
+
+## Server-Side Request Forgery {#sec-ssrf}
+
+Selling nodes fetch URLs supplied by other nodes (Node Descriptors,
+manifests, assets, logs).  Implementations MUST:
+
+* fetch only `https` URLs, and fetch creative assets only from the
+  advertiser's declared `creativeHosts`;
+* resolve host names and refuse connections to loopback, private,
+  link-local, unique-local, multicast and other special-purpose
+  addresses, re-checking after each redirect;
+* follow no redirects for asset fetches, and at most a small number
+  (for example 3), all within the same origin, otherwise;
+* enforce timeouts, size limits (using the manifest's declared
+  `size`), and media type allowlists.
+
+## Denial of Service
+
+Inboxes are exposed to the Internet.  Receivers SHOULD verify
+inexpensive properties (size, HTTP signature, known sender) before
+expensive ones, rate-limit per sender with `429`, and bound the
+number of outstanding Node Descriptor fetches.  Revocation flooding is
+limited because only the licence issuer's key can revoke; relays
+MUST authenticate senders before prioritizing revocations.  Report
+channels are aggregated and rate-limited; automatic takedown is
+limited to verified scam reports.
+
+## Key Compromise
+
+Short-lived signing keys certified by an offline root, logged
+rotation and revocation, and the rule that pre-revocation objects
+remain valid only if witnessed before `revokedAt`
+({{key-revocation}}), limit the impact of compromise.  An attacker
+holding a compromised key could issue false Revocations; licensees
+would stop serving, which is a fail-safe outcome.
+
+## Attester Centralization
+
+V3 relies on attesters, which today are few.  V3 is optional,
+multiple issuers are permitted, and verifiers choose which issuers to
+accept.
+
+# Privacy Considerations {#privacy}
+
+This section follows the structure of {{RFC6973}}.
+
+## Data Minimization and No Cross-Site Identifiers {#no-identifiers}
+
+Protocol objects MUST NOT contain personal data about end users.  In
+particular, they MUST NOT contain IP addresses, user agent strings,
+cookies, device or advertising identifiers, account identifiers,
+email addresses or their hashes, precise location, or click
+identifiers unique to a user or event.  Targeting is restricted to the
+dimensions in {{targeting}}.  Receivers SHOULD reject objects that
+appear to violate this rule.
+
+## Surveillance and Correlation
+
+Because creatives are fetched by the licensee rather than by end-user
+devices ({{fetching}}), advertisers do not observe viewers' IP
+addresses.  Because matching uses context and decisions are made on
+the selling node, user context is not broadcast to bidders.  Cross-
+publisher correlation is not supported by design.
+
+## Aggregation and Re-identification {#agg-reid}
+
+Combinations of fine context, language, region and time can single
+out individuals, particularly on small community sites.  Receipt
+cells are aggregated by hour or longer, by coarse region and by
+category; cells below k (default 50) are merged; cell tree leaves are
+salted; and small nodes report over longer windows.  Implementers of
+surface profiles SHOULD consider additional suppression where
+categories are themselves sensitive.
+
+## Secondary Use and Stored Data
+
+Selling nodes process IP addresses and user agents transiently for
+coarse geolocation and invalid-traffic filtering and MUST NOT log
+them per user for advertising purposes.  Conversation content on AI
+surfaces MUST NOT be sent to other nodes; only a context category
+derived on the selling node may appear in aggregate cells.
+Frequency counters are first-party only.
+
+## Disclosure through Transparency Logs
+
+Logs are public.  Log entries contain only type, identifier and
+hash, so they disclose neither personal data nor commercial terms,
+but identifiers and entry timing could reveal business relationships
+or volumes.  Issuers SHOULD use unguessable identifiers
+({{object-ids}}) and MAY batch log appends.
+
+## Device Access
+
+Viewability measurement, on-device profiles and Privacy Pass all
+involve access to the user's device, which some jurisdictions subject
+to consent requirements.  Core billing is therefore server-side
+(impressions, sends, deliveries and clicks counted by the selling
+node), and device-side features are optional.  Privacy Pass tokens
+are unlinkable to the client by design {{RFC9576}}, but the sampling
+decision and timing could leak information; selling nodes SHOULD
+sample randomly.
+
+## User Controls {#privacy-user-controls}
+
+The user controls in {{user-controls}}, including honoring Global
+Privacy Control and the minor-safe default, are mandatory at every
+conformance level.  Report objects carry only aggregate counts.
+Block lists remain on the device or with the first party.
+
+## Conversions
+
+This document defines no conversion measurement.  Aggregate,
+privacy-preserving conversion measurement could be added as a profile
+based on, for example, the Distributed Aggregation Protocol
+{{I-D.ietf-ppm-dap}}.  Per-user conversion pixels and per-user click
+identifiers are prohibited.
+
+# IANA Considerations {#iana}
+
+## Media Type Registration {#iana-media-type}
+
+This document requests registration of the following media type in
+the "Media Types" registry, following {{RFC6838}}.
+
+Type name:
+: application
+
+Subtype name:
+: federated-ads+json
+
+Required parameters:
+: N/A
+
+Optional parameters:
+: N/A
+
+Encoding considerations:
+: binary; the content is JSON {{RFC8259}} in UTF-8.
+
+Security considerations:
+: See {{security}} of this document.  Content is signed with Data
+  Integrity proofs; receivers must verify them before acting.
+
+Interoperability considerations:
+: Content conforms to I-JSON {{RFC7493}}.
+
+Published specification:
+: This document.
+
+Applications that use this media type:
+: Nodes implementing the Federated Ads Protocol.
+
+Fragment identifier considerations:
+: As for `application/json`, per {{Section 3.1 of RFC6839}}.
+
+Additional information:
+: Deprecated alias names for this type: N/A.
+  Magic number(s): N/A.
+  File extension(s): N/A.
+  Macintosh file type code(s): N/A.
+
+Person and email address to contact for further information:
+: Suneesh Rajan <suneeshtr@gmail.com>
+
+Intended usage:
+: COMMON
+
+Restrictions on usage:
+: None
+
+Author:
+: Suneesh Rajan
+
+Change controller:
+: IETF
+
+## Well-Known URI Registration {#iana-well-known}
+
+This document requests registration of the following in the
+"Well-Known URIs" registry {{RFC8615}}:
+
+URI suffix:
+: federated-ads
+
+Change controller:
+: IETF
+
+Specification document(s):
+: This document, {{well-known}}
+
+Status:
+: permanent
+
+Related information:
+: None
+
+## WebFinger Link Relation
+
+The WebFinger relation used by this document
+(`https://w3id.org/federated-ads/rel/node`) is an extension relation
+type ({{RFC8288}}, Section 2.1.2) and requires no IANA action.
+
+## Federated Ads Protocol Registries {#iana-registries}
+
+This document requests that IANA create a new registry group named
+"Federated Ads Protocol Parameters", containing the registries below.
+Registration policies follow {{RFC8126}}.  Designated experts should
+check that proposed values are clearly defined, do not duplicate
+existing values, and, for event types and surface profiles, do not
+require or enable cross-site identifiers.  The initial contents of
+each registry reference this document.
+
+### Object Types {#iana-object-types}
+
+Policy: Specification Required.  Fields: Name, Description,
+Reference.  Initial contents: `Node`, `Discovery`, `Policy`,
+`Inventory`, `Offer`, `StandingOffer`, `RFP`, `Claim`, `Acceptance`,
+`CounterOffer`, `Decline`, `Deal`, `DealAmendment`, `StatusChange`,
+`CreativeManifest`, `Licence`, `Revocation`, `RevocationAck`,
+`SpendReport`, `ReceiptBatch`, `Statement`, `PaymentNotice`,
+`Dispute`, `Report`, `Label`, `KeyRotation`, `KeyRevocation`, `Ack`,
+`Collection`, each as defined in {{objects}} or {{discovery}}.
+
+### Event Types {#iana-event-types}
+
+Policy: Specification Required.  Fields: Name, Definition, Billable,
+Reference.
+
+| Name | Definition | Billable |
+|---|---|---|
+| `impression` | Creative rendered in the placement. | Yes |
+| `viewable` | Met the deal's viewability rule; default per {{MRC-VIEWABILITY}}: 50% of pixels for 1 continuous second (display), 30% for large display, 50% for 2 seconds (video). | Yes |
+| `click` | User activated the call to action through the selling node's redirect. | Yes |
+| `ad_delivered` | Audio: all bytes of the ad delivered within a valid download per {{IAB-PODCAST}}. | Yes |
+| `ad_play_confirmed` | Audio: client-side confirmation of playback. | If the deal says so |
+| `send` | Email: issue containing the ad sent to a deliverable address. | Yes |
+| `open` | Email: image load. | No |
+| `engagement` | Surface-specific action defined by a surface profile. | If the deal says so |
+{: title="Initial event types"}
+
+### Pricing Models {#iana-pricing}
+
+Policy: Specification Required.  Fields: Code, Description,
+Reference.
+
+| Code | Description |
+|---|---|
+| `cpm` | Cost per thousand impressions. |
+| `vcpm` | Cost per thousand viewable impressions. |
+| `cpc` | Cost per click. |
+| `flat` | Flat fee per unit (issue, episode, day, week). |
+| `cpad` | Cost per delivered audio ad. |
+| `sponsorship` | Fixed sponsorship of a section or feed. |
+{: title="Initial pricing models"}
+
+### Surface Profiles {#iana-surfaces}
+
+Policy: Specification Required.  Fields: Identifier, Description,
+Reference.  Initial contents: `surface:web` (web display and
+native), `surface:social` (social and federated feeds),
+`surface:email` (newsletters), `surface:audio` (podcasts and audio),
+`surface:ai` (AI and chat interfaces), and `profile:agent` (AI agents
+acting for users).  The detailed requirements of each are to be
+specified in separate documents; the initial entries reference
+{{WHITEPAPER}} pending those documents.
+
+### Settlement Profiles {#iana-settlement}
+
+Policy: Specification Required.  Fields: Identifier, Description,
+Reference.  Initial contents: `settle:invoice` (invoice plus bank
+transfer or card), `settle:processor` (regulated payment processor),
+`settle:prepaid` (prepaid escrow at a regulated provider),
+`settle:stablecoin` (regulated stablecoin), and `settle:micropay`
+(streaming or micro-settlement; experimental).
+
+### Revocation Reasons {#iana-revocation-reasons}
+
+Policy: Expert Review.  Fields: Name, Description, Reference.
+Initial contents: `legal`, `recall`, `pricing-error`,
+`rights-expired`, `brand-safety`, `creative-updated`, `deal-ended`,
+`key-compromise`, `other`.
+
+### Error Types {#iana-errors}
+
+Policy: Expert Review.  Fields: Name, Suggested HTTP Status,
+Description, Reference.  Initial contents: the entries of
+{{tab-errors}}.  The full `type` URI is formed by appending the name
+to `https://w3id.org/federated-ads/errors/`.
+
+### Critical Extensions {#iana-critical}
+
+Policy: Specification Required.  Fields: Member Name, Applicable
+Object Types, Description, Reference.  Initial contents: none.
+
+--- back
+
+# Open Issues {#open-issues}
+{:numbered="false"}
+
+*RFC Editor: please remove this section before publication.*
+
+Open issues are tracked at {{ISSUES}}.  Issues known at the time of
+writing include:
+
+1. Several objects not listed in the whitepaper were added for
+   completeness: Discovery, DealAmendment, StatusChange, Ack and
+   Collection.  Feedback is sought on whether they should be merged.
+2. The Privacy Pass `redemption_context` adds 0x00 separators to the
+   whitepaper's concatenation to make the encoding unambiguous.
+3. The content taxonomy and jurisdiction profiles are referenced but
+   not defined; a registry or separate document is needed.
+4. Whether the C2SP specifications are sufficiently stable as
+   normative references, or whether an IETF transparency log
+   specification should be used instead.
+5. Whether the log should hold only hashes (as specified) or also
+   selected public objects such as Revocations.
+6. Surface profile documents, including the ActivityPub sponsorship
+   extension and the AT Protocol labeler binding.
+7. Who should act as Privacy Pass attesters for V3.
+8. Dispute resolution evidence and arbiter procedures.
+9. Bridge profiles for OpenRTB 2.6 and VAST 4.x.
+10. Media type and well-known URI registration review.
+
+# Change Log {#change-log}
+{:numbered="false"}
+
+*RFC Editor: please remove this section before publication.*
+
+draft-rajan-federated-ads-protocol-00:
+: Initial version, derived from whitepaper version 0.2.
+
+# Acknowledgments {#acknowledgments}
+{:numbered="false"}
+
+The design draws on ads.cert, ads.txt and sellers.json from IAB Tech
+Lab; on email authentication; on Certificate Transparency and the
+C2SP transparency log specifications; on ActivityPub and the AT
+Protocol; and on Privacy Pass.
+
+AI-assistance disclosure: this document was drafted with the
+assistance of Claude, an AI model made by Anthropic, under the
+direction of the author, who set its goals, made the design
+decisions, and is responsible for its content.  Any errors are the
+author's.
