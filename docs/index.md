@@ -21,6 +21,6 @@ An open, federated, owner-controlled protocol for advertising on the open web. I
 
 ## Get involved
 
-Source, issues and discussions: [github.com/federated-ads/spec](https://github.com/federated-ads/spec). Contact: Suneesh Rajan, suneeshtr@gmail.com.
+Source, issues and discussions: [github.com/federated-ads/spec](https://github.com/federated-ads/spec). Contributors: Suneesh Rajan and Arjun Krishna. Contact: Suneesh Rajan, suneeshtr@gmail.com.
 
 This project is unrelated to The Trade Desk's "OpenAds", the "Open Ads Protocol" Web3 project and the historical "Openads" ad server.

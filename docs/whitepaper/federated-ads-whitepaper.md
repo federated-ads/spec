@@ -8,7 +8,7 @@
 |---|---|
 | **Short name** | Federated Ads (identifier: `federated-ads`) |
 | **Published by** | The Federated Ads Initiative (see [§23](#23-governance-ipr-and-funding) for what this is today) |
-| **Contributors** | Suneesh Rajan; Claude (Anthropic) |
+| **Contributors** | Suneesh Rajan; Arjun Krishna; Claude (Anthropic) |
 | **Contact** | Suneesh Rajan · suneeshtr@gmail.com |
 | **Repository and issues** | https://github.com/federated-ads/spec |
 | **Namespace (provisional)** | `https://w3id.org/federated-ads/v0` |
@@ -1474,7 +1474,7 @@ DKIM and DMARC spread fastest once major receivers required them of bulk senders
 
 ### 23.1 What the "Federated Ads Initiative" is today
 
-Today the initiative is **one individual contributor working with an AI assistant**. It has no legal entity, no members and no funding. We say so plainly because a standards effort must earn trust by being transparent about its origins. The governance below describes how that changes.
+Today the initiative is **two individual contributors, Suneesh Rajan and Arjun Krishna, working with an AI assistant**. It has no legal entity, no members and no funding. We say so plainly because a standards effort must earn trust by being transparent about its origins. The governance below describes how that changes.
 
 ### 23.2 Phases
 
@@ -1543,7 +1543,7 @@ Today the initiative is **one individual contributor working with an AI assistan
 | **Verification seen as insufficient by agencies** | High (early) | Medium | V3/V4; work with auditors; align with MRC definitions; target direct-buying advertisers first |
 | **Regulatory change** | Medium | Medium | Jurisdiction profiles; regulatory watch; privacy-maximal default |
 | **Governance capture** | Low (early) to medium | High | Phased neutral governance; no majority holder; public process |
-| **Single-maintainer risk** | High (now) | High | Recruit co-editors and implementers before M2; keep everything public |
+| **Maintainer concentration** | Medium (two maintainers since October 2026) | High | Recruit co-editors from other organisations and implementers before M2; keep everything public |
 | **Name and trademark** | Medium | Medium | Renamed from "OpenAds"; trademark search before launch |
 | **Security incident in reference code** | Medium | High | Security review before pilot; safe defaults; disclosure policy |
 
@@ -1611,6 +1611,7 @@ This whitepaper was **authored with Claude**, an AI model developed by Anthropic
   - Their findings were incorporated with citations.
   - For version 0.3, further AI research agents searched for similar papers and proposals and for evidence on publisher revenue. Search limits meant some requested sources could not be checked; those were left out rather than cited unverified.
 - **Verification.** AI-assisted research can be wrong. Figures and legal points are cited to sources, and items resting only on secondary sources are flagged as such or omitted. Readers should check primary sources before relying on any figure, legal statement or standard reference. Example protocol objects are illustrative and non-normative.
+- **Contributors.** Arjun Krishna joined as a contributor after version 0.3 was published and has since contributed corrections, including to the offer, deal and dispute state machines, the HTML5 creative policy and the Internet-Draft. The design decisions and drafting described above were made before they joined.
 - **Why we disclose this.** A proposed open standard should be open about how it was made.
 
 ---
@@ -1779,6 +1780,10 @@ This whitepaper was **authored with Claude**, an AI model developed by Anthropic
 ---
 
 ## Appendix C. Change history
+
+### After v0.3
+
+- Arjun Krishna added as a contributor; governance ([§23.1](#231-what-the-federated-ads-initiative-is-today)) and risk ([§25](#25-risks-and-mitigations)) updated to reflect two maintainers.
 
 ### Changes in v0.3 (5 October 2026)
 
