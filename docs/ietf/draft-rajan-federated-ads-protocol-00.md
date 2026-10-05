@@ -1297,7 +1297,7 @@ Issued by: the recipient of an Offer or CounterOffer.
 | Member | Req. | Description |
 |---|---|---|
 | `inReplyTo` | REQUIRED | Object Reference to the Offer or CounterOffer accepted. |
-| `approvedCreatives` | COND. | Creative hashes approved; REQUIRED if creative approval applies. |
+| `approvedCreatives` | COND. | Creative hashes approved; REQUIRED if the selling node issues the Acceptance and creative approval applies. MUST NOT be present in an Acceptance issued by the buying node. |
 | `expiresAt` | REQUIRED | Acceptance lapses if no Deal is issued by this time. |
 {: title="Acceptance members"}
 
@@ -1312,6 +1312,7 @@ Issued by: either party.
 |---|---|---|
 | `inReplyTo` | REQUIRED | Object Reference to the Offer, CounterOffer or RFP. |
 | `terms` | REQUIRED | Complete replacement Terms. |
+| `approvedCreatives` | OPTIONAL | Creative hashes approved by the selling node, if it issues the CounterOffer and creative approval applies. MUST NOT be present in a CounterOffer issued by the buying node. |
 | `expiresAt` | REQUIRED | Lapse time. |
 | `note` | OPTIONAL | Human-readable explanation. |
 {: title="CounterOffer members"}
@@ -1342,6 +1343,12 @@ Issued by: buying node; countersigned by the selling node ({{proof-chains}}).
 | `approvedCreatives` | REQUIRED | Array of approved Creative Manifest hashes (MAY be empty). |
 | `settlementProfile` | REQUIRED | The one profile chosen from `terms.settlement`. |
 {: title="Deal members"}
+
+`approvedCreatives` MUST equal the creatives approved by the selling
+node: those in its Acceptance or Claim or, when the buying node
+accepted a CounterOffer issued by the selling node, those in that
+CounterOffer.  A selling node MUST NOT countersign a Deal whose
+`approvedCreatives` it did not approve.
 
 A Deal takes effect when countersigned.  The `id` of a Deal is stable
 for its lifetime; changes are made with DealAmendment objects.
@@ -1791,15 +1798,17 @@ that would cause a transition not shown, with error type
                   CounterOffer
           +------------------------+
           |                        v
-   Offer  |                  +-----------+
- ------>+------+  rev. Offer |           |
-        | Sent |<------------| Countered |
+   Offer  |                  +-----------+ ---+
+ ------>+------+  rev. Offer |           |    | CounterOffer
+        | Sent |<------------| Countered | <--+
         +------+             +-----------+
-         | | | |                 |     |
-         | | | +-- Withdrawn     |     +--> Declined
-         | | +---- Expired       +--------> Expired
-         | +------ Declined
-         +-------- Accepted --> (Deal)
+         | | | |               | | | |
+         | | | +-- Withdrawn   | | | +-- Withdrawn
+         | | +---- Expired     | | +---- Expired
+         | +------ Declined    | +------ Declined
+         +-------- Accepted    +-------- Accepted
+                      |                     |
+                      +------> (Deal) <-----+
 ~~~
 {: title="Offer states"}
 
@@ -1807,43 +1816,45 @@ that would cause a transition not shown, with error type
 |---|---|---|---|
 | (none) | Sent | Offer | buyer |
 | Sent | Countered | CounterOffer | recipient |
+| Countered | Countered | CounterOffer | recipient of the latest CounterOffer |
 | Countered | Sent | Offer with `previous` | buyer |
 | Sent | Accepted | Acceptance | recipient |
+| Countered | Accepted | Acceptance | recipient of the latest CounterOffer |
 | Sent, Countered | Declined | Decline | recipient of the latest offer |
 | Sent, Countered | Expired | passage of `expiresAt` | (none) |
-| Sent | Withdrawn | StatusChange `to: "withdrawn"` | buyer |
+| Sent, Countered | Withdrawn | StatusChange `to: "withdrawn"` | issuer of the latest offer |
 {: title="Offer transitions"}
 
-The same machine applies to RFP responses and Standing Offer claims,
-with Claim in place of Acceptance.  An Accepted offer leads to a Deal
-only if the buyer issues a Deal before the Acceptance's `expiresAt`.
+"The latest offer" is the most recent Offer or CounterOffer in the
+negotiation.  The same machine applies to RFP responses and Standing
+Offer claims, with Claim in place of Acceptance.  An Accepted offer
+leads to a Deal only if the buyer issues a Deal before the
+Acceptance's `expiresAt`.  When the buying node accepts a CounterOffer
+issued by the selling node, the buying node issues the Acceptance and
+then the Deal, whose `basis` references that Acceptance and whose
+`terms` are those of the accepted CounterOffer.
 
 ## Deal
 
 ~~~ ascii-art
-                    pause
-      +--------+ ----------> +--------+
-  --->| Active |             | Paused |
-      +--------+ <---------- +--------+
-        |  |  |    resume      |    |
-        |  |  |  end,          |    |
-        |  |  |  flight end    |    |
-        |  |  +------+  +------+    |
-        |  |         v  v           |
-        |  |      +-------+         |
-        |  |      | Ended |         |
-        |  |      +-------+         |
-        |  | terminate              | terminate
-        |  +-------+    +-----------+
-        |          v    v
-        |      +------------+
-        |      | Terminated |
-        |      +------------+
-        | budget used
-        v
-  +-----------+
-  | Exhausted |
-  +-----------+
+                      Deal (both proofs)
+                             |
+              budget used    v           pause
+ +-----------+ <-------- +--------+ ----------> +--------+
+ | Exhausted |           | Active |             | Paused |
+ +-----------+ --------> +--------+ <---------- +--------+
+       |   budget raised   |    |     resume     |    |
+       |                   |    | end,           |    |
+       | flight end        |    | flight end     |    | terminate
+       |                   |    v                |    |
+       |                   | +-------+    end,   |    |
+       +-------------------|>| Ended |<----------+    |
+                           | +-------+ flight end     |
+                           | terminate                |
+                           v                          |
+                     +------------+                   |
+                     | Terminated |<------------------+
+                     +------------+
 ~~~
 {: title="Deal states"}
 
@@ -1859,9 +1870,10 @@ only if the buyer issues a Deal before the Acceptance's `expiresAt`.
 | Active, Paused | Terminated | StatusChange `to: "terminated"` per `paymentTerms` |
 {: title="Deal transitions"}
 
-A Dispute marks a Deal as disputed.  This is a flag orthogonal to the
-states above: it pauses settlement of the disputed amount but not
-delivery, unless a party also pauses the Deal.
+A Dispute in state Open or Escalated ({{dispute-states}}) marks the
+Deal it concerns as disputed.  This is a flag orthogonal to the states
+above: it pauses settlement of the disputed amount but not delivery,
+unless a party also pauses the Deal.
 
 ## Licence
 
@@ -1899,6 +1911,38 @@ normally.
 
 A resolution MAY take the form of a new Statement whose `supersedes`
 references the disputed one.
+
+## Dispute {#dispute-states}
+
+~~~ ascii-art
+  Dispute   +------+   escalate   +-----------+
+ ---------->| Open |------------->| Escalated |
+            +------+              +-----------+
+             |    |                     |
+    withdraw |    | resolve             | resolve
+             v    | (disputant)         | (arbiter)
+  +-----------+   |                     |
+  | Withdrawn |   |    +----------+     |
+  +-----------+   +--->| Resolved |<----+
+                       +----------+
+~~~
+{: title="Dispute states"}
+
+| From | To | Effected by |
+|---|---|---|
+| (none) | Open | Dispute (either deal party) |
+| Open | Withdrawn | StatusChange `to: "withdrawn"` (the disputing party) |
+| Open | Resolved | StatusChange `to: "resolved"` (the disputing party, accepting the outcome of bilateral review) |
+| Open | Escalated | StatusChange `to: "escalated"` (either deal party, once `respondBy` has passed) |
+| Escalated | Resolved | StatusChange `to: "resolved"` (the arbiter) |
+{: title="Dispute transitions"}
+
+The arbiter is the Dispute's `arbiter` or, if that is absent, the
+`arbiter` in the deal's Terms.  A Dispute with no arbiter cannot be
+escalated.  An arbiter's StatusChange to `"resolved"` binds both
+parties for that deal, and its `reason` SHOULD state the outcome.  A
+resolution that changes the amount owed takes effect through a new
+Statement whose `supersedes` references the disputed one.
 
 # Inbox Messaging {#inbox}
 

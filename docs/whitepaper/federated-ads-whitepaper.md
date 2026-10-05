@@ -959,11 +959,16 @@ stateDiagram-v2
   state "Offer" as O {
     [*] --> Sent
     Sent --> Countered
+    Countered --> Countered
     Countered --> Sent
     Sent --> Accepted
+    Countered --> Accepted
     Sent --> Declined
+    Countered --> Declined
     Sent --> Expired
+    Countered --> Expired
     Sent --> Withdrawn
+    Countered --> Withdrawn
   }
   state "Deal" as D {
     [*] --> Active
@@ -972,7 +977,10 @@ stateDiagram-v2
     Active --> Exhausted
     Active --> Ended
     Paused --> Ended
+    Exhausted --> Active
+    Exhausted --> Ended
     Active --> Terminated
+    Paused --> Terminated
   }
   state "Licence" as L {
     [*] --> Issued
@@ -987,9 +995,17 @@ stateDiagram-v2
     Countersigned --> Disputed
     Disputed --> Countersigned
   }
+  state "Dispute" as DS {
+    state "Withdrawn" as DWithdrawn
+    [*] --> Open
+    Open --> DWithdrawn
+    Open --> Resolved
+    Open --> Escalated
+    Escalated --> Resolved
+  }
 ```
 
-Every transition is a signed message referencing the previous state's object. A Deal may also be marked **Disputed**, which pauses settlement but not delivery unless a party also pauses the deal.
+Every transition is a signed message referencing the previous state's object. A Deal is marked **Disputed** while a Dispute about it is open or escalated. That pauses settlement of the disputed amount but not delivery, unless a party also pauses the deal. A Dispute is resolved bilaterally by the disputing party, or by the arbiter named in the deal after escalation ([§10.8](#108-disputes)).
 
 ### 15.7 Messaging, errors and delivery semantics
 

@@ -1613,11 +1613,16 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
   state &quot;Offer&quot; as O {
     [*] --&gt; Sent
     Sent --&gt; Countered
+    Countered --&gt; Countered
     Countered --&gt; Sent
     Sent --&gt; Accepted
+    Countered --&gt; Accepted
     Sent --&gt; Declined
+    Countered --&gt; Declined
     Sent --&gt; Expired
+    Countered --&gt; Expired
     Sent --&gt; Withdrawn
+    Countered --&gt; Withdrawn
   }
   state &quot;Deal&quot; as D {
     [*] --&gt; Active
@@ -1626,7 +1631,10 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
     Active --&gt; Exhausted
     Active --&gt; Ended
     Paused --&gt; Ended
+    Exhausted --&gt; Active
+    Exhausted --&gt; Ended
     Active --&gt; Terminated
+    Paused --&gt; Terminated
   }
   state &quot;Licence&quot; as L {
     [*] --&gt; Issued
@@ -1640,8 +1648,16 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
     Proposed --&gt; Disputed
     Countersigned --&gt; Disputed
     Disputed --&gt; Countersigned
+  }
+  state &quot;Dispute&quot; as DS {
+    state &quot;Withdrawn&quot; as DWithdrawn
+    [*] --&gt; Open
+    Open --&gt; DWithdrawn
+    Open --&gt; Resolved
+    Open --&gt; Escalated
+    Escalated --&gt; Resolved
   }</pre></div>
-<p>Every transition is a signed message referencing the previous state's object. A Deal may also be marked <strong>Disputed</strong>, which pauses settlement but not delivery unless a party also pauses the deal.</p>
+<p>Every transition is a signed message referencing the previous state's object. A Deal is marked <strong>Disputed</strong> while a Dispute about it is open or escalated. That pauses settlement of the disputed amount but not delivery, unless a party also pauses the deal. A Dispute is resolved bilaterally by the disputing party, or by the arbiter named in the deal after escalation (<a href="#108-disputes">§10.8</a>).</p>
 <h3 id="157-messaging-errors-and-delivery-semantics">15.7 Messaging, errors and delivery semantics</h3>
 <ul>
 <li><strong>Inbox model.</strong> Each node has one inbox endpoint that receives signed objects. It answers <code>202 Accepted</code> with a signed acknowledgement, and processes asynchronously where needed.</li>
