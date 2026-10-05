@@ -26,6 +26,7 @@ These are the initial entries from the Internet-Draft [`draft-rajan-federated-ad
 | <a id="budget-exhausted"></a>`budget-exhausted` | 422 | No budget remains. |
 | <a id="licence-expired"></a>`licence-expired` | 403 | Licence expired. |
 | <a id="licence-revoked"></a>`licence-revoked` | 403 | Licence revoked. |
+| <a id="creative-not-approved"></a>`creative-not-approved` | 403 | The creative's hash is not among the Deal's approved creatives. |
 | <a id="adaptation-not-permitted"></a>`adaptation-not-permitted` | 403 | The Licence does not permit the adaptation that the surface requires or that was requested. |
 | <a id="k-threshold-violation"></a>`k-threshold-violation` | 422 | Receipt cells below k. |
 | <a id="log-inconsistent"></a>`log-inconsistent` | 422 | Log proofs do not verify. |
