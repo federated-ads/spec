@@ -35,7 +35,7 @@ AI-assisted contributions are welcome if you disclose them in the pull request a
 
 ## Conduct
 
-Be respectful and constructive, and assume good faith. Criticism of ideas is welcome; personal attacks are not. The [W3C Code of Conduct](https://www.w3.org/policies/code-of-conduct/) applies.
+Be respectful and constructive, and assume good faith. Criticism of ideas is welcome; personal attacks are not. The [W3C Code of Conduct](https://www.w3.org/policies/code-of-conduct/) applies; see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for how to report a problem.
 
 ## Competition law
 
