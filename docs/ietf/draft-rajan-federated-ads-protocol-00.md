@@ -686,11 +686,12 @@ A receiver MUST verify every proof on an object before acting on it,
 using the algorithm of {{VC-DI-EDDSA}}, and MUST additionally check
 that:
 
-* `proofPurpose` is `"assertionMethod"`;
+* `proofPurpose` is `"assertionMethod"`, except as permitted for
+  KeyRotation and KeyRevocation objects ({{key-lifecycle-proofs}});
 * for a single proof, or the first proof of a chain, the verification
   method's controller is the node identified by the object's `issuer`
   (or, for a Node Descriptor, by its `id`), and the method is listed
-  in that node's `assertionMethod`;
+  in that node's verification relationship named by `proofPurpose`;
 * the key was not revoked at the proof's `created` time
   ({{key-revocation}});
 * `created` is not more than 60 seconds later than the time of
@@ -708,14 +709,43 @@ chains).  The `proof` member is then an array of two proofs:
 1. The first proof is created by the issuer and MUST carry an `id`
    (for example, a `urn:uuid:` URN).
 2. The second proof is created by the counterparty named in the
-   object (for KeyRotation, by the new key) and MUST carry a
-   `previousProof` member whose value is the first proof's `id`.  Its
-   verification method MUST be controlled by the counterparty.
+   object (for KeyRotation, by the new key; {{key-lifecycle-proofs}})
+   and MUST carry a `previousProof` member whose value is the first
+   proof's `id`.  Except for KeyRotation, its verification method MUST
+   be controlled by the counterparty.
 
 A two-party object with only the first proof is a proposal.  It takes
 effect only when both proofs are present and valid.  The counterparty
 countersigns by adding the second proof without altering any other
 member and returning the result to the issuer's inbox.
+
+### Key-Lifecycle Proofs {#key-lifecycle-proofs}
+
+KeyRotation and KeyRevocation objects change which keys a node may
+use.  For these objects only, the following rules replace the
+corresponding checks of {{proof-verify}}:
+
+* A proof created with a key listed in the node's
+  `capabilityInvocation` verification relationship {{CID}} (an offline
+  root key; {{key-rotation}}) MUST have `proofPurpose`
+  `"capabilityInvocation"`.  Every other proof on these objects MUST
+  have `proofPurpose` `"assertionMethod"` and be created with a key
+  listed in `assertionMethod`.
+* The first proof of a KeyRotation is created with either the old key
+  or a `capabilityInvocation` key.  The second proof is created with
+  the new key.  Both keys belong to the issuing node, so the
+  counterparty rule of {{proof-chains}} does not apply.
+* Verifiers verify proofs created with the old and new keys against
+  `oldKeyMultibase` and `newKeyMultibase` respectively, rather than
+  against the current Node Descriptor, so that a KeyRotation remains
+  verifiable after either key has been removed from the descriptor.
+  A verifier MUST check that the old key, or the
+  `capabilityInvocation` key, was a key of the issuing node at the
+  rotation's `effectiveAt`, using the current Node Descriptor or the
+  key history reconstructed from the node's log ({{key-rotation}}).
+* A KeyRevocation is signed with a key of the issuing node other than
+  the revoked key: another `assertionMethod` key or a
+  `capabilityInvocation` key.
 
 ## Relays {#relays}
 
@@ -812,7 +842,8 @@ To rotate a key, a node:
 
 1. publishes the new key in its Node Descriptor alongside the old key;
 2. issues a KeyRotation object ({{obj-keyrotation}}) signed first by
-   the old key and then by the new key, and appends it to its log;
+   the old key (or the offline root key) and then by the new key
+   ({{key-lifecycle-proofs}}), and appends it to its log;
 3. keeps the old key listed, with an `expires` value, for at least
    the longest remaining lifetime of any object it signed with that
    key, and in any case for at least 30 days.
@@ -822,21 +853,42 @@ verifier can reconstruct a node's key history from its log and
 verify signatures on historical objects after the old key is removed
 from the Node Descriptor.
 
+Keys listed only in `authentication` sign HTTP messages, which are
+not retained or verified after the exchange.  A node MAY rotate such
+a key by updating its Node Descriptor, without issuing a KeyRotation.
+
 Nodes SHOULD use short-lived signing keys certified by an offline
 root key that is listed in the Node Descriptor under
-`capabilityDelegation` {{CID}} and used only to sign KeyRotation and
+`capabilityInvocation` {{CID}} and used only to sign KeyRotation and
 KeyRevocation objects.
 
 ## Key Revocation {#key-revocation}
 
 When a key is compromised, the node MUST issue a KeyRevocation object
 ({{obj-keyrevocation}}) signed by a different, unrevoked key (the
-offline root key, if any), append it to its log, and mark the key
-`revoked` in its Node Descriptor.  Proofs and HTTP signatures created
-by that key with a `created` time at or after `revokedAt` MUST be
-rejected.  Objects signed before `revokedAt` remain valid only if they
-were included in the issuer's log, under a witnessed checkpoint,
-before `revokedAt`.
+offline root key, if any; {{key-lifecycle-proofs}}), append it to its
+log, and mark the key `revoked` in its Node Descriptor.  A node MAY
+also revoke a key for other reasons.  The KeyRevocation's inclusion
+time T_log is determined as for Revocations ({{revocation-logging}}).
+
+Proofs and HTTP signatures created by the revoked key with a
+`created` time at or after `revokedAt` MUST be rejected.  For proofs
+created before `revokedAt`:
+
+* If `reason` is `"compromise"`, `revokedAt` MAY be earlier than
+  T_log, because a compromise is often discovered after the fact.  A
+  proof created with the key before `revokedAt` then remains valid
+  only if the object hash was included, under a checkpoint carrying a
+  witness cosignature timestamped before `revokedAt`, in the log of
+  the issuer or of a party named in the object.  A party that relies
+  on an object signed by another node therefore SHOULD log it
+  ({{log-entries}}).
+* For any other reason, `revokedAt` MUST NOT be earlier than T_log,
+  and proofs created before `revokedAt` remain valid.
+
+These rules prevent a node from invalidating its own obligations by
+backdating a revocation of its own key: an object that its
+counterparty logged before `revokedAt` remains valid.
 
 ## Caching {#caching}
 
@@ -951,7 +1003,7 @@ Issued by: any node.  Public.
 | `verificationMethod` | REQUIRED | Array of Multikey verification methods {{CID}}. |
 | `assertionMethod` | REQUIRED | Array of verification method URLs. |
 | `authentication` | REQUIRED | Array of verification method URLs. |
-| `capabilityDelegation` | OPTIONAL | Offline root key(s) ({{key-rotation}}). |
+| `capabilityInvocation` | OPTIONAL | Array of verification method URLs of offline root key(s), used only for key-lifecycle objects ({{key-rotation}}, {{key-lifecycle-proofs}}). |
 | `endpoints` | REQUIRED | Object with `inbox` and `log` (REQUIRED) and optionally `policy`, `inventory`, `licences`, `report`, `adfree` (URL of a human-readable ad-free offer), `support` (URL of a SupportOptions object, {{obj-supportoptions}}), `witness`. |
 | `versions` | REQUIRED | Supported protocol versions. |
 | `conformance` | REQUIRED | Array of conformance tokens ({{conformance}}). |
@@ -1757,9 +1809,10 @@ Issued by: labeler or auditor.  Public unless stated otherwise.
 
 ## KeyRotation {#obj-keyrotation}
 
-Issued by: any node.  Logged.  Signed first by the old key and then by
-the new key ({{proof-chains}}), or by the root key followed by the new
-key.
+Issued by: any node.  Logged.  Signed first by the old key, or by an
+offline root key, and then by the new key ({{key-lifecycle-proofs}}).
+Required only when an `assertionMethod` key is rotated
+({{key-rotation}}).
 
 | Member | Req. | Description |
 |---|---|---|
@@ -1773,8 +1826,8 @@ key.
 
 ## KeyRevocation {#obj-keyrevocation}
 
-Issued by: any node.  Logged.  Signed by a key other than the revoked
-key.
+Issued by: any node.  Logged.  Signed by a key of the issuing node
+other than the revoked key ({{key-lifecycle-proofs}}).
 
 | Member | Req. | Description |
 |---|---|---|
@@ -2326,9 +2379,16 @@ entry is the JCS serialization of a JSON object with members `type`
 hash).  Full objects are not placed in the log.
 
 A node MUST append an entry for each ReceiptBatch, Revocation,
-RevocationAck, Statement (when countersigned), KeyRotation and
-KeyRevocation it issues, and SHOULD append entries for SpendReports,
-Deals and DealAmendments.  For a ReceiptBatch, the entry's `hash` is
+RevocationAck, Statement (when countersigned), Deal and DealAmendment
+(when countersigned), MemberList, KeyRotation and KeyRevocation it
+issues, and SHOULD append entries for SpendReports.  A node SHOULD
+also append entries for objects issued by other nodes on which it
+relies, in particular countersigned Deals and DealAmendments to which
+it is a party and Licences under which it delivers; this preserves
+their validity if the issuer later revokes its key
+({{key-revocation}}).  An entry for an object issued by another node
+has the same form; its `id` identifies the object at the issuer's
+origin.  For a ReceiptBatch, the entry's `hash` is
 computed over the batch with its `log` member omitted and before the
 proof is added (the "batch commitment"); verifiers recompute it
 accordingly.
@@ -2755,6 +2815,14 @@ remain valid only if witnessed before `revokedAt`
 holding a compromised key could issue false Revocations; licensees
 would stop serving, which is a fail-safe outcome.
 
+A node could also try to escape its obligations by revoking its own
+key with a backdated `revokedAt`, invalidating Deals and Licences it
+signed.  Only revocations for compromise may be backdated, and an
+object that a counterparty logged under a witnessed checkpoint before
+`revokedAt` remains valid ({{key-revocation}}).  Counterparties that
+log the Deals and Licences they rely on are therefore protected;
+those that do not bear the risk of such a revocation.
+
 ## Attester Centralization
 
 V3 relies on attesters, which today are few.  V3 is optional,
@@ -3083,6 +3151,10 @@ writing include:
 17. Whether rounding each Statement line to the currency's minor unit
     (halves up) is the right rule, and whether fee lines should affect
     `total` when an intermediary invoices separately.
+18. The cost of logging every Licence received, given frequent
+    renewals under the `pointer` tier, and whether logging the Deal
+    alone gives counterparties enough protection against backdated
+    key revocations.
 
 # Change Log {#change-log}
 {:numbered="false"}
