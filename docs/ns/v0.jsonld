@@ -1,0 +1,23 @@
+{
+  "@context": {
+    "@version": 1.1,
+    "@protected": true,
+    "@vocab": "https://w3id.org/federated-ads/v0#",
+    "fa": "https://w3id.org/federated-ads/v0#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "id": "@id",
+    "type": "@type",
+    "deal": { "@id": "fa:deal", "@type": "@id" },
+    "offer": { "@id": "fa:offer", "@type": "@id" },
+    "manifest": { "@id": "fa:manifest", "@type": "@id" },
+    "licensee": { "@id": "fa:licensee", "@type": "@id" },
+    "issuer": { "@id": "fa:issuer", "@type": "@id" },
+    "member": { "@id": "fa:member", "@type": "@id" },
+    "revocationLog": { "@id": "fa:revocationLog", "@type": "@id" },
+    "policy": { "@id": "fa:policy", "@type": "@id" },
+    "inventory": { "@id": "fa:inventory", "@type": "@id" },
+    "issuedAt": { "@id": "fa:issuedAt", "@type": "xsd:dateTime" },
+    "expiresAt": { "@id": "fa:expiresAt", "@type": "xsd:dateTime" },
+    "effectiveAt": { "@id": "fa:effectiveAt", "@type": "xsd:dateTime" }
+  }
+}
