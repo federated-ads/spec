@@ -25,6 +25,10 @@ author:
     fullname: Suneesh Rajan
     organization: Federated Ads Initiative
     email: suneeshtr@gmail.com
+  -
+    fullname: Arjun Krishna
+    organization: Federated Ads Initiative
+    email: mail@arjunkrishna.dev
 
 normative:
   RFC3339:
@@ -3202,6 +3206,6 @@ Protocol; and on Privacy Pass.
 
 AI-assistance disclosure: this document was drafted with the
 assistance of Claude, an AI model made by Anthropic, under the
-direction of the author, who set its goals, made the design
-decisions, and is responsible for its content.  Any errors are the
-author's.
+direction of the authors, who set its goals, made the design
+decisions, and are responsible for its content.  Any errors are the
+authors'.
