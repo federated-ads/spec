@@ -700,7 +700,7 @@ The protocol proves what is owed. **Settlement profiles** define how it is paid.
 
 1. **Native** (default): a title, body, image or video asset and a CTA, rendered by the publisher's own template. No creative code.
 2. **Display:** a static image (WebP, AVIF, PNG, JPEG, or SVG loaded as an image, never inline).
-3. **HTML5:** allowed only at the extended conformance level. It runs in an `<iframe sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation">` served from a dedicated cookieless origin, with a strict CSP (`default-src 'none'`; `connect-src 'none'`) and no network access after load. `allow-same-origin` is never combined with `allow-scripts`.
+3. **HTML5:** allowed only at the extended conformance level. It runs in an `<iframe sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation">` served from a dedicated cookieless origin run by the selling node. The HTML and every file it loads must be hash-pinned assets of the approved manifest. A strict CSP lets the creative load only those assets from that origin, with scripts allowed by origin or hash and never `unsafe-eval`, and blocks every other request: no `connect-src`, no forms, no other origins. (A bare `default-src 'none'` would block the creative's own scripts and styles too.) `allow-same-origin` is never combined with `allow-scripts`.
 4. **Never allowed:** third-party JavaScript, tracking pixels, or unpinned assets.
 
 ### 13.2 Social and fediverse (`surface:social`)
