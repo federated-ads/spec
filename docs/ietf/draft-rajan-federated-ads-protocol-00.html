@@ -33,7 +33,7 @@ and the IANA registrations needed to support them.
 <meta content="draft-rajan-federated-ads-protocol-00" name="ietf.draft">
 <!-- Generator version information:
   xml2rfc 3.34.1
-    Python 3.12.11
+    Python 3.12.3
     ConfigArgParse 1.8.0
     google-i18n-address 3.1.1
     intervaltree 3.2.1
@@ -1434,6 +1434,9 @@ whitepaper, which is informative.<a href="#section-note.1-2" class="pilcrow">¶<
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.3">
                     <p id="section-toc.1-1.4.2.2.2.3.1"><a href="#section-4.2.3" class="auto internal xref">4.2.3</a>.  <a href="#name-proof-chains-for-two-party-" class="internal xref">Proof Chains for Two-Party Objects</a></p>
 </li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.4">
+                    <p id="section-toc.1-1.4.2.2.2.4.1"><a href="#section-4.2.4" class="auto internal xref">4.2.4</a>.  <a href="#name-key-lifecycle-proofs" class="internal xref">Key-Lifecycle Proofs</a></p>
+</li>
                 </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
@@ -1598,6 +1601,9 @@ whitepaper, which is informative.<a href="#section-note.1-2" class="pilcrow">¶<
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4">
                 <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-statement-2" class="internal xref">Statement</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.5">
+                <p id="section-toc.1-1.7.2.5.1"><a href="#section-7.5" class="auto internal xref">7.5</a>.  <a href="#name-dispute-2" class="internal xref">Dispute</a></p>
 </li>
             </ul>
 </li>
@@ -2709,13 +2715,14 @@ using the algorithm of <span>[<a href="#VC-DI-EDDSA" class="cite xref">VC-DI-EDD
 that:<a href="#section-4.2.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-4.2.2-2.1">
-              <p id="section-4.2.2-2.1.1"><code>proofPurpose</code> is <code>"assertionMethod"</code>;<a href="#section-4.2.2-2.1.1" class="pilcrow">¶</a></p>
+              <p id="section-4.2.2-2.1.1"><code>proofPurpose</code> is <code>"assertionMethod"</code>, except as permitted for
+KeyRotation and KeyRevocation objects (<a href="#key-lifecycle-proofs" class="auto internal xref">Section 4.2.4</a>);<a href="#section-4.2.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-4.2.2-2.2">
               <p id="section-4.2.2-2.2.1">for a single proof, or the first proof of a chain, the verification
 method's controller is the node identified by the object's <code>issuer</code>
 (or, for a Node Descriptor, by its <code>id</code>), and the method is listed
-in that node's <code>assertionMethod</code>;<a href="#section-4.2.2-2.2.1" class="pilcrow">¶</a></p>
+in that node's verification relationship named by <code>proofPurpose</code>;<a href="#section-4.2.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-4.2.2-2.3">
               <p id="section-4.2.2-2.3.1">the key was not revoked at the proof's <code>created</code> time
@@ -2745,15 +2752,57 @@ chains).  The <code>proof</code> member is then an array of two proofs:<a href="
 </li>
             <li id="section-4.2.3-2.2">
               <p id="section-4.2.3-2.2.1">The second proof is created by the counterparty named in the
-object (for KeyRotation, by the new key) and <span class="bcp14">MUST</span> carry a
-<code>previousProof</code> member whose value is the first proof's <code>id</code>.  Its
-verification method <span class="bcp14">MUST</span> be controlled by the counterparty.<a href="#section-4.2.3-2.2.1" class="pilcrow">¶</a></p>
+object (for KeyRotation, by the new key; <a href="#key-lifecycle-proofs" class="auto internal xref">Section 4.2.4</a>)
+and <span class="bcp14">MUST</span> carry a <code>previousProof</code> member whose value is the first
+proof's <code>id</code>.  Except for KeyRotation, its verification method <span class="bcp14">MUST</span>
+be controlled by the counterparty.<a href="#section-4.2.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
           </ol>
 <p id="section-4.2.3-3">A two-party object with only the first proof is a proposal.  It takes
 effect only when both proofs are present and valid.  The counterparty
 countersigns by adding the second proof without altering any other
 member and returning the result to the issuer's inbox.<a href="#section-4.2.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="key-lifecycle-proofs">
+<section id="section-4.2.4">
+          <h4 id="name-key-lifecycle-proofs">
+<a href="#section-4.2.4" class="section-number selfRef">4.2.4. </a><a href="#name-key-lifecycle-proofs" class="section-name selfRef">Key-Lifecycle Proofs</a>
+          </h4>
+<p id="section-4.2.4-1">KeyRotation and KeyRevocation objects change which keys a node may
+use.  For these objects only, the following rules replace the
+corresponding checks of <a href="#proof-verify" class="auto internal xref">Section 4.2.2</a>:<a href="#section-4.2.4-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.2.4-2.1">
+              <p id="section-4.2.4-2.1.1">A proof created with a key listed in the node's
+<code>capabilityInvocation</code> verification relationship <span>[<a href="#CID" class="cite xref">CID</a>]</span> (an offline
+root key; <a href="#key-rotation" class="auto internal xref">Section 5.5</a>) <span class="bcp14">MUST</span> have <code>proofPurpose</code>
+                <code>"capabilityInvocation"</code>.  Every other proof on these objects <span class="bcp14">MUST</span>
+have <code>proofPurpose</code> <code>"assertionMethod"</code> and be created with a key
+listed in <code>assertionMethod</code>.<a href="#section-4.2.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-4.2.4-2.2">
+              <p id="section-4.2.4-2.2.1">The first proof of a KeyRotation is created with either the old key
+or a <code>capabilityInvocation</code> key.  The second proof is created with
+the new key.  Both keys belong to the issuing node, so the
+counterparty rule of <a href="#proof-chains" class="auto internal xref">Section 4.2.3</a> does not apply.<a href="#section-4.2.4-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-4.2.4-2.3">
+              <p id="section-4.2.4-2.3.1">Verifiers verify proofs created with the old and new keys against
+<code>oldKeyMultibase</code> and <code>newKeyMultibase</code> respectively, rather than
+against the current Node Descriptor, so that a KeyRotation remains
+verifiable after either key has been removed from the descriptor.
+A verifier <span class="bcp14">MUST</span> check that the old key, or the
+<code>capabilityInvocation</code> key, was a key of the issuing node at the
+rotation's <code>effectiveAt</code>, using the current Node Descriptor or the
+key history reconstructed from the node's log (<a href="#key-rotation" class="auto internal xref">Section 5.5</a>).<a href="#section-4.2.4-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-4.2.4-2.4">
+              <p id="section-4.2.4-2.4.1">A KeyRevocation is signed with a key of the issuing node other than
+the revoked key: another <code>assertionMethod</code> key or a
+<code>capabilityInvocation</code> key.<a href="#section-4.2.4-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
 </section>
 </div>
 </section>
@@ -2937,7 +2986,8 @@ existing advertising systems.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-5.5-2.2">
             <p id="section-5.5-2.2.1">issues a KeyRotation object (<a href="#obj-keyrotation" class="auto internal xref">Section 6.28</a>) signed first by
-the old key and then by the new key, and appends it to its log;<a href="#section-5.5-2.2.1" class="pilcrow">¶</a></p>
+the old key (or the offline root key) and then by the new key
+(<a href="#key-lifecycle-proofs" class="auto internal xref">Section 4.2.4</a>), and appends it to its log;<a href="#section-5.5-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-5.5-2.3">
             <p id="section-5.5-2.3.1">keeps the old key listed, with an <code>expires</code> value, for at least
@@ -2949,10 +2999,13 @@ key, and in any case for at least 30 days.<a href="#section-5.5-2.3.1" class="pi
 verifier can reconstruct a node's key history from its log and
 verify signatures on historical objects after the old key is removed
 from the Node Descriptor.<a href="#section-5.5-3" class="pilcrow">¶</a></p>
-<p id="section-5.5-4">Nodes <span class="bcp14">SHOULD</span> use short-lived signing keys certified by an offline
+<p id="section-5.5-4">Keys listed only in <code>authentication</code> sign HTTP messages, which are
+not retained or verified after the exchange.  A node <span class="bcp14">MAY</span> rotate such
+a key by updating its Node Descriptor, without issuing a KeyRotation.<a href="#section-5.5-4" class="pilcrow">¶</a></p>
+<p id="section-5.5-5">Nodes <span class="bcp14">SHOULD</span> use short-lived signing keys certified by an offline
 root key that is listed in the Node Descriptor under
-<code>capabilityDelegation</code> <span>[<a href="#CID" class="cite xref">CID</a>]</span> and used only to sign KeyRotation and
-KeyRevocation objects.<a href="#section-5.5-4" class="pilcrow">¶</a></p>
+<code>capabilityInvocation</code> <span>[<a href="#CID" class="cite xref">CID</a>]</span> and used only to sign KeyRotation and
+KeyRevocation objects.<a href="#section-5.5-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="key-revocation">
@@ -2962,12 +3015,32 @@ KeyRevocation objects.<a href="#section-5.5-4" class="pilcrow">¶</a></p>
         </h3>
 <p id="section-5.6-1">When a key is compromised, the node <span class="bcp14">MUST</span> issue a KeyRevocation object
 (<a href="#obj-keyrevocation" class="auto internal xref">Section 6.29</a>) signed by a different, unrevoked key (the
-offline root key, if any), append it to its log, and mark the key
-<code>revoked</code> in its Node Descriptor.  Proofs and HTTP signatures created
-by that key with a <code>created</code> time at or after <code>revokedAt</code> <span class="bcp14">MUST</span> be
-rejected.  Objects signed before <code>revokedAt</code> remain valid only if they
-were included in the issuer's log, under a witnessed checkpoint,
-before <code>revokedAt</code>.<a href="#section-5.6-1" class="pilcrow">¶</a></p>
+offline root key, if any; <a href="#key-lifecycle-proofs" class="auto internal xref">Section 4.2.4</a>), append it to its
+log, and mark the key <code>revoked</code> in its Node Descriptor.  A node <span class="bcp14">MAY</span>
+also revoke a key for other reasons.  The KeyRevocation's inclusion
+time T_log is determined as for Revocations (<a href="#revocation-logging" class="auto internal xref">Section 9.4</a>).<a href="#section-5.6-1" class="pilcrow">¶</a></p>
+<p id="section-5.6-2">Proofs and HTTP signatures created by the revoked key with a
+<code>created</code> time at or after <code>revokedAt</code> <span class="bcp14">MUST</span> be rejected.  For proofs
+created before <code>revokedAt</code>:<a href="#section-5.6-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.6-3.1">
+            <p id="section-5.6-3.1.1">If <code>reason</code> is <code>"compromise"</code>, <code>revokedAt</code> <span class="bcp14">MAY</span> be earlier than
+T_log, because a compromise is often discovered after the fact.  A
+proof created with the key before <code>revokedAt</code> then remains valid
+only if the object hash was included, under a checkpoint carrying a
+witness cosignature timestamped before <code>revokedAt</code>, in the log of
+the issuer or of a party named in the object.  A party that relies
+on an object signed by another node therefore <span class="bcp14">SHOULD</span> log it
+(<a href="#log-entries" class="auto internal xref">Section 10.7</a>).<a href="#section-5.6-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.6-3.2">
+            <p id="section-5.6-3.2.1">For any other reason, <code>revokedAt</code> <span class="bcp14">MUST NOT</span> be earlier than T_log,
+and proofs created before <code>revokedAt</code> remain valid.<a href="#section-5.6-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-5.6-4">These rules prevent a node from invalidating its own obligations by
+backdating a revocation of its own key: an object that its
+counterparty logged before <code>revokedAt</code> remains valid.<a href="#section-5.6-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="caching">
@@ -3404,12 +3477,12 @@ object:<a href="#section-6.1.4-1" class="pilcrow">¶</a></p>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>capabilityDelegation</code>
+                <code>capabilityInvocation</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">
                 <span class="bcp14">OPTIONAL</span>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">Offline root key(s) (<a href="#key-rotation" class="auto internal xref">Section 5.5</a>).</td>
+              <td class="text-left" rowspan="1" colspan="1">Array of verification method URLs of offline root key(s), used only for key-lifecycle objects (<a href="#key-rotation" class="auto internal xref">Section 5.5</a>, <a href="#key-lifecycle-proofs" class="auto internal xref">Section 4.2.4</a>).</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
@@ -4191,7 +4264,7 @@ advertising selection.<a href="#section-6.5-3" class="pilcrow">¶</a></p>
                   "jurisdiction": "IN" },
   "terms": {
     "inventory": "https://ads.example.com/fa/inventory",
-    "placements": ["article-native"],
+    "placements": ["article-native-1"],
     "pricing": { "model": "cpm",
                  "price": { "amount": "350.00",
                             "currency": "INR" } },
@@ -4454,7 +4527,7 @@ references the Claim, or rejects it with a Decline.<a href="#section-6.9-3" clas
                 <code>approvedCreatives</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">COND.</td>
-              <td class="text-left" rowspan="1" colspan="1">Creative hashes approved; <span class="bcp14">REQUIRED</span> if creative approval applies.</td>
+              <td class="text-left" rowspan="1" colspan="1">Creative hashes approved; <span class="bcp14">REQUIRED</span> if the selling node issues the Acceptance and creative approval applies. <span class="bcp14">MUST NOT</span> be present in an Acceptance issued by the buying node.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
@@ -4507,6 +4580,15 @@ hash binding prevents substitution.<a href="#section-6.10-3" class="pilcrow">¶<
                 <span class="bcp14">REQUIRED</span>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Complete replacement Terms.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>approvedCreatives</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <span class="bcp14">OPTIONAL</span>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Creative hashes approved by the selling node, if it issues the CounterOffer and creative approval applies. <span class="bcp14">MUST NOT</span> be present in a CounterOffer issued by the buying node.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
@@ -4673,10 +4755,15 @@ hash binding prevents substitution.<a href="#section-6.10-3" class="pilcrow">¶<
             </tr>
           </tbody>
         </table>
-<p id="section-6.13-3">A Deal takes effect when countersigned.  The <code>id</code> of a Deal is stable
-for its lifetime; changes are made with DealAmendment objects.<a href="#section-6.13-3" class="pilcrow">¶</a></p>
+<p id="section-6.13-3"><code>approvedCreatives</code> <span class="bcp14">MUST</span> equal the creatives approved by the selling
+node: those in its Acceptance or Claim or, when the buying node
+accepted a CounterOffer issued by the selling node, those in that
+CounterOffer.  A selling node <span class="bcp14">MUST NOT</span> countersign a Deal whose
+<code>approvedCreatives</code> it did not approve.<a href="#section-6.13-3" class="pilcrow">¶</a></p>
+<p id="section-6.13-4">A Deal takes effect when countersigned.  The <code>id</code> of a Deal is stable
+for its lifetime; changes are made with DealAmendment objects.<a href="#section-6.13-4" class="pilcrow">¶</a></p>
 <span id="name-countersigned-deal-illustra"></span><figure id="figure-9">
-          <div class="lang-json sourcecode" id="section-6.13-4.1">
+          <div class="lang-json sourcecode" id="section-6.13-5.1">
 <pre>
 {
   "@context": ["https://w3id.org/federated-ads/v0",
@@ -5666,6 +5753,20 @@ by the other (<a href="#proof-chains" class="auto internal xref">Section 4.2.3</
         </table>
 <p id="section-6.22-3">All Money values in a Statement <span class="bcp14">MUST</span> use the same currency.  The
 countersigned Statement is the authoritative basis for invoicing.<a href="#section-6.22-3" class="pilcrow">¶</a></p>
+<p id="section-6.22-4">Each line's <code>quantity</code> is an integer.  For event-priced models, it is
+the sum of the <code>totals</code> for the line's <code>event</code> over the referenced
+Receipt Batches of the line's deal, excluding deliveries that are not
+billable; for <code>cpvh</code> it is the sum of <code>viewableSeconds</code> (<a href="#cpvh" class="auto internal xref">Section 10.5</a>);
+for <code>flat</code> and <code>sponsorship</code> it is the number of units.  A line's
+<code>amount</code> is <code>unitPrice</code> multiplied by <code>quantity</code> and divided by 1000
+for <code>cpm</code> and <code>vcpm</code>, by 3600 for <code>cpvh</code>, and by 1 otherwise.  The
+result is computed exactly as a decimal number and then rounded to
+the minor unit of the currency <span>[<a href="#ISO4217" class="cite xref">ISO4217</a>]</span>, rounding halves up.
+<code>subtotal</code> is the sum of the rounded line amounts, and <code>total</code> is
+<code>subtotal</code> plus <code>tax.amount</code>, if present.  Fee lines show how the
+subtotal is divided among intermediaries; they do not change
+<code>total</code>.  The amounts billed for a deal, across all of its
+Statements, <span class="bcp14">MUST NOT</span> exceed the deal's <code>budget</code>.<a href="#section-6.22-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="obj-paymentnotice">
@@ -6043,9 +6144,10 @@ does not hold, with <code>malformed-object</code>.<a href="#section-6.26-3" clas
         <h3 id="name-keyrotation">
 <a href="#section-6.28" class="section-number selfRef">6.28. </a><a href="#name-keyrotation" class="section-name selfRef">KeyRotation</a>
         </h3>
-<p id="section-6.28-1">Issued by: any node.  Logged.  Signed first by the old key and then by
-the new key (<a href="#proof-chains" class="auto internal xref">Section 4.2.3</a>), or by the root key followed by the new
-key.<a href="#section-6.28-1" class="pilcrow">¶</a></p>
+<p id="section-6.28-1">Issued by: any node.  Logged.  Signed first by the old key, or by an
+offline root key, and then by the new key (<a href="#key-lifecycle-proofs" class="auto internal xref">Section 4.2.4</a>).
+Required only when an <code>assertionMethod</code> key is rotated
+(<a href="#key-rotation" class="auto internal xref">Section 5.5</a>).<a href="#section-6.28-1" class="pilcrow">¶</a></p>
 <span id="name-keyrotation-members"></span><table class="center" id="table-32">
           <caption>
 <a href="#table-32" class="selfRef">Table 32</a>:
@@ -6122,8 +6224,8 @@ key.<a href="#section-6.28-1" class="pilcrow">¶</a></p>
         <h3 id="name-keyrevocation">
 <a href="#section-6.29" class="section-number selfRef">6.29. </a><a href="#name-keyrevocation" class="section-name selfRef">KeyRevocation</a>
         </h3>
-<p id="section-6.29-1">Issued by: any node.  Logged.  Signed by a key other than the revoked
-key.<a href="#section-6.29-1" class="pilcrow">¶</a></p>
+<p id="section-6.29-1">Issued by: any node.  Logged.  Signed by a key of the issuing node
+other than the revoked key (<a href="#key-lifecycle-proofs" class="auto internal xref">Section 4.2.4</a>).<a href="#section-6.29-1" class="pilcrow">¶</a></p>
 <span id="name-keyrevocation-members"></span><table class="center" id="table-33">
           <caption>
 <a href="#table-33" class="selfRef">Table 33</a>:
@@ -6265,15 +6367,17 @@ that would cause a transition not shown, with error type
                   CounterOffer
           +------------------------+
           |                        v
-   Offer  |                  +-----------+
- ------&gt;+------+  rev. Offer |           |
-        | Sent |&lt;------------| Countered |
+   Offer  |                  +-----------+ ---+
+ ------&gt;+------+  rev. Offer |           |    | CounterOffer
+        | Sent |&lt;------------| Countered | &lt;--+
         +------+             +-----------+
-         | | | |                 |     |
-         | | | +-- Withdrawn     |     +--&gt; Declined
-         | | +---- Expired       +--------&gt; Expired
-         | +------ Declined
-         +-------- Accepted --&gt; (Deal)
+         | | | |               | | | |
+         | | | +-- Withdrawn   | | | +-- Withdrawn
+         | | +---- Expired     | | +---- Expired
+         | +------ Declined    | +------ Declined
+         +-------- Accepted    +-------- Accepted
+                      |                     |
+                      +------&gt; (Deal) &lt;-----+
 </pre>
 </div>
 <figcaption><a href="#figure-14" class="selfRef">Figure 14</a>:
@@ -6307,6 +6411,12 @@ that would cause a transition not shown, with error type
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Countered</td>
+              <td class="text-left" rowspan="1" colspan="1">Countered</td>
+              <td class="text-left" rowspan="1" colspan="1">CounterOffer</td>
+              <td class="text-left" rowspan="1" colspan="1">recipient of the latest CounterOffer</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Countered</td>
               <td class="text-left" rowspan="1" colspan="1">Sent</td>
               <td class="text-left" rowspan="1" colspan="1">Offer with <code>previous</code>
 </td>
@@ -6317,6 +6427,12 @@ that would cause a transition not shown, with error type
               <td class="text-left" rowspan="1" colspan="1">Accepted</td>
               <td class="text-left" rowspan="1" colspan="1">Acceptance</td>
               <td class="text-left" rowspan="1" colspan="1">recipient</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Countered</td>
+              <td class="text-left" rowspan="1" colspan="1">Accepted</td>
+              <td class="text-left" rowspan="1" colspan="1">Acceptance</td>
+              <td class="text-left" rowspan="1" colspan="1">recipient of the latest CounterOffer</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Sent, Countered</td>
@@ -6332,17 +6448,22 @@ that would cause a transition not shown, with error type
               <td class="text-left" rowspan="1" colspan="1">(none)</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">Sent</td>
+              <td class="text-left" rowspan="1" colspan="1">Sent, Countered</td>
               <td class="text-left" rowspan="1" colspan="1">Withdrawn</td>
               <td class="text-left" rowspan="1" colspan="1">StatusChange <code>to: "withdrawn"</code>
 </td>
-              <td class="text-left" rowspan="1" colspan="1">buyer</td>
+              <td class="text-left" rowspan="1" colspan="1">issuer of the latest offer</td>
             </tr>
           </tbody>
         </table>
-<p id="section-7.1-3">The same machine applies to RFP responses and Standing Offer claims,
-with Claim in place of Acceptance.  An Accepted offer leads to a Deal
-only if the buyer issues a Deal before the Acceptance's <code>expiresAt</code>.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+<p id="section-7.1-3">"The latest offer" is the most recent Offer or CounterOffer in the
+negotiation.  The same machine applies to RFP responses and Standing
+Offer claims, with Claim in place of Acceptance.  An Accepted offer
+leads to a Deal only if the buyer issues a Deal before the
+Acceptance's <code>expiresAt</code>.  When the buying node accepts a CounterOffer
+issued by the selling node, the buying node issues the Acceptance and
+then the Deal, whose <code>basis</code> references that Acceptance and whose
+<code>terms</code> are those of the accepted CounterOffer.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="deal">
@@ -6353,29 +6474,24 @@ only if the buyer issues a Deal before the Acceptance's <code>expiresAt</code>.<
 <span id="name-deal-states"></span><figure id="figure-15">
           <div class="alignLeft art-ascii-art art-text artwork" id="section-7.2-1.1">
 <pre>
-                    pause
-      +--------+ ----------&gt; +--------+
-  ---&gt;| Active |             | Paused |
-      +--------+ &lt;---------- +--------+
-        |  |  |    resume      |    |
-        |  |  |  end,          |    |
-        |  |  |  flight end    |    |
-        |  |  +------+  +------+    |
-        |  |         v  v           |
-        |  |      +-------+         |
-        |  |      | Ended |         |
-        |  |      +-------+         |
-        |  | terminate              | terminate
-        |  +-------+    +-----------+
-        |          v    v
-        |      +------------+
-        |      | Terminated |
-        |      +------------+
-        | budget used
-        v
-  +-----------+
-  | Exhausted |
-  +-----------+
+                      Deal (both proofs)
+                             |
+              budget used    v           pause
+ +-----------+ &lt;-------- +--------+ ----------&gt; +--------+
+ | Exhausted |           | Active |             | Paused |
+ +-----------+ --------&gt; +--------+ &lt;---------- +--------+
+       |   budget raised   |    |     resume     |    |
+       |                   |    | end,           |    |
+       | flight end        |    | flight end     |    | terminate
+       |                   |    v                |    |
+       |                   | +-------+    end,   |    |
+       +-------------------|&gt;| Ended |&lt;----------+    |
+                           | +-------+ flight end     |
+                           | terminate                |
+                           v                          |
+                     +------------+                   |
+                     | Terminated |&lt;------------------+
+                     +------------+
 </pre>
 </div>
 <figcaption><a href="#figure-15" class="selfRef">Figure 15</a>:
@@ -6442,9 +6558,10 @@ only if the buyer issues a Deal before the Acceptance's <code>expiresAt</code>.<
             </tr>
           </tbody>
         </table>
-<p id="section-7.2-3">A Dispute marks a Deal as disputed.  This is a flag orthogonal to the
-states above: it pauses settlement of the disputed amount but not
-delivery, unless a party also pauses the Deal.<a href="#section-7.2-3" class="pilcrow">¶</a></p>
+<p id="section-7.2-3">A Dispute in state Open or Escalated (<a href="#dispute-states" class="auto internal xref">Section 7.5</a>) marks the
+Deal it concerns as disputed.  This is a flag orthogonal to the states
+above: it pauses settlement of the disputed amount but not delivery,
+unless a party also pauses the Deal.<a href="#section-7.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="licence">
@@ -6498,6 +6615,77 @@ normally.<a href="#section-7.3-2" class="pilcrow">¶</a></p>
           </figcaption></figure>
 <p id="section-7.4-2">A resolution <span class="bcp14">MAY</span> take the form of a new Statement whose <code>supersedes</code>
 references the disputed one.<a href="#section-7.4-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="dispute-states">
+<section id="section-7.5">
+        <h3 id="name-dispute-2">
+<a href="#section-7.5" class="section-number selfRef">7.5. </a><a href="#name-dispute-2" class="section-name selfRef">Dispute</a>
+        </h3>
+<span id="name-dispute-states"></span><figure id="figure-18">
+          <div class="alignLeft art-ascii-art art-text artwork" id="section-7.5-1.1">
+<pre>
+  Dispute   +------+   escalate   +-----------+
+ ----------&gt;| Open |-------------&gt;| Escalated |
+            +------+              +-----------+
+             |    |                     |
+    withdraw |    | resolve             | resolve
+             v    | (disputant)         | (arbiter)
+  +-----------+   |                     |
+  | Withdrawn |   |    +----------+     |
+  +-----------+   +---&gt;| Resolved |&lt;----+
+                       +----------+
+</pre>
+</div>
+<figcaption><a href="#figure-18" class="selfRef">Figure 18</a>:
+<a href="#name-dispute-states" class="selfRef">Dispute states</a>
+          </figcaption></figure>
+<span id="name-dispute-transitions"></span><table class="center" id="table-37">
+          <caption>
+<a href="#table-37" class="selfRef">Table 37</a>:
+<a href="#name-dispute-transitions" class="selfRef">Dispute transitions</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">From</th>
+              <th class="text-left" rowspan="1" colspan="1">To</th>
+              <th class="text-left" rowspan="1" colspan="1">Effected by</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">(none)</td>
+              <td class="text-left" rowspan="1" colspan="1">Open</td>
+              <td class="text-left" rowspan="1" colspan="1">Dispute (either deal party)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Open</td>
+              <td class="text-left" rowspan="1" colspan="1">Withdrawn</td>
+              <td class="text-left" rowspan="1" colspan="1">StatusChange <code>to: "withdrawn"</code> (the disputing party)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Open</td>
+              <td class="text-left" rowspan="1" colspan="1">Resolved</td>
+              <td class="text-left" rowspan="1" colspan="1">StatusChange <code>to: "resolved"</code> (the disputing party, accepting the outcome of bilateral review)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Open</td>
+              <td class="text-left" rowspan="1" colspan="1">Escalated</td>
+              <td class="text-left" rowspan="1" colspan="1">StatusChange <code>to: "escalated"</code> (either deal party, once <code>respondBy</code> has passed)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Escalated</td>
+              <td class="text-left" rowspan="1" colspan="1">Resolved</td>
+              <td class="text-left" rowspan="1" colspan="1">StatusChange <code>to: "resolved"</code> (the arbiter)</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-7.5-3">The arbiter is the Dispute's <code>arbiter</code> or, if that is absent, the
+<code>arbiter</code> in the deal's Terms.  A Dispute with no arbiter cannot be
+escalated.  An arbiter's StatusChange to <code>"resolved"</code> binds both
+parties for that deal, and its <code>reason</code> <span class="bcp14">SHOULD</span> state the outcome.  A
+resolution that changes the amount owed takes effect through a new
+Statement whose <code>supersedes</code> references the disputed one.<a href="#section-7.5-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -6594,12 +6782,12 @@ Servers <span class="bcp14">MAY</span> also provide a <code>Link</code> header f
 <p id="section-8.5-1">Errors are reported using Problem Details <span>[<a href="#RFC9457" class="cite xref">RFC9457</a>]</span> with media type
 <code>application/problem+json</code>.  The <code>type</code> member is a URI formed by
 appending an error type name to <code>https://w3id.org/federated-ads/errors/</code>.
-The initial error types are listed in <a href="#tab-errors" class="auto internal xref">Table 37</a> and are
+The initial error types are listed in <a href="#tab-errors" class="auto internal xref">Table 38</a> and are
 registered in <a href="#iana-errors" class="auto internal xref">Section 17.4.7</a>.<a href="#section-8.5-1" class="pilcrow">¶</a></p>
 <span id="name-initial-error-types"></span><div id="tab-errors">
-<table class="center" id="table-37">
+<table class="center" id="table-38">
           <caption>
-<a href="#table-37" class="selfRef">Table 37</a>:
+<a href="#table-38" class="selfRef">Table 38</a>:
 <a href="#name-initial-error-types" class="selfRef">Initial error types</a>
           </caption>
 <thead>
@@ -6754,6 +6942,13 @@ registered in <a href="#iana-errors" class="auto internal xref">Section 17.4.7</
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">
+                <code>creative-not-approved</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">403</td>
+              <td class="text-left" rowspan="1" colspan="1">The creative's hash is not among the Deal's approved creatives (<a href="#licence-tiers" class="auto internal xref">Section 9.1</a>).</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
                 <code>adaptation-not-permitted</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">403</td>
@@ -6797,9 +6992,9 @@ registered in <a href="#iana-errors" class="auto internal xref">Section 17.4.7</
         <h3 id="name-licence-tiers">
 <a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-licence-tiers" class="section-name selfRef">Licence Tiers</a>
         </h3>
-<span id="name-licence-tiers-2"></span><table class="center" id="table-38">
+<span id="name-licence-tiers-2"></span><table class="center" id="table-39">
           <caption>
-<a href="#table-38" class="selfRef">Table 38</a>:
+<a href="#table-39" class="selfRef">Table 39</a>:
 <a href="#name-licence-tiers-2" class="selfRef">Licence tiers</a>
           </caption>
 <thead>
@@ -6840,6 +7035,33 @@ when the licence ends.  A licensee holding a <code>signed-cache</code> licence
 <a href="#revocation-pull" class="auto internal xref">Section 9.7</a>).<a href="#section-9.1-2" class="pilcrow">¶</a></p>
 <p id="section-9.1-3">Delivery under an expired licence, or after a revocation deadline, is
 not billable.<a href="#section-9.1-3" class="pilcrow">¶</a></p>
+<p id="section-9.1-4">Before delivering a creative under a Licence, the licensee <span class="bcp14">MUST</span>
+verify that:<a href="#section-9.1-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-9.1-5.1">
+            <p id="section-9.1-5.1.1">it is the Licence's <code>licensee</code>;<a href="#section-9.1-5.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.1-5.2">
+            <p id="section-9.1-5.2.1">the Licence's <code>issuer</code> is the Deal's <code>buyer</code> or the node given in
+the <code>node</code> member of the Deal's <code>advertiser</code>;<a href="#section-9.1-5.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.1-5.3">
+            <p id="section-9.1-5.3.1">it is the <code>seller</code> of the Deal named in <code>deal</code>, and the Deal is
+Active (<a href="#state" class="auto internal xref">Section 7</a>);<a href="#section-9.1-5.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.1-5.4">
+            <p id="section-9.1-5.4.1"><code>manifestHash</code> is among the Deal's <code>approvedCreatives</code>, as modified
+by DealAmendments in effect; and<a href="#section-9.1-5.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.1-5.5">
+            <p id="section-9.1-5.5.1">if the Deal's targeting has <code>surfaces</code>, each of the Licence's
+<code>surfaces</code> is among them.<a href="#section-9.1-5.5.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-9.1-6">A licensee <span class="bcp14">MUST NOT</span> deliver under a Licence that fails these checks.
+It <span class="bcp14">SHOULD</span> reject the Licence with error type <code>creative-not-approved</code>
+if <code>manifestHash</code> is not approved, and with <code>not-authorized</code>
+otherwise.<a href="#section-9.1-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="fetching">
@@ -7053,18 +7275,25 @@ a deal <span class="bcp14">MUST</span> be issued in <code>sequence</code> order,
 (category identifier or <code>"*"</code>), <code>region</code> (as in <a href="#targeting" class="auto internal xref">Section 6.1.3</a>, or
 <code>"*"</code>), <code>event</code> (registered event type), <code>count</code> (integer), <code>ivt</code>
 (<span class="bcp14">OPTIONAL</span> array of invalid-traffic flags) and <code>salt</code> (<span class="bcp14">REQUIRED</span>; at
-least 16 random octets, base64url-encoded without padding).  An
+least 16 random octets, base64url-encoded without padding).<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<p id="section-10.3-2"><code>count</code> is the number of events the selling node treats as valid.
+Events it has identified as invalid traffic <span class="bcp14">MUST</span> be excluded from
+<code>count</code> and are not billable.  <code>ivt</code>, if present, names the
+categories of invalid traffic that were detected and excluded from
+the cell, for example <code>"known-crawler"</code>, <code>"data-center"</code> or
+<code>"rate-anomaly"</code>; it is informational and carries no counts.  This
+document does not define a registry of invalid-traffic categories.  An
 additional member <code>hour</code> (timestamp) <span class="bcp14">MAY</span> subdivide a multi-hour
 window.  Each combination of members other than <code>count</code>,
 <code>viewableSeconds</code>, <code>ivt</code> and <code>salt</code> <span class="bcp14">MUST</span> appear at most once.  For
 each event type, the sum of <code>count</code> over cells <span class="bcp14">MUST</span> equal the
-corresponding <code>totals</code> value.<a href="#section-10.3-1" class="pilcrow">¶</a></p>
-<p id="section-10.3-2">A cell whose <code>event</code> is <code>viewable</code> <span class="bcp14">MAY</span> also carry <code>viewableSeconds</code>
+corresponding <code>totals</code> value.<a href="#section-10.3-2" class="pilcrow">¶</a></p>
+<p id="section-10.3-3">A cell whose <code>event</code> is <code>viewable</code> <span class="bcp14">MAY</span> also carry <code>viewableSeconds</code>
 (integer): the sum, over the viewable events counted in the cell, of
 the seconds each was in view (<a href="#cpvh" class="auto internal xref">Section 10.5</a>).  If the deal's pricing model
 is <code>cpvh</code>, every <code>viewable</code> cell <span class="bcp14">MUST</span> carry <code>viewableSeconds</code>.  When
 cells are merged under <a href="#k-threshold" class="auto internal xref">Section 10.4</a>, their <code>viewableSeconds</code> values
-are added.<a href="#section-10.3-2" class="pilcrow">¶</a></p>
+are added.<a href="#section-10.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="k-threshold">
@@ -7155,9 +7384,16 @@ entry is the JCS serialization of a JSON object with members <code>type</code>
 (the object type), <code>id</code> (the object <code>id</code>) and <code>hash</code> (the object
 hash).  Full objects are not placed in the log.<a href="#section-10.7-1" class="pilcrow">¶</a></p>
 <p id="section-10.7-2">A node <span class="bcp14">MUST</span> append an entry for each ReceiptBatch, Revocation,
-RevocationAck, Statement (when countersigned), KeyRotation and
-KeyRevocation it issues, and <span class="bcp14">SHOULD</span> append entries for SpendReports,
-Deals and DealAmendments.  For a ReceiptBatch, the entry's <code>hash</code> is
+RevocationAck, Statement (when countersigned), Deal and DealAmendment
+(when countersigned), MemberList, KeyRotation and KeyRevocation it
+issues, and <span class="bcp14">SHOULD</span> append entries for SpendReports.  A node <span class="bcp14">SHOULD</span>
+also append entries for objects issued by other nodes on which it
+relies, in particular countersigned Deals and DealAmendments to which
+it is a party and Licences under which it delivers; this preserves
+their validity if the issuer later revokes its key
+(<a href="#key-revocation" class="auto internal xref">Section 5.6</a>).  An entry for an object issued by another node
+has the same form; its <code>id</code> identifies the object at the issuer's
+origin.  For a ReceiptBatch, the entry's <code>hash</code> is
 computed over the batch with its <code>log</code> member omitted and before the
 proof is added (the "batch commitment"); verifiers recompute it
 accordingly.<a href="#section-10.7-2" class="pilcrow">¶</a></p>
@@ -7209,9 +7445,9 @@ be published, for example as a Label.<a href="#section-10.9-3" class="pilcrow">�
 <a href="#section-10.10" class="section-number selfRef">10.10. </a><a href="#name-verification-levels" class="section-name selfRef">Verification Levels</a>
         </h3>
 <p id="section-10.10-1">Deals declare required verification levels in <code>terms.verification</code>.<a href="#section-10.10-1" class="pilcrow">¶</a></p>
-<span id="name-verification-levels-2"></span><table class="center" id="table-39">
+<span id="name-verification-levels-2"></span><table class="center" id="table-40">
           <caption>
-<a href="#table-39" class="selfRef">Table 39</a>:
+<a href="#table-40" class="selfRef">Table 40</a>:
 <a href="#name-verification-levels-2" class="selfRef">Verification levels</a>
           </caption>
 <thead>
@@ -7680,13 +7916,44 @@ static display formats are allowed, with SVG loaded only as an image.
 HTML5 creatives (extended level only) <span class="bcp14">MUST</span> be rendered in an iframe
 with <code>sandbox="allow-scripts allow-popups
 allow-popups-to-escape-sandbox
-allow-top-navigation-by-user-activation"</code> from a dedicated cookieless
-origin, with a Content Security Policy of <code>default-src 'none'</code> that
-permits no network access after load; <code>allow-same-origin</code> <span class="bcp14">MUST NOT</span> be
-combined with <code>allow-scripts</code>.  Third-party scripts, tracking pixels
-and unpinned assets are never permitted.  Landing-page cloaking is
+allow-top-navigation-by-user-activation"</code>, served from a dedicated
+cookieless origin operated by the licensee (the "creative origin");
+<code>allow-same-origin</code> <span class="bcp14">MUST NOT</span> be combined with <code>allow-scripts</code>.  The
+HTML document and every resource it loads <span class="bcp14">MUST</span> be Assets of the
+approved Creative Manifest, verified by hash (<a href="#fetching" class="auto internal xref">Section 9.2</a>), and the
+creative origin <span class="bcp14">MUST</span> serve nothing else.  The document <span class="bcp14">MUST</span> be served
+with a Content Security Policy equivalent to the following:<a href="#section-15.9-1" class="pilcrow">¶</a></p>
+<span id="name-content-security-policy-for"></span><figure id="figure-19">
+          <div class="alignLeft art-text artwork" id="section-15.9-2.1">
+<pre>
+default-src 'none';
+script-src &lt;creative-origin&gt; ['sha256-...' ...];
+style-src &lt;creative-origin&gt; 'unsafe-inline';
+img-src &lt;creative-origin&gt; data:;
+media-src &lt;creative-origin&gt;;
+font-src &lt;creative-origin&gt;;
+form-action 'none';
+base-uri 'none'
+</pre>
+</div>
+<figcaption><a href="#figure-19" class="selfRef">Figure 19</a>:
+<a href="#name-content-security-policy-for" class="selfRef">Content Security Policy for HTML5 creatives</a>
+          </figcaption></figure>
+<p id="section-15.9-3"><code>&lt;creative-origin&gt;</code> is the serialized creative origin, given as a
+host source rather than <code>'self'</code>, because <code>'self'</code> does not reliably
+match inside an opaque-origin sandbox.  The optional hash sources
+permit inline scripts that are part of the approved HTML asset; a
+policy of <code>default-src 'none'</code> alone would block all scripts and
+styles, including inline ones.  The policy <span class="bcp14">MUST NOT</span> include
+<code>'unsafe-inline'</code> or <code>'unsafe-eval'</code> in <code>script-src</code>, or any other
+origin in any directive.  <code>connect-src</code>, <code>frame-src</code> and <code>worker-src</code>
+fall back to <code>default-src 'none'</code>; <code>form-action</code> and <code>base-uri</code> do not
+fall back, so they are listed explicitly.  The creative can therefore
+load only its own pinned assets from the licensee's origin, and cannot
+send data to the advertiser or any third party.  Third-party scripts,
+tracking pixels and unpinned assets are never permitted.  Landing-page cloaking is
 mitigated by pinning <code>landingUrl</code>, optional re-crawling, Labels, and
-voiding approval on change.<a href="#section-15.9-1" class="pilcrow">¶</a></p>
+voiding approval on change.<a href="#section-15.9-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-ssrf">
@@ -7743,6 +8010,13 @@ remain valid only if witnessed before <code>revokedAt</code>
 (<a href="#key-revocation" class="auto internal xref">Section 5.6</a>), limit the impact of compromise.  An attacker
 holding a compromised key could issue false Revocations; licensees
 would stop serving, which is a fail-safe outcome.<a href="#section-15.12-1" class="pilcrow">¶</a></p>
+<p id="section-15.12-2">A node could also try to escape its obligations by revoking its own
+key with a backdated <code>revokedAt</code>, invalidating Deals and Licences it
+signed.  Only revocations for compromise may be backdated, and an
+object that a counterparty logged under a witnessed checkpoint before
+<code>revokedAt</code> remains valid (<a href="#key-revocation" class="auto internal xref">Section 5.6</a>).  Counterparties that
+log the Deals and Licences they rely on are therefore protected;
+those that do not bear the risk of such a revocation.<a href="#section-15.12-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="attester-centralization">
@@ -7804,6 +8078,15 @@ per-render durations, which could act as behavioural signals, are
 never disclosed.  Implementers of
 surface profiles <span class="bcp14">SHOULD</span> consider additional suppression where
 categories are themselves sensitive.<a href="#section-16.3-1" class="pilcrow">¶</a></p>
+<p id="section-16.3-2">The k-threshold counts events, not people.  Because this protocol
+carries no user identifiers, a selling node cannot always tell how
+many distinct people a cell represents, and on a small site a single
+reader who views 50 pages can fill a cell alone.  The threshold
+therefore limits what small counts reveal but does not guarantee
+that a cell describes at least k people.  Selling nodes with small
+audiences <span class="bcp14">SHOULD</span> use longer windows and coarser contexts than the
+minimum, and <span class="bcp14">SHOULD NOT</span> report sensitive context categories at fine
+granularity.<a href="#section-16.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="secondary-use-and-stored-data">
@@ -8054,9 +8337,9 @@ Reference.  Initial contents: <code>Node</code>, <code>Discovery</code>, <code>P
           </h4>
 <p id="section-17.4.2-1">Policy: Specification Required.  Fields: Name, Definition, Billable,
 Reference.<a href="#section-17.4.2-1" class="pilcrow">¶</a></p>
-<span id="name-initial-event-types"></span><table class="center" id="table-40">
+<span id="name-initial-event-types"></span><table class="center" id="table-41">
             <caption>
-<a href="#table-40" class="selfRef">Table 40</a>:
+<a href="#table-41" class="selfRef">Table 41</a>:
 <a href="#name-initial-event-types" class="selfRef">Initial event types</a>
             </caption>
 <thead>
@@ -8134,9 +8417,9 @@ Reference.<a href="#section-17.4.2-1" class="pilcrow">¶</a></p>
           </h4>
 <p id="section-17.4.3-1">Policy: Specification Required.  Fields: Code, Description,
 Reference.<a href="#section-17.4.3-1" class="pilcrow">¶</a></p>
-<span id="name-initial-pricing-models"></span><table class="center" id="table-41">
+<span id="name-initial-pricing-models"></span><table class="center" id="table-42">
             <caption>
-<a href="#table-41" class="selfRef">Table 41</a>:
+<a href="#table-42" class="selfRef">Table 42</a>:
 <a href="#name-initial-pricing-models" class="selfRef">Initial pricing models</a>
             </caption>
 <thead>
@@ -8243,7 +8526,7 @@ Initial contents: <code>legal</code>, <code>recall</code>, <code>pricing-error</
           </h4>
 <p id="section-17.4.7-1">Policy: Expert Review.  Fields: Name, Suggested HTTP Status,
 Description, Reference.  Initial contents: the entries of
-<a href="#tab-errors" class="auto internal xref">Table 37</a>.  The full <code>type</code> URI is formed by appending the name
+<a href="#tab-errors" class="auto internal xref">Table 38</a>.  The full <code>type</code> URI is formed by appending the name
 to <code>https://w3id.org/federated-ads/errors/</code>.<a href="#section-17.4.7-1" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -8294,6 +8577,10 @@ Object Types, Description, Reference.  Initial contents: none.<a href="#section-
 <dt id="RFC4648">[RFC4648]</dt>
         <dd>
 <span class="refAuthor">Josefsson, S.</span>, <span class="refTitle">"The Base16, Base32, and Base64 Data Encodings"</span>, <span class="seriesInfo">RFC 4648</span>, <span class="seriesInfo">DOI 10.17487/RFC4648</span>, <time datetime="2006-10" class="refDate">October 2006</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc4648">https://www.rfc-editor.org/rfc/rfc4648</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC5646">[RFC5646]</dt>
+        <dd>
+<span class="refAuthor">Phillips, A., Ed.</span> and <span class="refAuthor">M. Davis, Ed.</span>, <span class="refTitle">"Tags for Identifying Languages"</span>, <span class="seriesInfo">BCP 47</span>, <span class="seriesInfo">RFC 5646</span>, <span class="seriesInfo">DOI 10.17487/RFC5646</span>, <time datetime="2009-09" class="refDate">September 2009</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc5646">https://www.rfc-editor.org/rfc/rfc5646</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC6839">[RFC6839]</dt>
         <dd>
@@ -8440,10 +8727,6 @@ Object Types, Description, Reference.  Initial contents: none.<a href="#section-
         <dd>
 <span class="refAuthor">Rescorla, E.</span> and <span class="refAuthor">B. Korver</span>, <span class="refTitle">"Guidelines for Writing RFC Text on Security Considerations"</span>, <span class="seriesInfo">BCP 72</span>, <span class="seriesInfo">RFC 3552</span>, <span class="seriesInfo">DOI 10.17487/RFC3552</span>, <time datetime="2003-07" class="refDate">July 2003</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc3552">https://www.rfc-editor.org/rfc/rfc3552</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC5646">[RFC5646]</dt>
-        <dd>
-<span class="refAuthor">Phillips, A., Ed.</span> and <span class="refAuthor">M. Davis, Ed.</span>, <span class="refTitle">"Tags for Identifying Languages"</span>, <span class="seriesInfo">BCP 47</span>, <span class="seriesInfo">RFC 5646</span>, <span class="seriesInfo">DOI 10.17487/RFC5646</span>, <time datetime="2009-09" class="refDate">September 2009</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc5646">https://www.rfc-editor.org/rfc/rfc5646</a>&gt;</span>. </dd>
-<dd class="break"></dd>
 <dt id="RFC6838">[RFC6838]</dt>
         <dd>
 <span class="refAuthor">Freed, N.</span>, <span class="refAuthor">Klensin, J.</span>, and <span class="refAuthor">T. Hansen</span>, <span class="refTitle">"Media Type Specifications and Registration Procedures"</span>, <span class="seriesInfo">BCP 13</span>, <span class="seriesInfo">RFC 6838</span>, <span class="seriesInfo">DOI 10.17487/RFC6838</span>, <time datetime="2013-01" class="refDate">January 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6838">https://www.rfc-editor.org/rfc/rfc6838</a>&gt;</span>. </dd>
@@ -8553,6 +8836,21 @@ ad-free passes, and whether a dedicated token type is needed.<a href="#appendix-
 example permitted languages, length limits or tone) instead of a
 URL.<a href="#appendix-A-3.15.1" class="pilcrow">¶</a></p>
 </li>
+        <li id="appendix-A-3.16">
+          <p id="appendix-A-3.16.1">Whether invalid-traffic categories in the cell <code>ivt</code> member need
+a registry, and whether excluded volumes should be reported.<a href="#appendix-A-3.16.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="appendix-A-3.17">
+          <p id="appendix-A-3.17.1">Whether rounding each Statement line to the currency's minor unit
+(halves up) is the right rule, and whether fee lines should affect
+<code>total</code> when an intermediary invoices separately.<a href="#appendix-A-3.17.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="appendix-A-3.18">
+          <p id="appendix-A-3.18.1">The cost of logging every Licence received, given frequent
+renewals under the <code>pointer</code> tier, and whether logging the Deal
+alone gives counterparties enough protection against backdated
+key revocations.<a href="#appendix-A-3.18.1" class="pilcrow">¶</a></p>
+</li>
       </ol>
 </section>
 </div>
@@ -8577,6 +8875,22 @@ object and <code>support</code> endpoint; the <code>cpvh</code> pricing model an
 cooperative selling profile <code>profile:coop</code>, with the MemberList
 object, per-member receipts, competition-law safeguards and
 cooperative ad-free passes.<a href="#appendix-B-2.2.1" class="pilcrow">¶</a></p>
+<p id="appendix-B-2.2.2">Pre-submission review fixes: the Offer state machine now allows a
+CounterOffer to be accepted or countered again, and carries the
+selling node's creative approvals into the Deal; KeyRotation and
+KeyRevocation proofs by an offline root key use the
+<code>capabilityInvocation</code> relationship and proof purpose (replacing
+<code>capabilityDelegation</code>); key revocation no longer invalidates
+objects that a counterparty logged before <code>revokedAt</code>, and only
+revocations for compromise may be backdated; Deals and
+DealAmendments <span class="bcp14">MUST</span> be logged; the HTML5 Content Security Policy now
+permits a creative's own hash-pinned assets; a Dispute state
+machine is defined; licensees verify a Licence against its Deal
+before delivering (new error <code>creative-not-approved</code>); invalid
+traffic is excluded from cell counts; Statement arithmetic and
+rounding are specified; the privacy considerations note that the
+k-threshold counts events, not people; RFC 5646 is a normative
+reference.<a href="#appendix-B-2.2.2" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>

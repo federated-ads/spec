@@ -7,7 +7,7 @@ protocol of the Federated Ads Protocol.
 |---|---|
 | `draft-rajan-federated-ads-protocol-00.md` | Source, in kramdown-rfc Markdown. Edit this file. |
 | `draft-rajan-federated-ads-protocol-00.xml` | Generated xml2rfc v3 XML. This is the file you submit. |
-| `draft-rajan-federated-ads-protocol-00.txt` | Generated plain-text rendering (89 pages). |
+| `draft-rajan-federated-ads-protocol-00.txt` | Generated plain-text rendering (92 pages). |
 | `draft-rajan-federated-ads-protocol-00.html` | Generated HTML rendering. |
 
 ## What the draft covers
