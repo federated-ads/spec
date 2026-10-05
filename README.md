@@ -35,6 +35,8 @@ Feedback is the point of this draft. In particular:
 
 Please open an [issue](https://github.com/federated-ads/spec/issues) for specific problems or start a [discussion](https://github.com/federated-ads/spec/discussions) for broader questions. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+Contributors: Suneesh Rajan ([@suneeshtr](https://github.com/suneeshtr)) and Arjun Krishna ([@decoded-cipher](https://github.com/decoded-cipher)).
+
 Contact: Suneesh Rajan · suneeshtr@gmail.com
 
 ## Naming

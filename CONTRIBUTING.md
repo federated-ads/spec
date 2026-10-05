@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for helping improve the Federated Ads Protocol. The project is at an early stage: it is currently run by one individual contributor working with an AI assistant, and the aim is to bring in co-editors, implementers and reviewers from publishers, advertisers, civil society and standards bodies.
+Thank you for helping improve the Federated Ads Protocol. The project is at an early stage: it is currently run by two individual contributors, Suneesh Rajan and Arjun Krishna, working with an AI assistant, and the aim is to bring in co-editors, implementers and reviewers from publishers, advertisers, civil society and standards bodies.
 
 ## How to contribute
 

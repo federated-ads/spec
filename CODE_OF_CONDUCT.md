@@ -29,12 +29,12 @@ This applies in all project spaces: GitHub issues, discussions and pull requests
 
 ## Reporting
 
-Report concerns to the project lead, Suneesh Rajan, at suneeshtr@gmail.com. Reports are kept confidential and shared only as needed to resolve them. If the report concerns the project lead, or you would prefer to report to someone independent, you can contact the [W3C Ombudspeople](https://www.w3.org/guide/process/coc-incident-resolution-ombuds.html) once the work is hosted in a W3C Community Group.
+Report concerns to either maintainer: Suneesh Rajan (suneeshtr@gmail.com) or Arjun Krishna (mail@arjunkrishna.dev). If your report concerns one of them, send it to the other. Reports are kept confidential and shared only as needed to resolve them. If you would prefer to report to someone independent of the project, you can contact the [W3C Ombudspeople](https://www.w3.org/guide/process/coc-incident-resolution-ombuds.html) once the work is hosted in a W3C Community Group.
 
 Please include what happened, where and when, who was involved, and any links or screenshots. You do not need to have every detail before reporting.
 
 ## Enforcement
 
-The project lead, and later the editors or chairs, will review each report promptly and fairly. Depending on what happened, responses range from a private conversation or a public correction to a temporary or permanent ban from project spaces. People who report in good faith will not face retaliation.
+The maintainers, and later the editors or chairs, will review each report promptly and fairly. Depending on what happened, responses range from a private conversation or a public correction to a temporary or permanent ban from project spaces. People who report in good faith will not face retaliation.
 
-The project is small and currently run by one person. As more editors join, enforcement will move to a group of at least two people, and nobody will handle a report in which they are involved.
+The project is small and currently has two maintainers. Nobody handles a report in which they are involved, and as more editors join, enforcement will move to a wider group.
