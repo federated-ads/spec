@@ -1,0 +1,8 @@
+title: Federated Ads Protocol
+description: An open, federated, owner-controlled protocol for advertising on the open web. Discussion draft.
+markdown: kramdown
+kramdown:
+  input: GFM
+exclude:
+  - outreach
+  - brainstorms
