@@ -3175,6 +3175,23 @@ draft-rajan-federated-ads-protocol-00:
   object, per-member receipts, competition-law safeguards and
   cooperative ad-free passes.
 
+  Pre-submission review fixes: the Offer state machine now allows a
+  CounterOffer to be accepted or countered again, and carries the
+  selling node's creative approvals into the Deal; KeyRotation and
+  KeyRevocation proofs by an offline root key use the
+  `capabilityInvocation` relationship and proof purpose (replacing
+  `capabilityDelegation`); key revocation no longer invalidates
+  objects that a counterparty logged before `revokedAt`, and only
+  revocations for compromise may be backdated; Deals and
+  DealAmendments MUST be logged; the HTML5 Content Security Policy now
+  permits a creative's own hash-pinned assets; a Dispute state
+  machine is defined; licensees verify a Licence against its Deal
+  before delivering (new error `creative-not-approved`); invalid
+  traffic is excluded from cell counts; Statement arithmetic and
+  rounding are specified; the privacy considerations note that the
+  k-threshold counts events, not people; RFC 5646 is a normative
+  reference.
+
 # Acknowledgments {#acknowledgments}
 {:numbered="false"}
 
