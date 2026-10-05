@@ -29,6 +29,7 @@ author:
 normative:
   RFC3339:
   RFC4648:
+  RFC5646:
   RFC6839:
   RFC7033:
   RFC7493:
@@ -110,7 +111,6 @@ normative:
 
 informative:
   RFC3552:
-  RFC5646:
   RFC6838:
   RFC6962:
   RFC6973:
@@ -1217,7 +1217,7 @@ Issued by: buying node.  Sent to one selling node.
                   "jurisdiction": "IN" },
   "terms": {
     "inventory": "https://ads.example.com/fa/inventory",
-    "placements": ["article-native"],
+    "placements": ["article-native-1"],
     "pricing": { "model": "cpm",
                  "price": { "amount": "350.00",
                             "currency": "INR" } },
@@ -1640,6 +1640,21 @@ by the other ({{proof-chains}}).
 All Money values in a Statement MUST use the same currency.  The
 countersigned Statement is the authoritative basis for invoicing.
 
+Each line's `quantity` is an integer.  For event-priced models, it is
+the sum of the `totals` for the line's `event` over the referenced
+Receipt Batches of the line's deal, excluding deliveries that are not
+billable; for `cpvh` it is the sum of `viewableSeconds` ({{cpvh}});
+for `flat` and `sponsorship` it is the number of units.  A line's
+`amount` is `unitPrice` multiplied by `quantity` and divided by 1000
+for `cpm` and `vcpm`, by 3600 for `cpvh`, and by 1 otherwise.  The
+result is computed exactly as a decimal number and then rounded to
+the minor unit of the currency {{ISO4217}}, rounding halves up.
+`subtotal` is the sum of the rounded line amounts, and `total` is
+`subtotal` plus `tax.amount`, if present.  Fee lines show how the
+subtotal is divided among intermediaries; they do not change
+`total`.  The amounts billed for a deal, across all of its
+Statements, MUST NOT exceed the deal's `budget`.
+
 ## PaymentNotice {#obj-paymentnotice}
 
 Issued by: payer.
@@ -2038,6 +2053,7 @@ registered in {{iana-errors}}.
 | `budget-exhausted` | 422 | No budget remains. |
 | `licence-expired` | 403 | Licence expired. |
 | `licence-revoked` | 403 | Licence revoked. |
+| `creative-not-approved` | 403 | The creative's hash is not among the Deal's approved creatives ({{licence-tiers}}). |
 | `adaptation-not-permitted` | 403 | The Licence does not permit the adaptation that the surface requires or that was requested ({{creative-integrity}}). |
 | `k-threshold-violation` | 422 | Receipt cells below k. |
 | `log-inconsistent` | 422 | Log proofs do not verify. |
@@ -2063,6 +2079,24 @@ MUST implement both push and pull revocation ({{revocation-push}},
 
 Delivery under an expired licence, or after a revocation deadline, is
 not billable.
+
+Before delivering a creative under a Licence, the licensee MUST
+verify that:
+
+* it is the Licence's `licensee`;
+* the Licence's `issuer` is the Deal's `buyer` or the node given in
+  the `node` member of the Deal's `advertiser`;
+* it is the `seller` of the Deal named in `deal`, and the Deal is
+  Active ({{state}});
+* `manifestHash` is among the Deal's `approvedCreatives`, as modified
+  by DealAmendments in effect; and
+* if the Deal's targeting has `surfaces`, each of the Licence's
+  `surfaces` is among them.
+
+A licensee MUST NOT deliver under a Licence that fails these checks.
+It SHOULD reject the Licence with error type `creative-not-approved`
+if `manifestHash` is not approved, and with `not-authorized`
+otherwise.
 
 ## Fetching Creatives {#fetching}
 
@@ -2203,7 +2237,15 @@ A Cell has the members `creative` (content hash), `context`
 (category identifier or `"*"`), `region` (as in {{targeting}}, or
 `"*"`), `event` (registered event type), `count` (integer), `ivt`
 (OPTIONAL array of invalid-traffic flags) and `salt` (REQUIRED; at
-least 16 random octets, base64url-encoded without padding).  An
+least 16 random octets, base64url-encoded without padding).
+
+`count` is the number of events the selling node treats as valid.
+Events it has identified as invalid traffic MUST be excluded from
+`count` and are not billable.  `ivt`, if present, names the
+categories of invalid traffic that were detected and excluded from
+the cell, for example `"known-crawler"`, `"data-center"` or
+`"rate-anomaly"`; it is informational and carries no counts.  This
+document does not define a registry of invalid-traffic categories.  An
 additional member `hour` (timestamp) MAY subdivide a multi-hour
 window.  Each combination of members other than `count`,
 `viewableSeconds`, `ivt` and `salt` MUST appear at most once.  For
@@ -2754,6 +2796,16 @@ never disclosed.  Implementers of
 surface profiles SHOULD consider additional suppression where
 categories are themselves sensitive.
 
+The k-threshold counts events, not people.  Because this protocol
+carries no user identifiers, a selling node cannot always tell how
+many distinct people a cell represents, and on a small site a single
+reader who views 50 pages can fill a cell alone.  The threshold
+therefore limits what small counts reveal but does not guarantee
+that a cell describes at least k people.  Selling nodes with small
+audiences SHOULD use longer windows and coarser contexts than the
+minimum, and SHOULD NOT report sensitive context categories at fine
+granularity.
+
 ## Secondary Use and Stored Data
 
 Selling nodes process IP addresses and user agents transiently for
@@ -3026,6 +3078,11 @@ writing include:
 15. Whether `adaptationTerms` needs a structured vocabulary (for
     example permitted languages, length limits or tone) instead of a
     URL.
+16. Whether invalid-traffic categories in the cell `ivt` member need
+    a registry, and whether excluded volumes should be reported.
+17. Whether rounding each Statement line to the currency's minor unit
+    (halves up) is the right rule, and whether fee lines should affect
+    `total` when an intermediary invoices separately.
 
 # Change Log {#change-log}
 {:numbered="false"}
