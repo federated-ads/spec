@@ -2642,11 +2642,39 @@ static display formats are allowed, with SVG loaded only as an image.
 HTML5 creatives (extended level only) MUST be rendered in an iframe
 with `sandbox="allow-scripts allow-popups
 allow-popups-to-escape-sandbox
-allow-top-navigation-by-user-activation"` from a dedicated cookieless
-origin, with a Content Security Policy of `default-src 'none'` that
-permits no network access after load; `allow-same-origin` MUST NOT be
-combined with `allow-scripts`.  Third-party scripts, tracking pixels
-and unpinned assets are never permitted.  Landing-page cloaking is
+allow-top-navigation-by-user-activation"`, served from a dedicated
+cookieless origin operated by the licensee (the "creative origin");
+`allow-same-origin` MUST NOT be combined with `allow-scripts`.  The
+HTML document and every resource it loads MUST be Assets of the
+approved Creative Manifest, verified by hash ({{fetching}}), and the
+creative origin MUST serve nothing else.  The document MUST be served
+with a Content Security Policy equivalent to the following:
+
+~~~
+default-src 'none';
+script-src <creative-origin> ['sha256-...' ...];
+style-src <creative-origin> 'unsafe-inline';
+img-src <creative-origin> data:;
+media-src <creative-origin>;
+font-src <creative-origin>;
+form-action 'none';
+base-uri 'none'
+~~~
+{: title="Content Security Policy for HTML5 creatives"}
+
+`<creative-origin>` is the serialized creative origin, given as a
+host source rather than `'self'`, because `'self'` does not reliably
+match inside an opaque-origin sandbox.  The optional hash sources
+permit inline scripts that are part of the approved HTML asset; a
+policy of `default-src 'none'` alone would block all scripts and
+styles, including inline ones.  The policy MUST NOT include
+`'unsafe-inline'` or `'unsafe-eval'` in `script-src`, or any other
+origin in any directive.  `connect-src`, `frame-src` and `worker-src`
+fall back to `default-src 'none'`; `form-action` and `base-uri` do not
+fall back, so they are listed explicitly.  The creative can therefore
+load only its own pinned assets from the licensee's origin, and cannot
+send data to the advertiser or any third party.  Third-party scripts,
+tracking pixels and unpinned assets are never permitted.  Landing-page cloaking is
 mitigated by pinning `landingUrl`, optional re-crawling, Labels, and
 voiding approval on change.
 
