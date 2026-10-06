@@ -632,7 +632,7 @@ A Deal states which levels are required. Price should reflect the level of verif
 
 ### 10.4 Viewability measurement in the page
 
-Federated Ads publishes an open-source reference **measurement module**: a small script, pinned by hash, that measures viewability with standard browser APIs (Intersection Observer). Receipts record the module's hash, and auditors check that pages load that hash. Verification vendors may supply their own modules under the stricter conditions of [§10.9](#109-third-party-measurement-and-tracking): pinned, open or escrowed, and with no network access.
+Federated Ads publishes an open-source reference **measurement module**: a small script, pinned by hash, that measures viewability with standard browser APIs (Intersection Observer). Receipts record the module's hash, and auditors check that pages load that hash. Verification vendors may supply their own modules under the stricter conditions of [§10.9](#109-third-party-measurement-and-tracking): pinned, open or escrowed, and sandboxed so that their fetches and subresource loads are blocked.
 
 This is weaker than a verification vendor's script that reports independently, because the publisher controls the page. It is also more transparent: anyone can read the module, and tampering with it is detectable in audits. A native profile for apps is planned ([Appendix D](#appendix-d-measurement-channels-in-detail)).
 
@@ -701,7 +701,7 @@ Buyers rely on third parties for an independent count to reconcile against the s
 | Channel | Replaces | What the third party gets | Conformance |
 |---|---|---|---|
 | **A. Aggregate tracker callbacks** | Tracking pixels, VAST tracking URLs, click-tracker redirects | Signed Tracker Reports, sent server to server by the selling node, carrying the aggregate cells of its Receipt Batches | Extended |
-| **B. Sandboxed measurement modules** | Third-party verification tags | Coarse counters from the vendor's own pinned code, which runs in the page with no network access; reported through Channel A | Extended |
+| **B. Sandboxed measurement modules** | Third-party verification tags | Coarse counters from the vendor's own pinned code, which runs sandboxed in the page with its fetches and subresource loads blocked; reported through Channel A | Extended |
 | **C. Aggregate conversion measurement** | Conversion pixels, click identifiers, per-install postbacks | Deal-level conversion histograms with noise, as one of two non-colluding aggregators in the DAP profile ([§10.6](#106-conversions-and-attribution)) | Planned profile |
 | **D. Experiments** | Per-person holdouts and lift cookies | Outcome differences between holdout cells committed in advance | Optional |
 | **E. Consented panels and audits** | Cross-site audience and reach measurement | Signed aggregate estimates from a panel whose members consented, or from an auditor | Outside the protocol core |
@@ -712,7 +712,7 @@ Buyers rely on third parties for an independent count to reconcile against the s
 
 | Practice | Why |
 |---|---|
-| Third-party cookies, and third-party JavaScript or pixels in the browser, other than the pinned, egress-free modules of Channel B | Gives a third party a line of sight to the person and the page |
+| Third-party cookies, and third-party JavaScript or pixels in the browser, other than the pinned, sandboxed modules of Channel B | Gives a third party a line of sight to the person and the page |
 | Cookie syncing, identity graphs, universal IDs, and hashed email or phone matching across parties | A cross-site identifier by another name ([§8](#8-audience-matching-options-compared)) |
 | Device fingerprinting for measurement or fraud scoring ([§10.7](#107-invalid-traffic-without-fingerprinting) filters invalid traffic without it) | The same |
 | Per-click or per-impression unique identifiers, and macros that expand to them | Lets events be joined to a person |
@@ -725,12 +725,12 @@ Buyers rely on third parties for an independent count to reconcile against the s
 - **Weaker invalid-traffic detection.** Fingerprinting and cross-site reputation are not available to vendors.
 - **Slower feedback.** Hourly aggregates replace per-event pixels; pacing uses spend totals.
 - **Integration work.** Vendors and agencies must ingest Tracker Reports.
-- **Accreditation is open.** Whether accreditation bodies and verification vendors accept egress-free modules and aggregate reports is an open question ([§26](#26-open-questions)).
+- **Accreditation is open.** Whether accreditation bodies and verification vendors accept sandboxed modules and aggregate reports is an open question ([§26](#26-open-questions)).
 - **Price.** Buyers may pay less where measurement is coarser ([§20.3](#203-the-evidence-on-revenue-without-tracking)).
 
 In return there are fewer vendors in the render path, no per-person data sent to third parties, and, in our view, less regulatory exposure.
 
-**Device access.** Sending Tracker Reports server to server (Channel A) involves no access to the user's device. Channel B's modules read signals on the device, Channel C relies on reports produced in the user's browser or app, and a publisher's own randomisation of its visitors (a first-party practice outside Channel D's holdouts) may use first-party state on the device; these carry the consent analysis of [§18.3](#183-device-access). Whether aggregate cells count as anonymous data depends on context, including the recipient's means of re-identification, and needs jurisdiction-specific review ([§19](#19-legal-and-regulatory-considerations)). This is not legal advice.
+**Device access.** Channel A involves no access to the user's device. Channels B and C, and a publisher's own randomisation of its visitors ([Appendix D](#appendix-d-measurement-channels-in-detail)), use the device and carry the consent analysis of [§18.3](#183-device-access). Whether aggregate cells count as anonymous data depends on context, including the recipient's means of re-identification, and needs jurisdiction-specific review ([§19](#19-legal-and-regulatory-considerations)). This is not legal advice.
 
 **Considered and left out of v1:** a consent-gated cross-site tier, in which a person knowingly allows cross-site measurement through tokens they hold. It would amend principle P3 and carries the highest legal exposure. It is recorded as an open question ([§26](#26-open-questions)).
 
@@ -782,7 +782,7 @@ The protocol proves what is owed. **Settlement profiles** define how it is paid.
 1. **Native** (default): a title, body, image or video asset and a CTA, rendered by the publisher's own template. No creative code.
 2. **Display:** a static image (WebP, AVIF, PNG, JPEG, or SVG loaded as an image, never inline).
 3. **HTML5:** allowed only at the extended conformance level. It runs in an `<iframe sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation">` served from a dedicated cookieless origin run by the selling node. The HTML and every file it loads must be hash-pinned assets of the approved manifest. A strict CSP lets the creative load only those assets from that origin, with scripts allowed by origin or hash and never `unsafe-eval`, and blocks every other request: no `connect-src`, no forms, no other origins. (A bare `default-src 'none'` would block the creative's own scripts and styles too.) `allow-same-origin` is never combined with `allow-scripts`.
-4. **Never allowed:** third-party JavaScript, tracking pixels, or unpinned assets. Vendor measurement uses the pinned, egress-free modules and server-side reports of [§10.9](#109-third-party-measurement-and-tracking), never code or pixels inside the creative.
+4. **Never allowed:** third-party JavaScript, tracking pixels, or unpinned assets. Vendor measurement uses the pinned, sandboxed modules and server-side reports of [§10.9](#109-third-party-measurement-and-tracking), never code or pixels inside the creative.
 
 ### 13.2 Social and fediverse (`surface:social`)
 
@@ -1250,7 +1250,7 @@ sequenceDiagram
 | **Revocation flooding** | Revocations must come from the licence issuer's key; rate limits; relays authenticate before giving priority |
 | **Report-channel abuse** | Reports aggregated and rate-limited; no automatic takedown except for scam categories with verification |
 | **Key compromise** | Short-lived subkeys; offline root; logged revocation |
-| **Covert identification through a measurer** (small cells, overlapping windows, side channels in modules) | k-thresholds; fixed non-overlapping windows; deal-level macros only; egress-free module sandbox; signed data-handling statements; labels for violators |
+| **Covert identification through a measurer** (small cells, overlapping windows, side channels in modules) | k-thresholds; fixed non-overlapping windows; deal-level macros only; module sandbox and source review; signed data-handling statements; labels for violators |
 | **Malicious or colluding measurement vendor** | Tracker Reports share the receipt Merkle root, so a vendor cannot invent counts the seller did not commit; module hash pinned and audited; vendor sees aggregates only |
 | **Attester centralisation** | V3 is optional; multiple issuers allowed; an open question on community attesters |
 
@@ -1651,7 +1651,7 @@ Today the initiative is **two individual contributors, Suneesh Rajan and Arjun K
 10. **C2PA.** Should Federated Ads define a C2PA assertion for licences and revocation status?
 11. **Measurement module.** Who maintains and audits the open-source viewability module?
 12. **Funding.** Which funders can support early stewardship without compromising neutrality?
-13. **Measurers.** Who accredits measurement modules and audits the sandbox: the MRC, the standards body, or independent auditors? Will major verification vendors accept egress-free modules and aggregate reports in place of their current tags?
+13. **Measurers.** Who accredits measurement modules and audits the sandbox: the MRC, the standards body, or independent auditors? Will major verification vendors accept sandboxed modules and aggregate reports in place of their current tags?
 14. **Consent-gated cross-site tier.** Should a later version offer an opt-in profile in which a person knowingly allows cross-site measurement (user-held tokens, for example)? It would amend P3 and carry the highest legal exposure. v1 says no.
 15. **Experiments.** Are signed region and time holdouts workable for small advertisers, or does experimental measurement only suit large budgets?
 
@@ -1669,7 +1669,7 @@ No. It is a different model, based on deals and federation, for parties who want
 No. Matching is contextual. Receipts are aggregated. Cross-site identifiers are prohibited in protocol messages.
 
 **Can third-party verification and measurement vendors work with Federated Ads?**
-Yes, through the measurement channels of [§10.9](#109-third-party-measurement-and-tracking), and through a measurement bridge for their existing tools ([§14.3](#143-bridges)). They receive signed aggregate reports from the selling node, may supply sandboxed measurement modules that have no network access, and, once the planned profile is defined, may operate conversion aggregators ([§10.6](#106-conversions-and-attribution)). They do not get pixels, cookies or identifiers.
+Yes, through the measurement channels of [§10.9](#109-third-party-measurement-and-tracking), and through a measurement bridge for their existing tools ([§14.3](#143-bridges)). They receive signed aggregate reports from the selling node, may supply sandboxed measurement modules whose fetches and subresource loads are blocked, and, once the planned profile is defined, may operate conversion aggregators ([§10.6](#106-conversions-and-attribution)). They do not get pixels, cookies or identifiers.
 
 **Is server-side tracking allowed?**
 Not if it forwards anything about a person. Moving a pixel from the browser to the server still sends the same data. Server-to-server reports carry aggregate cells only.
@@ -1736,7 +1736,7 @@ This whitepaper was **authored with Claude**, an AI model developed by Anthropic
 | **Cookie syncing** | Companies matching their separate cookie identifiers for the same browser so they can share data about it |
 | **Identity graph** | A database linking a person's identifiers across devices, sites and companies |
 | **Lift** | The change in an outcome, such as sales, caused by advertising, usually measured against a control group |
-| **Measurement module** | Pinned, open or escrowed code run in an egress-free sandbox to compute coarse counters |
+| **Measurement module** | Pinned code that measures viewability or invalid traffic in the page and passes coarse counters to the selling node. A vendor's module is open or escrowed and runs in a sandbox that blocks its fetches and subresource loads |
 | **Demand-side platform (DSP)** | Software advertisers and agencies use to buy ad impressions automatically across many sellers |
 | **Made-for-advertising (MFA) site** | A site built mainly to resell ad traffic at a profit rather than to serve readers |
 | **Private marketplace (PMP)** | An invitation-only programmatic deal between known buyers and sellers, identified by a deal ID |
@@ -1907,6 +1907,7 @@ This whitepaper was **authored with Claude**, an AI model developed by Anthropic
 144. ANA, "ANA Releases Part 2 of Comprehensive Programmatic Media Buying Study" (5 December 2023). https://www.ana.net/content/show/id/83522
 145. AgenticAdvertising.org, "Experimental Status," *AdCP 3.2.2* documentation (accessed October 2026). https://docs.adcontextprotocol.org/dist/docs/3.2.2/reference/experimental-status
 146. J. Graber, "A New Chapter for Bluesky," Bluesky (9 March 2026). https://bsky.social/about/blog/03-09-2026-a-new-chapter-for-bluesky
+147. W3C, *Content Security Policy Level 3*, W3C Working Draft (16 September 2026), §6.4 "Navigation Directives". https://www.w3.org/TR/CSP3/
 
 
 *Technical specifications*
@@ -1949,10 +1950,10 @@ This whitepaper was **authored with Claude**, an AI model developed by Anthropic
 
 - **Part I evidence review:** §1.1–§1.3 rechecked against primary sources under the new evidence gate (`docs/STYLE.md`). §1.1 adds the UK case, updates the Canadian case and the September 2026 US remedies decision, and separates walled-garden concentration from open-web intermediation. §1.2 separates leakage from waste, states the ISBA restatement basis and names the studies' interests and samples. §1.3 presents fraud estimates as a range, distinguishes invalid traffic from fraud, and states where Federated Ads is weaker. References [1], [3], [7]–[9] and [12] now point to primary sources; [92]–[98] added. §1.4 renamed "Cross-site tracking and the failed replacement"; corrects Firefox's default (it confines third-party cookies rather than blocking them), cites Google's own Privacy Sandbox announcements and states which APIs were kept; references [99]–[103] added. §1.5 cites how VAST and AdCOM handle creatives, and narrows the claim that no stop signal exists: AdCOM's "expired" status, VAST's `Expires` and the Ad Creative ID Framework come close but give the advertiser no withdrawal with proof; references [104]–[106] added. §1.6 corrects the source and wording of the Bluesky quotes, gives EthicalAds' exact figures, cites OpenAI's own announcements (including its August 2026 targeting features), marks views as views, and drops the Perplexity example, whose original source could not be verified; reference 14 withdrawn, [107]–[108] added. §1.7 renamed "What ad blocking tells us"; names eyeo's interest and method, scopes the 81% figure to its US poll, and adds that most ad-filtering users keep non-intrusive ads enabled. §1.8 replaces the claim that no open advertising protocol exists with a precise one: OpenRTB and AdCP 3.2 are acknowledged, and the gap is the combination of properties Federated Ads targets; references [109]–[110] added. §2 rebuilt as 15 rows, each claim checked against a primary source: corrects Do Not Track (the W3C did define tracking), Global Privacy Control's legal basis, Brave's matching (behavioural, on the device), THEMIS's authorship and the Graze figures; removes Carbon Ads, the unsourced "a better PKI" quote and the unverified Graze CPM; updates the agent-protocol row for AdCP 3.2 and AAMP 3.0; references 21, 23, 47 and 48 withdrawn, [111]–[142] added.
 - **Part I corrections after review:** §1.2 scopes the ISBA II figures to the whole study (noting the share of private marketplaces and of data fields not shared), splits the ANA's 64 lost cents into fees (leakage) and lost media productivity (waste), and reports that TrustNet's overall performance softened in Q4 2025; §1.3 uses the MRC's own description of sophisticated invalid traffic and notes that the fraud table departs from the MRC categories; §1.4 dates the search behind its absence claim; §1.5 corrects who reviews ads and notes AdCP's revocation webhook, whose receipt the buyer acknowledges; §1.6 notes that Jay Graber left the chief executive role in March 2026; §1.7 describes eyeo's sources more fully; §1.8 and §2 cite AdCP's experimental-status page for its rights lifecycle; §2 scopes the SupplyChain figures to a crawl of misinformation websites, corrects THEMIS's affiliations and the Sephora enforcement wording. The executive summary drops Carbon and lists the same four properties as §2. References [144]–[146] added; [56], [93], [101], [103] and [112] corrected.
+- **Measurement module limits:** modules are described as running in a sandboxed frame whose fetches and subresource loads are blocked, not as having no network access, since Content Security Policy does not govern every navigation (Appendix D); reference [147] added. The Internet-Draft's measurement requirements are restated in testable terms, and modules may read only Intersection Observer and Page Visibility signals.
 - **HTML rendering:** the side index of the HTML page, empty since v0.2, is now generated from the article's headings by `scripts/render_whitepaper.py`.
-- **§10.9 revised:** shortened, with channel detail moved to the new [Appendix D](#appendix-d-measurement-channels-in-detail). The processor role for conversion data is removed, so third parties receive only aggregate measurements (or, in the planned conversion profile, shares of reports that reveal nothing on their own); Tracker Reports are stated to be the seller's own numbers, not independent counts; pacing data sent to measurers is limited to spend totals; the device-access note no longer overstates which channels avoid it. [§10.4](#104-viewability-measurement-in-the-page) renamed and updated for vendor modules; [§18.1](#181-data-inventory) gains a row for module signals; the Internet-Draft now defines the measurement members, the Tracker Report and `measurementModules`. Reference [143] added; 45 withdrawn (expired Internet-Draft) and 15 withdrawn (duplicate of reference 5).
+- **Third-party measurement and tracking:** new [§10.9](#109-third-party-measurement-and-tracking) defining measurement channels (aggregate tracker callbacks, sandboxed measurement modules, aggregate conversion measurement, holdout experiments, consented panels), the measurer role, what stays prohibited and what it costs, with channel detail in the new [Appendix D](#appendix-d-measurement-channels-in-detail). Third parties receive only aggregate measurements (or, in the planned conversion profile, shares of reports that reveal nothing on their own); Tracker Reports are stated to be the seller's own numbers, not independent counts; pacing data sent to measurers is limited to spend totals. [§10.4](#104-viewability-measurement-in-the-page) renamed and updated for vendor modules; [§18.1](#181-data-inventory) gains a row for module signals; the Internet-Draft defines the measurement members, the Tracker Report and `measurementModules`. Cross-references added in the executive summary, [§3.3](#33-non-goals-for-v1), [§4](#4-actors-and-roles), [§10.6](#106-conversions-and-attribution), [§13.1](#131-web-display-and-native-surfaceweb), [§14.3](#143-bridges), [§15.11](#1511-conformance-levels), [§17.2](#172-threats-and-mitigations), [§18.1](#181-data-inventory), [§26](#26-open-questions), the FAQ and the glossary. Reference [143] added; 45 withdrawn (expired Internet-Draft) and 15 withdrawn (duplicate of reference 5).
 - Arjun Krishna added as a contributor; governance ([§23.1](#231-what-the-federated-ads-initiative-is-today)) and risk ([§25](#25-risks-and-mitigations)) updated to reflect two maintainers.
-- **Third-party measurement and tracking:** new [§10.9](#109-third-party-measurement-and-tracking) defining measurement channels (aggregate tracker callbacks, sandboxed measurement modules, aggregate conversion measurement, holdout experiments, consented panels), the measurer role, what stays prohibited and what it costs. Cross-references added in the executive summary, [§3.3](#33-non-goals-for-v1), [§4](#4-actors-and-roles), [§10.6](#106-conversions-and-attribution), [§13.1](#131-web-display-and-native-surfaceweb), [§14.3](#143-bridges), [§15.11](#1511-conformance-levels), [§17.2](#172-threats-and-mitigations), [§18.1](#181-data-inventory), [§26](#26-open-questions), the FAQ and the glossary.
 
 ### Changes in v0.3 (5 October 2026)
 
@@ -2000,11 +2001,11 @@ Clicks keep the existing path: the user follows the call to action through the s
 **B. Sandboxed measurement modules.** A verification vendor may supply a measurement module that runs in the page alongside the reference module of [§10.4](#104-viewability-measurement-in-the-page). Conditions:
 - the module is pinned by hash and listed in the Deal, and Receipt Batches record the hash of every module used (`measurementModules`);
 - its source is open, or available to auditors under escrow;
-- it runs with **no network access of its own** (`connect-src 'none'`, no other origins) and talks only to the selling node's collector over a single message channel;
+- it runs in a sandboxed frame that may run scripts but has no same-origin access, forms, pop-ups or top-level navigation, under a Content Security Policy that blocks its fetches and subresource loads (`default-src 'none'`, `form-action 'none'`, `base-uri 'none'`, with only the pinned module allowed as a script), and talks only to the selling node's collector;
 - it reads only standard signals (Intersection Observer, page visibility), and no cookies, storage or fingerprinting surfaces such as canvas, audio, fonts or device enumeration;
 - its outputs are coarse counters, such as viewable-time buckets and invalid-traffic category flags, which the selling node folds into receipt cells.
 
-The vendor's code has no network access of its own; it can pass only coarse counters to the selling node's collector. A native profile for apps is planned after the web profile. It would follow the IAB Tech Lab Open Measurement SDK (OM SDK 1.5), in which measurement providers' scripts collect the signals; under Federated Ads those scripts would run with no network access [143].
+In our view these measures narrow what a module can send but are not a complete barrier: Content Security Policy defines navigation directives only for form submissions and framing [147], so a frame navigating itself, for example, is outside its reach. The module's pinned, reviewable source and audits therefore remain the main safeguard. A native profile for apps is planned after the web profile. It would follow the IAB Tech Lab Open Measurement SDK (OM SDK 1.5), in which measurement providers' scripts collect the signals; under Federated Ads those scripts would run under the same restrictions [143].
 
 **C. Aggregate conversion measurement.** A measurement provider may act as one of the two non-colluding aggregators in the DAP profile of [§10.6](#106-conversions-and-attribution). It receives only shares of reports that are useless on their own, and releases deal-level histograms with noise, under a fixed privacy budget per campaign per week. The advertiser may also count conversions on its own site in aggregate; that is first-party measurement, not a third-party channel.
 

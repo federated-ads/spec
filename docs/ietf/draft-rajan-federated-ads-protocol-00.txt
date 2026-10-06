@@ -211,10 +211,10 @@ Internet-Draft           Federated Ads Protocol             October 2026
      11.3.  Measurement Object . . . . . . . . . . . . . . . . . . .  74
      11.4.  Tracker Reports  . . . . . . . . . . . . . . . . . . . .  75
      11.5.  Measurement Modules  . . . . . . . . . . . . . . . . . .  76
-     11.6.  Holdouts . . . . . . . . . . . . . . . . . . . . . . . .  76
+     11.6.  Holdouts . . . . . . . . . . . . . . . . . . . . . . . .  77
    12. Disclosure and User Controls  . . . . . . . . . . . . . . . .  77
    13. Cooperative Selling Profile . . . . . . . . . . . . . . . . .  77
-     13.1.  Membership . . . . . . . . . . . . . . . . . . . . . . .  77
+     13.1.  Membership . . . . . . . . . . . . . . . . . . . . . . .  78
      13.2.  Per-Member Receipts  . . . . . . . . . . . . . . . . . .  78
      13.3.  Competition-Law Safeguards . . . . . . . . . . . . . . .  78
      13.4.  Cooperative Ad-Free Pass . . . . . . . . . . . . . . . .  79
@@ -228,10 +228,10 @@ Internet-Draft           Federated Ads Protocol             October 2026
 
    14. Extensibility and Versioning  . . . . . . . . . . . . . . . .  79
      14.1.  Unknown Members  . . . . . . . . . . . . . . . . . . . .  79
-     14.2.  Versioning . . . . . . . . . . . . . . . . . . . . . . .  79
+     14.2.  Versioning . . . . . . . . . . . . . . . . . . . . . . .  80
      14.3.  Registries . . . . . . . . . . . . . . . . . . . . . . .  80
    15. Conformance . . . . . . . . . . . . . . . . . . . . . . . . .  80
-   16. Security Considerations . . . . . . . . . . . . . . . . . . .  80
+   16. Security Considerations . . . . . . . . . . . . . . . . . . .  81
      16.1.  Trust Model  . . . . . . . . . . . . . . . . . . . . . .  81
      16.2.  Transport Replay and Freshness . . . . . . . . . . . . .  81
      16.3.  Object Replay and Substitution . . . . . . . . . . . . .  81
@@ -4066,19 +4066,19 @@ Internet-Draft           Federated Ads Protocol             October 2026
 
 11.1.  Rule
 
-   A node MUST NOT send to a measurer, or to any other third party, data
-   from which the recipient could tell that two events came from the
-   same person or device, or recover an IP address, user agent, page
-   URL, cookie or other identifier.  A measurer receives only the data
-   defined in this section.
+   The aim of this section is that no measurer can tell that two events
+   came from the same person or device, or recover an IP address, user
+   agent, page URL, cookie or other identifier.  To that end, a node
+   MUST NOT send to a measurer per-event records, and MUST NOT send to a
+   measurer or to any other third party identifiers of people or
+   devices, or IP addresses, user agents, page URLs, cookies, referrers
+   or request headers taken from end users' requests.  A measurer
+   receives only the data defined in this section.
 
 11.2.  Measurers
 
    A measurer is a node with the measurer role (Section 1.6).  Its Node
    Descriptor MUST include a dataHandling object with these members:
-
-
-
 
 
 
@@ -4203,8 +4203,8 @@ Internet-Draft           Federated Ads Protocol             October 2026
 
 
    *  macros, if used, MAY expand only to deal, creative, window,
-      context and region values.  No macro may expand to a value about a
-      person, device or request.
+      context and region values.  A macro MUST NOT expand to a value
+      about a person, device or request.
 
    *  A selling node MUST NOT forward IP addresses, user agents, request
       headers, cookies or referrers to a measurer.
@@ -4226,27 +4226,27 @@ Internet-Draft           Federated Ads Protocol             October 2026
    *  MUST load it only by its content hash, and MUST list the hash of
       every module used in the Receipt Batch measurementModules member;
 
-   *  MUST run it in an isolated context with no network access of its
-      own (for example under a Content Security Policy with connect-src
-      'none' and no other permitted origins), exchanging messages only
-      with the selling node's collector;
+   *  MUST run it in a sandboxed frame that permits scripts but not
+      same-origin access, forms, pop-ups or top-level navigation, under
+      a Content Security Policy that blocks its fetches and subresource
+      loads (for example default-src 'none'; form-action 'none'; base-
+      uri 'none', with only the pinned module permitted in script-src),
+      exchanging messages only with the selling node's collector;
 
-   *  MUST NOT give it access to cookies, storage or device-identifying
-      interfaces;
+   *  MUST NOT expose cookies or storage to it, and MUST NOT run a
+      module whose source reads signals other than those of Intersection
+      Observer and Page Visibility;
 
-   *  MUST accept from it only coarse counters (for example viewable-
-      time buckets and invalid-traffic category flags) and fold them
-      into aggregate cells.
+   *  MUST accept from it only viewable-time buckets and invalid-traffic
+      category flags, and fold them into aggregate cells.
 
-   The source of a vendor module SHOULD be public, and MUST be available
-   to auditors.
-
-11.6.  Holdouts
-
-   If a Deal's measurement includes holdouts, the selling node MUST NOT
-   deliver the deal's creatives in the listed cells, and the Receipt
-   Batches show delivery by cell.  Holdouts are assigned by region,
-   context or time window, never by person.
+   These measures do not guarantee that no data leaves the page: for
+   example, Content Security Policy defines navigation directives only
+   for form submissions and framing [CSP3], so it does not govern a
+   frame navigating itself.  Source review is therefore part of the
+   safeguard: the measurer SHOULD publish the source of its module, and
+   MUST make it available to the selling node, the buying node and the
+   auditors the Deal names.
 
 
 
@@ -4257,6 +4257,13 @@ Rajan & Krishna           Expires 8 April 2027                 [Page 76]
 
 Internet-Draft           Federated Ads Protocol             October 2026
 
+
+11.6.  Holdouts
+
+   If a Deal's measurement includes holdouts, the selling node MUST NOT
+   deliver the deal's creatives in the listed cells, and the Receipt
+   Batches show delivery by cell.  Holdouts are assigned by region,
+   context or time window, never by person.
 
 12.  Disclosure and User Controls
 
@@ -4297,6 +4304,16 @@ Internet-Draft           Federated Ads Protocol             October 2026
    lists profile:coop in its Node profiles member and has the selling
    role.
 
+
+
+
+
+
+Rajan & Krishna           Expires 8 April 2027                 [Page 77]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
 13.1.  Membership
 
    A cooperative node MUST publish a signed MemberList (Section 6.27),
@@ -4306,13 +4323,6 @@ Internet-Draft           Federated Ads Protocol             October 2026
    node MUST list the cooperative node in its own Node cooperatives
    member, and a receiver MUST treat a node as a member only if both
    statements are present.
-
-
-
-Rajan & Krishna           Expires 8 April 2027                 [Page 77]
-
-Internet-Draft           Federated Ads Protocol             October 2026
-
 
    The revenueSplit of a Member entry is the fraction of the
    cooperative's revenue from deals, net of the fees declared in each
@@ -4350,6 +4360,16 @@ Internet-Draft           Federated Ads Protocol             October 2026
       node express the cooperative's own prices for pooled placements.
       They MUST NOT identify member-level prices.
 
+
+
+
+
+
+Rajan & Krishna           Expires 8 April 2027                 [Page 78]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
    *  A member's batches MUST NOT be made available to other members.
       Deal Terms, Statements and SpendReports that a cooperative node
       shares with a member MUST be limited to the deals and lines in
@@ -4361,14 +4381,6 @@ Internet-Draft           Federated Ads Protocol             October 2026
 
    These requirements do not prevent members from publishing their own
    Inventory and Policy.
-
-
-
-
-Rajan & Krishna           Expires 8 April 2027                 [Page 78]
-
-Internet-Draft           Federated Ads Protocol             October 2026
-
 
 13.4.  Cooperative Ad-Free Pass
 
@@ -4406,6 +4418,14 @@ Internet-Draft           Federated Ads Protocol             October 2026
    avoid collision.  This rule ensures that new constraints, for example
    new brand-safety rules in a Policy, cannot be silently dropped.
 
+
+
+
+Rajan & Krishna           Expires 8 April 2027                 [Page 79]
+
+Internet-Draft           Federated Ads Protocol             October 2026
+
+
 14.2.  Versioning
 
    The protocol version is a string MAJOR.MINOR.  This document defines
@@ -4414,17 +4434,6 @@ Internet-Draft           Federated Ads Protocol             October 2026
    registry values.  A new major version requires both parties to
    advertise it in versions.  Major version 0 indicates that
    incompatible changes may occur between drafts.
-
-
-
-
-
-
-
-Rajan & Krishna           Expires 8 April 2027                 [Page 79]
-
-Internet-Draft           Federated Ads Protocol             October 2026
-
 
 14.3.  Registries
 
@@ -4466,21 +4475,16 @@ Internet-Draft           Federated Ads Protocol             October 2026
    for signatures, canonicalization and Merkle proofs are expected to
    accompany each version of this document.
 
-16.  Security Considerations
-
-   This section follows the guidance of [RFC3552].
-
-
-
-
-
-
 
 
 Rajan & Krishna           Expires 8 April 2027                 [Page 80]
 
 Internet-Draft           Federated Ads Protocol             October 2026
 
+
+16.  Security Considerations
+
+   This section follows the guidance of [RFC3552].
 
 16.1.  Trust Model
 
@@ -4526,10 +4530,6 @@ Internet-Draft           Federated Ads Protocol             October 2026
    Witness cosigning and consistency checks (Section 10.8, Section 10.9)
    make this detectable.  Verifiers who gossip checkpoints further
    reduce the risk.
-
-
-
-
 
 
 
@@ -5280,6 +5280,9 @@ Internet-Draft           Federated Ads Protocol             October 2026
               Technical Specification", n.d.,
               <https://c2pa.org/specifications/>.
 
+   [CSP3]     W3C, "Content Security Policy Level 3", 16 September 2026,
+              <https://www.w3.org/TR/CSP3/>.
+
    [GPC]      W3C, "Global Privacy Control (GPC)", n.d.,
               <https://www.w3.org/TR/gpc/>.
 
@@ -5310,9 +5313,6 @@ Internet-Draft           Federated Ads Protocol             October 2026
    [ISSUES]   Federated Ads Initiative, "Federated Ads Protocol
               specification issue tracker", n.d.,
               <https://github.com/federated-ads/spec/issues>.
-
-
-
 
 
 
