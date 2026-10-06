@@ -479,7 +479,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <tr>
 <td>P4</td>
 <td><strong>Verifiable</strong></td>
-<td>Every economically meaningful record (deals, licences and revocations, receipts, statements) is signed, and logged in an append-only, witnessed log.</td>
+<td>Every economically meaningful record (deals, revocations and their acknowledgements, receipt batches and statements) is signed and recorded in an append-only log that independent witnesses can cosign.</td>
 </tr>
 <tr>
 <td>P5</td>
@@ -589,7 +589,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 </tr>
 <tr>
 <td><strong>Measurer</strong></td>
-<td>A third party named in a Deal for delivery reporting, verification, attribution, lift research or audit. Receives aggregate measurements only, except as an aggregator in the planned conversion profile (<a href="#109-third-party-measurement-and-tracking">§10.9</a>).</td>
+<td>A third party named in a Deal for delivery reporting, verification, attribution, lift research or audit. Receives aggregate measurements only, except as an aggregator in the planned conversion profile, where it receives report shares that reveal nothing on their own (<a href="#109-third-party-measurement-and-tracking">§10.9</a>).</td>
 <td>Yes, or through a node that holds the measurer role, such as a measurement bridge</td>
 </tr>
 <tr>
@@ -684,11 +684,11 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>Privacy.</strong> User context stays on the publisher's node. Nothing is broadcast to dozens of bidders.</li>
 <li><strong>Latency.</strong> No network round trip is needed when rendering.</li>
 <li><strong>Accessibility.</strong> A small operator can run a node.</li>
-<li><strong>Market evidence.</strong> Even in conventional programmatic advertising, over 92% of median spend in the ANA/TAG TrustNet benchmark flows through private marketplaces, which are pre-agreed deals [4].</li>
+<li><strong>Market evidence.</strong> Even in conventional programmatic advertising, most spend has moved from open auctions to invitation-only private marketplaces between known buyers and sellers: over 92% of median spend in the ANA/TAG TrustNet benchmark [4].</li>
 </ul>
 <hr />
 <h2 id="6-market-design-how-buying-and-selling-works">6. Market design: how buying and selling works</h2>
-<p>Version 0.1 left the market mechanism vague; the project's internal review of that version identified this as its largest gap (<a href="#28-ai-assistance-disclosure">§28</a>). This section specifies it.</p>
+<p>Version 0.1 left the market mechanism vague; the project's internal review of that version (<a href="#28-ai-assistance-disclosure">§28</a>) flagged this gap. This section specifies it.</p>
 <h3 id="61-inventory-and-rate-cards">6.1 Inventory and rate cards</h3>
 <p>A selling node publishes an <strong>Inventory</strong> document so buyers can plan:</p>
 <ul>
@@ -1024,7 +1024,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 </ul>
 <hr />
 <h2 id="10-measurement-and-verification">10. Measurement and verification</h2>
-<p>The project's internal review of version 0.1 found its measurement design the second-largest weakness (<a href="#28-ai-assistance-disclosure">§28</a>). In particular, its claim that creative-host fetch logs corroborate volume was wrong, because a caching node fetches the same number of times whether it serves a thousand impressions or a million. This section rebuilds the trust model.</p>
+<p>The project's internal review of version 0.1 (<a href="#28-ai-assistance-disclosure">§28</a>) flagged its measurement design as weak. In particular, its claim that creative-host fetch logs corroborate volume was wrong, because a caching node fetches the same number of times whether it serves a thousand impressions or a million. This section rebuilds the trust model.</p>
 <h3 id="101-events">10.1 Events</h3>
 <div class="tbl"><table>
 <thead>
@@ -1398,7 +1398,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Acme Bikes Pvt Ltd&quot;</span></span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span><span class="ot">]</span></span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p>Federated Ads will propose, as a Fediverse Enhancement Proposal [30], a vendor-neutral way to mark a post as sponsored: a visible label plus a machine-readable tag that any project can use, not one tied to Federated Ads. The FEP community favours vendor-neutral proposals [156], and a shared marker would also help instances let users declare commercial content, as Article 26(2) of the EU Digital Services Act requires of online platforms [154]. Federated Ads will adopt that tag, and use its own <code>fa:</code> terms only to link a post to its manifest and deal; the example above uses <code>fa:Sponsorship</code> as a placeholder. In a search of the 147 FEPs in October 2026 we found none for sponsored posts; we welcome corrections. On Bluesky, Graze already sells placement in topical custom feeds, with feed operators approving each campaign [82]. Rules for this surface:</p>
+<p>Federated Ads will propose, as a Fediverse Enhancement Proposal [30], a vendor-neutral way to mark a post as sponsored: a visible label plus a machine-readable tag that any project can use, not one tied to Federated Ads. An open proposal would add guidance to the FEP process document that proposals should not promote a specific product or service and that vendor-neutral solutions are preferred [156]; a shared marker would also help instances let users declare commercial content, as Article 26(2) of the EU Digital Services Act requires of online platforms [154]. Federated Ads will adopt that tag, and use its own <code>fa:</code> terms only to link a post to its manifest and deal; the example above uses <code>fa:Sponsorship</code> as a placeholder. In October 2026 we searched the FEP repository [30], which then held 147 proposals, and its pull requests for "sponsor", "advert" and "promot", and found no proposal for marking sponsored posts; we welcome corrections. On Bluesky, Graze already sells placement in topical custom feeds, with feed operators approving each campaign [82]. Rules for this surface:</p>
 <ul>
 <li><strong>Opt-in.</strong> Instance administrators choose whether to participate. Sponsored posts appear only in the feeds of that instance's users.</li>
 <li><strong>No federation as organic content.</strong> Sponsored posts are addressed to local users only, never federated as public posts.</li>
@@ -1437,7 +1437,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <ul>
 <li>It must disclose to the user when a sponsored option influenced its choice.</li>
 <li>It must not prefer a sponsored option over a better organic one without disclosure.</li>
-<li>A planned binding will expose node functions (discover inventory, create offers, fetch receipts) as tools for agent frameworks. Agent protocols such as AdCP already provide their own discovery and request signing [136]; Federated Ads complements them rather than competing. An agent can discover and buy through AdCP, while Federated Ads adds what AdCP leaves out or marks experimental: independently verifiable delivery records, acknowledged revocation of the advertiser's own creative, and settlement [28][29][137].</li>
+<li>A planned binding will expose node functions (discover inventory, create offers, fetch receipts) as tools for agent frameworks. Agent protocols such as AdCP already provide their own discovery and request signing [136]; Federated Ads complements them rather than competing. An agent can discover and buy through AdCP, while As far as we found in the AdCP 3.2 documentation, Federated Ads adds what AdCP leaves out or marks experimental: independently verifiable delivery records, acknowledged revocation of the advertiser's own creative, and settlement [110][137][145]. We welcome corrections.</li>
 </ul>
 <hr />
 <h2 id="14-interoperability-with-existing-standards">14. Interoperability with existing standards</h2>
@@ -3234,10 +3234,9 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <li><strong>Measurement module limits:</strong> modules are described as running in a sandboxed frame whose fetches and subresource loads are blocked, not as having no network access, since Content Security Policy does not govern every navigation (Appendix D); reference [147] added. The Internet-Draft's measurement requirements are restated in testable terms, and modules may read only Intersection Observer and Page Visibility signals.</li>
 <li><strong>HTML rendering:</strong> the side index of the HTML page, empty since v0.2, is now generated from the article's headings by <code>scripts/render_whitepaper.py</code>.</li>
 <li><strong>Third-party measurement and tracking:</strong> new <a href="#109-third-party-measurement-and-tracking">§10.9</a> defining measurement channels (aggregate tracker callbacks, sandboxed measurement modules, aggregate conversion measurement, holdout experiments, consented panels), the measurer role, what stays prohibited and what it costs, with channel detail in the new <a href="#appendix-d-measurement-channels-in-detail">Appendix D</a>. Third parties receive only aggregate measurements (or, in the planned conversion profile, shares of reports that reveal nothing on their own); Tracker Reports are stated to be the seller's own numbers, not independent counts; pacing data sent to measurers is limited to spend totals. <a href="#104-viewability-measurement-in-the-page">§10.4</a> renamed and updated for vendor modules; <a href="#181-data-inventory">§18.1</a> gains a row for module signals; the Internet-Draft defines the measurement members, the Tracker Report and <code>measurementModules</code>. Cross-references added in the executive summary, <a href="#33-non-goals-for-v1">§3.3</a>, <a href="#4-actors-and-roles">§4</a>, <a href="#106-conversions-and-attribution">§10.6</a>, <a href="#131-web-display-and-native-surfaceweb">§13.1</a>, <a href="#143-bridges">§14.3</a>, <a href="#1511-conformance-levels">§15.11</a>, <a href="#172-threats-and-mitigations">§17.2</a>, <a href="#181-data-inventory">§18.1</a>, <a href="#26-open-questions">§26</a>, the FAQ and the glossary. Reference [143] added; 45 withdrawn (expired Internet-Draft) and 15 withdrawn (duplicate of reference 5).</li>
-<li><strong>§10.9 revised:</strong> shortened, with channel detail moved to the new <a href="#appendix-d-measurement-channels-in-detail">Appendix D</a>. The processor role for conversion data is removed, so third parties receive only aggregate measurements (or, in the planned conversion profile, shares of reports that reveal nothing on their own); Tracker Reports are stated to be the seller's own numbers, not independent counts; pacing data sent to measurers is limited to spend totals; the device-access note no longer overstates which channels avoid it. <a href="#104-viewability-measurement-in-the-page">§10.4</a> renamed and updated for vendor modules; <a href="#181-data-inventory">§18.1</a> gains a row for module signals; the Internet-Draft now defines the measurement members, the Tracker Report and <code>measurementModules</code>. Reference [143] added; 45 withdrawn (expired Internet-Draft) and 15 withdrawn (duplicate of reference 5).</li>
 <li><strong>§3 aligned with the rest of the paper:</strong> P3 says matching is contextual by default and that third parties measure deals but never observe people; P4 refers to signed, logged records rather than individual events; P8 includes agent protocols; the privacy goal is restated as no personal data leaving the selling node; the reach and frequency non-goal acknowledges on-device capping and panel estimates.</li>
 <li><strong>§4–§5:</strong> the measurer row is shortened; the topology diagram gains a text description and the measurer; the lifecycle states that Deals take effect when countersigned and that Spend Reports should be logged; the market evidence for deals keeps its source's scope.</li>
-<li><strong>§6.1–§6.3:</strong> the origin of the market-design gap is attributed to the internal review disclosed in §28; the feed saturation limit is attributed to Graze; IAB podcast and attention guidelines are cited precisely; reference 122 withdrawn (duplicate of reference 70).</li>
+<li><strong>§6.1–§6.3:</strong> the market-design gap is attributed to the internal review disclosed in §28; the feed saturation limit is attributed to Graze; IAB podcast and attention guidelines are cited precisely; reference 122 withdrawn (duplicate of reference 70).</li>
 <li><strong>§6.4–§6.5:</strong> the <code>rtb</code> and on-device profiles are described as planned, since the Internet-Draft does not yet specify them; an unsourced claim about how sponsorships are sold is removed; receipt windows match the draft (hourly, up to weekly for low-volume nodes).</li>
 <li><strong>§7:</strong> licence TTLs, the revocation deadline, the grace period and the pull rule now match the Internet-Draft, which adds a rule that relays forward revocations ahead of other traffic; Google's C2PA statement is reported as a stated goal.</li>
 <li><strong>§8–§9:</strong> IAB taxonomy versions are named and cited; the Brave claim is scoped; the claim that keyword blocklists over-block now cites a study, with its author's interest; references [148]–[150] added.</li>
