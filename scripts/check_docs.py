@@ -134,10 +134,16 @@ EXCLUSIONARY_ALLOWED = re.compile(
 
 
 def check_language(path: str, text: str) -> None:
+    in_references = False
     for no, line in lines_outside_code(text):
+        if line.startswith("## "):
+            in_references = line.startswith("## Appendix B. References")
         body = strip_inline_code(line)
         for m in NAMING.finditer(NAMING_ALLOWED.sub("", body)):
             error(path, no, f"old or wrong project name {m.group(0)!r}; use 'Federated Ads' (STYLE.md §3)")
+        if in_references:
+            # Titles of cited works are quoted exactly as published.
+            continue
         for m in EXCLUSIONARY.finditer(EXCLUSIONARY_ALLOWED.sub("", body)):
             error(path, no, f"non-inclusive term {m.group(0)!r} (STYLE.md §9)")
 
