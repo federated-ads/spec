@@ -48,7 +48,7 @@ ROOT = _repo_root()
 WHITEPAPER = "docs/whitepaper/federated-ads-whitepaper.md"
 WHITEPAPER_HTML = "docs/whitepaper/web/federated-ads-whitepaper.html"
 # Documents that follow the full punctuation rules (STYLE.md §6).
-EDITORIAL = [WHITEPAPER, "docs/STYLE.md", "CLAUDE.md", "CONTRIBUTING.md", "README.md"]
+EDITORIAL = [WHITEPAPER, "docs/STYLE.md", "docs/explainer.md", "CLAUDE.md", "CONTRIBUTING.md", "README.md"]
 # Markdown that is historical or private and is not checked.
 SKIP_PREFIXES = ("docs/whitepaper/archive/", "docs/outreach/", "docs/brainstorms/")
 
