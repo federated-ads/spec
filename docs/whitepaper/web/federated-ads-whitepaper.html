@@ -115,7 +115,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
       <div><dt>Status</dt><dd>Draft · v0.3</dd></div>
       <div><dt>Date</dt><dd>5 October 2026</dd></div>
       <div><dt>Published by</dt><dd>Federated Ads Initiative</dd></div>
-      <div><dt>Contributors</dt><dd>Suneesh Rajan; Claude (Anthropic)</dd></div>
+      <div><dt>Contributors</dt><dd>Suneesh Rajan; Arjun Krishna; Claude (Anthropic)</dd></div>
       <div><dt>Licence</dt><dd>CC BY 4.0 (text) · Apache-2.0 (code)</dd></div>
       <div><dt>Repository</dt><dd>github.com/federated-ads/spec</dd></div>
       <div><dt>Protocol draft</dt><dd>draft-rajan-federated-ads-protocol</dd></div>
@@ -154,6 +154,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>settle payment</strong> on whatever payment rail the parties choose.</li>
 </ol>
 <p>Matching is <strong>contextual by default</strong>, so the protocol carries no cross-site identifiers. People who see ads get enforceable rights: an explanation, an opt-out, an ad-free option and a way to report abuse. One protocol covers websites, fediverse and social feeds, newsletters, podcasts and AI/chat surfaces.</p>
+<p>Third parties can <strong>measure</strong> but not <strong>track</strong>. Verification and reporting vendors plug in through the measurement channels of <a href="#109-third-party-measurement-and-tracking">§10.9</a>, or through a measurement bridge for their existing tools (<a href="#143-bridges">§14.3</a>): they receive signed, aggregate measurements about a deal, never observations about a person. Attribution is limited to deal-level experiments and a planned aggregate conversion profile.</p>
 <p><strong>What is new.</strong> Most pieces exist separately: domain-bound signing (DKIM, ads.cert), contextual networks (EthicalAds, Carbon), on-device matching (Brave), transparency logs (Certificate Transparency). Federated Ads combines them into one open, federated protocol with three properties that, as far as our search found, no current system offers together (<a href="#2-what-has-been-tried-lessons-from-prior-art">§2</a>):</p>
 <ul>
 <li>the advertiser keeps ownership of its creative and can revoke it;</li>
@@ -173,79 +174,122 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <h3 id="11-concentration">1.1 Concentration</h3>
 <p>Advertising revenue is consolidating into fewer hands.</p>
 <p><strong>US market share.</strong> The IAB/PwC <em>Internet Advertising Revenue Report</em> for 2025 puts US internet ad revenue at <strong>$294.6 billion</strong>. The top ten companies hold <strong>84.1%</strong>, up from 78.6% in 2021. Companies ranked 11–25 hold 8.3%, and everyone else shares the remaining 7.5% [5].</p>
-<p><strong>Global share.</strong> WPP Media's mid-2026 forecast estimates global advertising revenue of about $1.3 trillion in 2026, with Alphabet, Meta and Amazon taking <strong>57.6%</strong> of the market outside China [6].</p>
-<p><strong>Conflicts of interest.</strong> The concentration problem goes beyond market share. The same firm often represents buyers, represents sellers and runs the exchange between them. Authorities in three jurisdictions have acted on this:</p>
+<p><strong>Global share.</strong> WPP Media's mid-2026 forecast puts global advertising revenue, excluding US political advertising, at about $1.3 trillion in 2026, with Alphabet, Meta and Amazon taking <strong>57.6%</strong> of the market outside China [6].</p>
+<p><strong>What a protocol can change.</strong> Federated Ads cannot change how much advertising companies sell on their own services. It can change the plumbing of the open web, where ad money passes through intermediaries. As far as our search found (<a href="#2-what-has-been-tried-lessons-from-prior-art">§2</a>), no open protocol yet gives the long tail of publishers federated discovery, revocable creative licences and verifiable delivery together (<a href="#18-what-is-missing">§1.8</a>).</p>
+<p><strong>Conflicts of interest.</strong> One firm can represent buyers, represent sellers and run the exchange between them, as Google does through its advertiser tools, its publisher ad server and its AdX exchange [7]. Authorities in four jurisdictions have acted:</p>
 <ul>
-<li><strong>United States.</strong> In <em>United States v. Google</em> (E.D. Va.), the court found on <strong>17 April 2025</strong> that Google had illegally monopolised the publisher ad server and ad exchange markets and unlawfully tied them together. In September 2026 the court rejected divestiture of Google's AdX exchange. It instead ordered behavioural remedies, including interoperability with the open-source Prebid header-bidding framework and a ban on "first look"/"last look" advantages, overseen by a monitor [7]. Google has said it will appeal.</li>
-<li><strong>European Union.</strong> On <strong>5 September 2025</strong> the European Commission fined Google <strong>€2.95 billion</strong> for self-preferencing its ad exchange since 2014 and signalled that a structural remedy might be needed [8].</li>
-<li><strong>Canada.</strong> The Competition Bureau filed for divestiture of Google's publisher ad server and exchange in November 2024 [9].</li>
+<li><strong>United States.</strong> On <strong>17 April 2025</strong> a federal court found that Google had illegally monopolised the publisher ad server and ad exchange markets and unlawfully tied them together [7]. On <strong>2 September 2026</strong> it rejected divestiture of the AdX exchange and the other structural remedies the plaintiffs sought. It accepted most proposed behavioural remedies instead: interoperability with the open-source Prebid framework, access for rival ad servers to AdX's real-time bids, limits on Google's advertiser tools favouring its own ad tech, and data export for publishers. The opinion provides for a decree that would apply worldwide for six years, overseen by a Monitor and a Technical Committee [92]. It takes effect once the court enters a final judgment. As of this writing the parties have proposed one (2 October 2026) and the court has not entered it [97].</li>
+<li><strong>European Union.</strong> On <strong>5 September 2025</strong> the European Commission fined Google <strong>€2.95 billion</strong> for favouring its AdX exchange since at least 2014. It stated its preliminary view that only a structural remedy would end Google's conflicts of interest [8].</li>
+<li><strong>United Kingdom.</strong> In September 2024 the Competition and Markets Authority issued a statement of objections alleging that Google abused its dominance in ad tech [93]. As of this writing it has not published a final decision.</li>
+<li><strong>Canada.</strong> In November 2024 the Competition Bureau applied for an order requiring Google to sell its publisher ad server and its ad exchange [9]. In March 2026 the Competition Tribunal dismissed Google's constitutional challenge to the penalties sought, and the case is proceeding [94].</li>
 </ul>
-<p>Regulators broadly agree on the diagnosis: conflicted intermediaries control the rails. They differ on the cure. The US remedy notably requires <strong>interoperability with an open, multi-party framework</strong>, which is the kind of remedy an open protocol makes possible.</p>
+<p>Regulators broadly agree on the diagnosis: conflicted intermediaries control the rails. They differ on the cure. The US remedy matters most here. Rather than break the company up, the court decided to require it to <strong>interoperate with an open, multi-party framework</strong> [92]. Open protocols make that kind of remedy possible, and Federated Ads is designed to be one.</p>
 <h3 id="12-opacity-and-leakage">1.2 Opacity and leakage</h3>
-<p><strong>ISBA/PwC studies.</strong> In 2020 the ISBA/PwC <em>Programmatic Supply Chain Transparency Study</em> found that only <strong>51%</strong> of advertiser spend reached publishers. <strong>15%</strong> was an "unknown delta" that could not be attributed to anyone [1].</p>
-<p>The 2023 follow-up found real improvement where participants shared log-level data and used private deals [2]:</p>
+<p>The evidence answers two separate questions, and Federated Ads addresses them differently:</p>
 <ul>
-<li>publishers received <strong>65%</strong> (against a restated 57% for the earlier study);</li>
-<li>the unknown delta fell to <strong>3%</strong>.</li>
+<li><strong>Leakage:</strong> how much of an advertiser's money reaches the publisher?</li>
+<li><strong>Waste:</strong> how much of it buys an impression that a real person could see, on a legitimate site?</li>
 </ul>
-<p><strong>ANA study.</strong> The ANA's 2023 <em>Programmatic Media Supply Chain Transparency Study</em> covered $123 million of spend and 35.5 billion impressions [3]. It found that:</p>
+<p><strong>Leakage.</strong> ISBA, the UK advertisers' association, studies the programmatic supply chain with PwC. Its 2020 study found that publishers received <strong>51%</strong> of advertiser spend, and that <strong>15%</strong> was an "unknown delta" no one could account for [1]. The follow-up, published in January 2023, measured a narrower chain that excludes agency fees, verification and ad serving. On that basis the 2020 figures restate to 57% and 17%. Where participants shared log-level data (impression-by-impression records from every party) and used private deals, the follow-up found [2]:</p>
 <ul>
-<li>only about <strong>36 cents</strong> of each dollar entering a demand-side platform reached consumers as an effective impression;</li>
-<li>made-for-advertising sites took <strong>15%</strong> of spend;</li>
-<li>an average campaign ran on <strong>44,000</strong> websites.</li>
+<li>publishers received <strong>65%</strong>, against 57%;</li>
+<li>the unknown delta fell to <strong>3%</strong>, against 17%, and below 1% in private marketplaces;</li>
+<li>the share of impressions matched end to end rose from 12% to 58%.</li>
 </ul>
-<p><strong>ANA/TAG TrustNet benchmark.</strong> The quarterly benchmark shows the industry improving [4]:</p>
+<p>Federated Ads tackles leakage structurally. Every fee within the protocol is declared in the signed Deal (<a href="#11-settlement">§11</a>), so on-protocol hops leave no room for an unknown delta. Fees charged by payment providers, or by legacy systems behind a bridge (<a href="#143-bridges">§14.3</a>), sit outside the protocol.</p>
+<p><strong>Waste.</strong> The US Association of National Advertisers (ANA) studied $123 million of spend and 35.5 billion impressions in 2023 [3]. It found that:</p>
 <ul>
-<li>Q4 2025: "TrueAdSpend" of 56.7% for top performers and 37.5% for laggards.</li>
-<li>Over <strong>92%</strong> of median web and mobile programmatic spend now flows through private marketplaces.</li>
+<li>only about <strong>36 cents</strong> of each dollar entering a demand-side platform (the software buyers use to bid for ads) reached consumers as a valid, viewable, measurable impression on a legitimate site;</li>
+<li>an average campaign ran on <strong>44,000</strong> websites;</li>
+<li>made-for-advertising sites, built to resell traffic rather than serve readers, took <strong>15%</strong> of the spend in the study's sample.</li>
 </ul>
-<p><strong>What this tells us.</strong> Verifiable records work: transparency rose sharply wherever log-level data and deal identifiers were available. But the industry's fix has largely been to retreat into private deals between large parties. Those deals are walled gardens by another name, and they are not open to the long tail of publishers. Federated Ads aims to make verifiable, deal-based buying a <strong>property of the protocol</strong>, available to anyone.</p>
+<p>The quarterly ANA/TAG TrustNet benchmark shows improvement [4]. In Q4 2025, top-performing advertisers turned <strong>56.7%</strong> of programmatic spend into impressions meeting its quality criteria ("TrueAdSpend"), and lower performers 37.5%. Over <strong>92%</strong> of median spend across environments flowed through private marketplaces: invitation-only deals between known buyers and sellers.</p>
+<p>Federated Ads addresses waste through verification levels and independent labelers (<a href="#103-verification-levels">§10.3</a>, <a href="#9-brand-safety-and-content-policy-options-compared">§9</a>). Waste is the harder problem, and the protocol's answers to it are weaker (<a href="#25-risks-and-mitigations">§25</a>).</p>
+<p><strong>A caveat on the evidence.</strong> ISBA and the ANA represent advertisers, and their studies rely on small samples of participating companies: 15 advertisers and 12 publishers in ISBA's 2020 study [1], and 21 advertisers in the ANA's [3]. They are the best evidence available, not a census of the market.</p>
+<p><strong>What this tells us.</strong> Verifiable records work: transparency rose sharply where log-level data and deal identifiers were available [2]. But the industry's fix has largely been to retreat into private deals [4]. In our view, that leaves out publishers too small to negotiate them. Federated Ads aims to make verifiable, deal-based buying a <strong>property of the protocol</strong>, available to anyone.</p>
 <h3 id="13-fraud">1.3 Fraud</h3>
-<p>Estimates of ad fraud vary widely by method. Juniper Research's model put fraud at about <strong>$84 billion in 2023</strong>, 22% of online ad spend [12]. That is a modelled upper-bound estimate. Verification vendors report much lower invalid-traffic rates on the inventory they measure. Either way, fraud thrives where delivery cannot be verified and identities cannot be authenticated, and both are design targets for Federated Ads.</p>
-<h3 id="14-surveillance-as-infrastructure-and-the-collapse-of-its-replacement">1.4 Surveillance as infrastructure, and the collapse of its replacement</h3>
+<p>Nobody knows how much ad fraud there is. Published figures range from under 1% to over 20%, partly because they measure different things: some count invalid traffic as a share of impressions, others model the share of spend lost to fraud.</p>
+<ul>
+<li><strong>High end.</strong> Market-research firm Juniper Research, in a whitepaper distributed by a fraud-prevention vendor, models losses to fraud at about <strong>$84 billion in 2023</strong>, or 22% of online ad spend, rising to $172 billion by 2028 [12].</li>
+<li><strong>Low end.</strong> The industry's anti-fraud body, the Trustworthy Accountability Group (TAG), measures invalid traffic. Under the Media Rating Council's definitions this includes general invalid traffic, such as known crawlers, as well as sophisticated invalid traffic such as fraud [98]. TAG reports rates below <strong>1%</strong> in its certified channels, and estimates about <strong>10%</strong> for US display and video advertising without its standards and programmes [95].</li>
+</ul>
+<p>In our view, both ends have an interest: anti-fraud vendors benefit from high estimates, and certification bodies and verification vendors from showing that the inventory they certify is clean. Fraud thrives where delivery cannot be verified and identities cannot be authenticated, and those are the gaps Federated Ads targets.</p>
+<p>"Fraud" covers several different problems, and Federated Ads is stronger against some than others:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Fraud type</th>
+<th>Example</th>
+<th>Federated Ads</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Misrepresentation</strong></td>
+<td>Domain spoofing; reselling inventory the seller does not own</td>
+<td><strong>Strong.</strong> Every node's identity is bound to its domain and every object is signed (<a href="#153-identity-keys-and-discovery">§15.3</a>)</td>
+</tr>
+<tr>
+<td><strong>Inflated reporting</strong></td>
+<td>A seller over-counts impressions</td>
+<td><strong>Medium to strong.</strong> Witnessed logs make numbers permanent and attributable; verification levels corroborate them (<a href="#103-verification-levels">§10.3</a>, <a href="#158-transparency-logs">§15.8</a>)</td>
+</tr>
+<tr>
+<td><strong>Invalid traffic</strong></td>
+<td>Bots, click farms, hidden ads</td>
+<td><strong>Weaker than today.</strong> Without device fingerprinting, nodes rely on bot lists, heuristics and optional client attestation (<a href="#105-client-attestation">§10.5</a>, <a href="#107-invalid-traffic-without-fingerprinting">§10.7</a>)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="14-cross-site-tracking-and-the-failed-replacement">1.4 Cross-site tracking and the failed replacement</h3>
 <p>Mainstream targeting was built on cross-site identifiers, and that model has run into trouble on several fronts:</p>
 <ul>
-<li><strong>Browsers.</strong> Safari and Firefox block third-party cookies by default.</li>
+<li><strong>Browsers.</strong> Safari has blocked third-party cookies by default since March 2020 [99]. Firefox confines each third-party cookie to the site where it was set, and blocks cookies from known trackers [100].</li>
 <li><strong>Regulators.</strong> GDPR, the ePrivacy Directive, the EU Digital Services and Digital Markets Acts, US state privacy laws and India's Digital Personal Data Protection Act all restrict it (<a href="#19-legal-and-regulatory-considerations">§19</a>).</li>
-<li><strong>Privacy Sandbox.</strong> Google's proposed replacement was abandoned. In July 2024 Google dropped its plan to remove third-party cookies from Chrome. On <strong>17 October 2025</strong> it retired most Privacy Sandbox APIs, including Topics, Protected Audience and Attribution Reporting, citing low adoption [10].</li>
-<li><strong>The result:</strong> after six years of industry engineering effort on APIs controlled by one vendor, Chrome still has third-party cookies, and no privacy-preserving replacement is widely deployed.</li>
+<li><strong>Privacy Sandbox.</strong> Google announced the Privacy Sandbox in August 2019 as a set of open standards to make the web more private [101]. In July 2024 it dropped its plan to remove third-party cookies from Chrome in favour of user choice [102]. In April 2025 it decided against a separate choice prompt, leaving the choice in Chrome's settings [103]. On <strong>17 October 2025</strong> it retired most Privacy Sandbox APIs, including Topics, Protected Audience and Attribution Reporting, citing their low adoption, and kept a few, among them CHIPS, FedCM and Private State Tokens [10].</li>
+<li><strong>The result:</strong> after six years of work on replacement APIs led by one vendor, Chrome still supports third-party cookies, and the vendor itself judged most of the replacements too little used to keep.</li>
 </ul>
-<p>The surviving multi-vendor effort is the W3C Private Advertising Technology Working Group's <em>Attribution</em> specification, which is still a Working Draft [24].</p>
-<p>Civil society and policy researchers have called for alternatives to surveillance-based advertising for years. The Norwegian Consumer Council and Accountable Tech called for a ban [57][87], and a 2022 US bill proposed one [88]. EFF argued for putting privacy first [60], and the Panoptykon Foundation set out requirements for a privacy-friendly ad system built on publisher collaboration [56], which this paper closely follows. A European Parliament study examined the policy options [59]. What none of them could point to was an open, interoperable protocol that implements the alternative.</p>
+<p>In 2020 the Panoptykon Foundation warned that Chrome's cohort targeting could make Google the gatekeeper of ad targeting across the open web [56]. That is the concentration problem of <a href="#11-concentration">§1.1</a> in another form.</p>
+<p>Multi-vendor standards work continues. The W3C Private Advertising Technology Working Group's <em>Attribution</em> specification is a Working Draft, most recently published on 10 September 2026 [24].</p>
+<p>Civil society and policy researchers have called for alternatives to surveillance-based advertising for years. The Norwegian Consumer Council and Accountable Tech called for a ban [57][87], and a 2022 US bill proposed one [88]. EFF argued for putting privacy first [60]. The Panoptykon Foundation examined how publishers could collaborate and set out requirements for a privacy-friendly ad system [56], which this paper closely follows. A European Parliament study examined the policy options [59]. As far as we found, none of these proposals describes an open, interoperable protocol that implements the alternative.</p>
 <h3 id="15-loss-of-creative-control">1.5 Loss of creative control</h3>
-<p>Once a creative enters the supply chain, it is copied into ad servers, exchanges, caches and CDNs that the advertiser does not control. Advertisers have many reasons to pull a creative quickly:</p>
+<p>Advertisers sometimes need to stop a creative quickly: for example after a legal problem, a product recall, a pricing error, the end of a licence for music or talent, or a brand crisis.</p>
+<p>Once a creative enters the supply chain, copies of it, and decisions about it, sit with parties the advertiser does not control. VAST, the IAB Tech Lab standard for serving video ads, describes ad-stitching services (which insert ads into a video stream on the server) that transcode a creative once and reuse the copy whenever its identifier appears again [104]. Exchanges and other vendors review ads and keep their own records of the outcome [105].</p>
+<p>Industry standards come close to a stop signal but stop short:</p>
 <ul>
-<li>a legal problem;</li>
-<li>a product recall;</li>
-<li>a pricing error;</li>
-<li>expired rights to talent or music;</li>
-<li>a brand crisis.</li>
+<li><strong>AdCOM 1.0</strong>, the object model that accompanies OpenRTB 3.0, has an "expired" audit status, but a vendor sets it and the expected behaviour is left to be agreed "offline" [105]. OpenRTB 3.0 is not backward compatible with 2.x, and IAB Tech Lab has added its features to 2.x piecemeal (<a href="#2-what-has-been-tried-lessons-from-prior-art">§2</a>).</li>
+<li><strong>VAST's <code>Expires</code> element</strong> is a playback timeout for one ad response, not a withdrawal [104].</li>
+<li><strong>The Ad Creative ID Framework</strong> gives a creative one identifier across the video supply chain and lets platforms check that it is registered, but defines no status for a withdrawn creative [106].</li>
 </ul>
-<p>In today's supply chain, pulling a creative is slow and incomplete. No interoperable "stop" signal exists, and nothing proves that it was honoured.</p>
+<p>Stopping a creative therefore depends on every party that holds a copy acting on its own, with no proof that it did. As far as our search found, no standard lets an advertiser withdraw a creative everywhere and receive proof that it was withdrawn (<a href="#74-revocation-mechanics">§7.4</a>).</p>
 <h3 id="16-the-unmonetised-open-web">1.6 The unmonetised open web</h3>
-<p>The ecosystems with the strongest values-based objections to surveillance advertising are also the ones with no workable alternative:</p>
+<p>In our view, some of the communities most opposed to tracking-based advertising are also the ones with the fewest options for earning from advertising:</p>
 <ul>
-<li><strong>Fediverse and decentralised social.</strong> Mastodon promises it "will never serve ads" [16]. Bluesky's CEO has said the company "can't enshittify the network with ads", but has not ruled out "user intent-driven" advertising [17].</li>
-<li><strong>Newsletters and podcasts.</strong> These are funded mostly by <strong>direct-sold sponsorships</strong>, which are growing but manual and unverifiable. US podcast advertising reached <strong>$2.86 billion in 2025</strong> [15].</li>
-<li><strong>Open-source and developer sites.</strong> Small contextual networks have shown that tracking-free advertising can pay. EthicalAds paid publishers about <strong>$117,000 in Q2 2026</strong> across about 200 sites [19]. These networks are small, centralised and not interoperable.</li>
-<li><strong>AI assistants.</strong> These are becoming an ad surface faster than norms can form:
+<li><strong>Fediverse and decentralised social.</strong> Mastodon says it "will never serve ads" [16]. Bluesky's chief executive has said the company "can't enshittify the network with ads" [108], but has not ruled out advertising that is "user intent-driven" [17].</li>
+<li><strong>Newsletters and podcasts.</strong> US podcast advertising reached <strong>$2.86 billion in 2025</strong> [5]. Federated Ads aims to give these media standard deals and verifiable delivery (<a href="#221-the-first-niche">§22.1</a>).</li>
+<li><strong>Open-source and developer sites.</strong> Small contextual networks show that tracking-free advertising can pay: EthicalAds paid its publishers <strong>$117,400</strong> in the second quarter of 2026, across 208 active publishers [19]. Each such network is run by a single operator, and as far as we found they do not interoperate.</li>
+<li><strong>AI assistants.</strong> These are becoming an ad surface quickly:
 <ul>
-<li>OpenAI began testing ads in ChatGPT in February 2026 under self-declared principles: answers not influenced by ads, ads clearly labelled, conversations kept private from advertisers [13]. By August 2026 it reported a $1 billion annualised run rate [90].</li>
-<li>Perplexity, by contrast, stopped its sponsored follow-up questions in early 2026, citing user trust [14].</li>
-<li>No AI provider's ad principles are independently verifiable.</li>
+<li>OpenAI published principles for advertising in ChatGPT in January 2026: ads do not influence answers, are clearly labelled and separate, and conversations are kept private from advertisers [13]. It began testing ads in the US on 9 February 2026 [107].</li>
+<li>By August 2026 it reported a $1 billion annualised revenue run rate. By then its ads system could also use context from a user's broader ChatGPT history where enabled, and advertisers could use a conversion pixel and custom audiences [90].</li>
+<li>These principles are self-declared [13][107]. In a search in October 2026 we found no independent audit of any AI provider's advertising principles; we welcome corrections.</li>
 </ul></li>
 </ul>
-<h3 id="17-ad-blocking-as-a-verdict">1.7 Ad blocking as a verdict</h3>
-<p>The eyeo <em>2026 Ad Blocking Report</em> estimates about <strong>1.1 billion</strong> ad-blocking users, roughly 30% of internet users, with mobile blocking up 27% since 2023. <strong>81%</strong> of respondents worry about how their data is used [11]. A large minority of the audience has opted out of today's advertising model altogether. Advertising that is non-tracking, accountable and clearly labelled is a credible way to win part of that audience back.</p>
+<h3 id="17-what-ad-blocking-tells-us">1.7 What ad blocking tells us</h3>
+<p>eyeo, a company whose business is ad filtering, estimates that about <strong>1.1 billion</strong> people used an ad blocker in the fourth quarter of 2025, roughly 30% of internet users, and that mobile ad-blocking users grew 27% since 2023. The user counts are eyeo's own estimates, built from its install data and figures published by browser companies [11].</p>
+<p>Ad blocking is not a blanket rejection of advertising. Among users of ad-filtering tools in eyeo's Acceptable Ads programme, which lets through ads that meet criteria for non-intrusive formats, more than nine in ten keep those ads enabled [11]; users can switch them off [96]. Privacy is part of the picture: in a Harris Poll of 2,058 US adults commissioned by eyeo in April 2026, 81% said they were concerned about devices recording their browsing history for targeted advertising [11].</p>
+<p>In our view, advertising that is non-tracking, accountable and clearly labelled is a credible way to win back part of this audience.</p>
 <h3 id="18-what-is-missing">1.8 What is missing</h3>
-<p>There is no open, federated protocol for advertising, comparable to SMTP for email or ActivityPub for social posting. Such a protocol would let any party:</p>
+<p>Open protocols for advertising exist. OpenRTB, the IAB Tech Lab standard, lets individual ad impressions be bought and sold in real time between platforms [109]. AdCP, an open standard governed by the industry body AgenticAdvertising.org, lets AI agents plan, buy and measure media. Its current version, 3.2, includes discovery through files published on each domain, optional signed requests, and experimental licensing of talent and other third-party rights with expiry and revocation [28][110][136].</p>
+<p>What we found missing (<a href="#2-what-has-been-tried-lessons-from-prior-art">§2</a>) is a protocol that does for advertising what SMTP does for email and ActivityPub for social posts, letting any party:</p>
 <ul>
-<li>run a node;</li>
+<li>run a node, found by its domain, with no central exchange;</li>
 <li>transact directly or through intermediaries it chooses;</li>
-<li>keep ownership of what it contributes;</li>
-<li>verify what happened;</li>
+<li>license its own creative for a limited time, withdraw it, and receive proof that the withdrawal was honoured;</li>
+<li>verify what was delivered, from signed records that others can check;</li>
 <li>do all of this without tracking the people who see the ads.</li>
 </ul>
+<p>As far as our search found, no open protocol combines these. Federated Ads is designed to, and to work alongside existing protocols rather than replace them: it bridges to OpenRTB (<a href="#143-bridges">§14.3</a>) and can complement agent protocols such as AdCP (<a href="#136-ai-agents-profileagent">§13.6</a>).</p>
 <hr />
 <h2 id="2-what-has-been-tried-lessons-from-prior-art">2. What has been tried: lessons from prior art</h2>
 <p>Federated Ads builds on, and has learned from, many earlier efforts. The table summarises what each did and what Federated Ads takes from it.</p>
@@ -260,134 +304,98 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 </thead>
 <tbody>
 <tr>
-<td><strong>ads.txt / sellers.json / SupplyChain object</strong> (IAB Tech Lab)</td>
-<td>Plain-text and JSON files on the domain declaring authorised sellers</td>
-<td>ads.txt: near-universal; sellers.json and SupplyChain object: widespread but uneven</td>
-<td>Domain-hosted declarations spread when they cost almost nothing. Federated Ads keeps that pattern and adds signatures.</td>
+<td><strong>ads.txt, sellers.json, SupplyChain object; ads.cert</strong> (IAB Tech Lab)</td>
+<td>Files on each domain declaring authorised sellers; ads.cert added signing, with keys published in DNS [20]</td>
+<td>By April 2019, 62% of top-100,000 sites selling through real-time bidding published ads.txt [111]. In a 2021–22 crawl, 20.5% of bid requests carried a SupplyChain object, and under a fifth of those were correct [112]. IAB Tech Lab calls ads.cert 2.0 ready for adoption [20], but its reference library describes itself as a proof of concept, unchanged since March 2023 [113]</td>
+<td>Domain-hosted declarations spread when they cost little. Signing needs production-grade code and participants who require it.</td>
 </tr>
 <tr>
-<td><strong>ads.cert 1.0 and 2.0</strong> (IAB Tech Lab)</td>
-<td>Signed bid requests; v2 binds keys to domains via DNS ("Call Signs") and signs server-to-server requests [20]</td>
-<td>v1 was tied to OpenRTB 3.0 and stalled. v2's reference implementation stopped at MVP. No buyer required it.</td>
-<td>The closest precedent. Signing cost was never the problem. Ship production-grade libraries and key management, and get major participants to <em>require</em> signatures.</td>
-</tr>
-<tr>
-<td><strong>OpenRTB 3.0 / AdCOM</strong></td>
-<td>A clean-slate redesign of real-time bidding</td>
-<td>Not backward compatible; adoption stayed minimal; useful parts moved back into 2.x [21]</td>
+<td><strong>OpenRTB 3.0 and AdCOM</strong> (IAB Tech Lab)</td>
+<td>A clean-slate redesign of real-time bidding, with signed bid requests [109]</td>
+<td>Not backward compatible with 2.x [114]. IAB Tech Lab reported its features being added piecemeal to 2.x, and OpenRTB 2.6 adopted the AdCOM lists [115][109]</td>
 <td>Breaking compatibility loses to incremental change. Provide bridges and a phased path.</td>
 </tr>
 <tr>
 <td><strong>Privacy Sandbox</strong> (Google)</td>
 <td>Browser APIs for interest-based ads and measurement without third-party cookies</td>
-<td>Most APIs retired in October 2025 [10]</td>
-<td>A "standard" controlled by one vendor with conflicting interests can be cancelled unilaterally. Require multi-stakeholder governance and independent implementations.</td>
+<td>In October 2025 Google announced it would retire most of the APIs, citing low adoption [10]</td>
+<td>A standard controlled by one vendor can be withdrawn by that vendor. Require multi-stakeholder governance and independent implementations.</td>
 </tr>
 <tr>
 <td><strong>Prebid.org</strong></td>
-<td>Neutral open-source header bidding with a multi-company board</td>
-<td>Widely adopted. A unilateral 2025 change to transaction IDs prompted a public dispute with IAB Tech Lab and a fork by The Trade Desk [22][23]</td>
+<td>Open-source header bidding governed by a multi-company board [142]</td>
+<td>Prebid describes Prebid.js as the most widely used header-bidding wrapper [142]. In August 2025 its Publisher Committee made transaction IDs supplier-specific [116]. AdExchanger reported that IAB Tech Lab's chief executive called this non-compliant, and itself described The Trade Desk's OpenAds as a forked version of the Prebid code [22]</td>
 <td>Neutral bodies work, but change control, notice periods and representation must be written down.</td>
 </tr>
 <tr>
-<td><strong>Do Not Track</strong></td>
-<td>A browser header asking sites not to track</td>
-<td>The W3C group closed in 2019 for insufficient deployment; "tracking" was never defined; no legal force [26]</td>
-<td>Vague signals fail.</td>
+<td><strong>Privacy signals: Do Not Track and Global Privacy Control</strong></td>
+<td>Browser headers asking sites not to track, or not to sell or share data</td>
+<td>The W3C closed Do Not Track in January 2019 for lack of deployment, and its companion compliance rules for lack of adoption [26][117][118]. California's regulations require businesses to honour opt-out preference signals, enforced for GPC against Sephora in 2022; Colorado has required GPC to be honoured since July 2024 [119][120][121]. GPC is a W3C Working Draft [25]</td>
+<td>A signal without agreed obligations fails. Narrow semantics with legal backing succeed. Federated Ads honours GPC.</td>
 </tr>
 <tr>
-<td><strong>Global Privacy Control</strong></td>
-<td>A narrow, well-defined opt-out header</td>
-<td>Recognised under California and Colorado law and in enforcement settlements; now a W3C Working Draft [25]</td>
-<td>Narrow semantics plus legal backing succeed. Federated Ads honours GPC.</td>
-</tr>
-<tr>
-<td><strong>Acceptable Ads / Coalition for Better Ads</strong></td>
-<td>Industry criteria for "acceptable" formats</td>
-<td>Criticised for pay-to-allowlist economics and for enforcement by an interested party</td>
+<td><strong>Acceptable Ads; Coalition for Better Ads</strong></td>
+<td>Industry criteria for acceptable ad formats</td>
+<td>Acceptable Ads' criteria are set by an independent committee, but its operator, eyeo, charges large platforms that benefit commercially a licensing fee that covers reviewing and enforcing them [96]. Google sits on the Coalition's board [123], and since February 2018 Chrome has blocked ads on sites that fail the Coalition's standards [122][124][125]</td>
 <td>Keep rule-making, enforcement and revenue separate.</td>
 </tr>
 <tr>
 <td><strong>Brave Ads</strong></td>
-<td>On-device matching from a downloaded catalogue; anonymous reporting via Privacy Pass-style tokens</td>
-<td>Works at scale (Brave reports over 100 million monthly active users [18]), but within one browser and one operator. Settled in its own token (BAT) [48]</td>
-<td>Local matching and anonymous tokens work technically. Federation and payment neutrality are what is missing.</td>
+<td>Matches ads to browsing behaviour on the device, from a downloaded catalogue; confirms ad views with Privacy Pass tokens [126][127]</td>
+<td>Works at scale (Brave reports over 100 million monthly active users [18]), but within one browser and one operator. Opted-in users receive 70% of the ad revenue in Brave's own token, BAT [128]</td>
+<td>On-device matching and anonymous tokens work. Federation and payment neutrality are what is missing.</td>
 </tr>
 <tr>
 <td><strong>Web Monetization / Coil</strong></td>
 <td>Streaming micropayments as an alternative to ads</td>
-<td>Coil shut down in March 2023; the work continues under the Interledger Foundation [27]</td>
-<td>One company carrying an "open" standard is fragile. Payment rails are the hardest part, so stay rail-agnostic.</td>
+<td>Coil discontinued its service on 15 March 2023 and passed stewardship of Web Monetization to the Interledger Foundation [27]</td>
+<td>One company carrying an open standard is fragile. Payment rails are hard, so stay rail-agnostic.</td>
 </tr>
 <tr>
-<td><strong>Blockchain ad projects</strong> (AdEx, Lucidity, the AdChain registry, Kochava XCHNG and others) [46][47]</td>
-<td>On-chain ad accounting, token-curated domain registries, tokenised insertion orders</td>
-<td>Pivoted or absorbed. Participants concluded what was really needed was "a better PKI"</td>
-<td>Signatures and verifiable logs are the valuable part. They need no blockchain.</td>
+<td><strong>Blockchain ad projects</strong> (AdEx, Lucidity, adChain)</td>
+<td>On-chain ad accounting and token-curated registries of domains</td>
+<td>AdEx moved away from advertising and became heyAura in 2026 [129]; Lucidity was acquired by Umbrella Network in 2021 [130]; adChain's operator reported governance and usability problems with its registry [46]</td>
+<td>In our view, signatures and verifiable logs are the valuable part, and they need no blockchain.</td>
 </tr>
 <tr>
-<td><strong>EthicalAds, Carbon Ads</strong></td>
-<td>Contextual, privacy-respecting networks</td>
-<td>Commercially viable, small, centralised; pays publishers 70% of revenue [19][81]</td>
-<td>Contextual advertising pays. Federation could let many such networks interoperate.</td>
+<td><strong>Email authentication (SPF, DKIM, DMARC)</strong></td>
+<td>Domain-bound signatures and aggregate reports for federated email</td>
+<td>Gmail and Yahoo required bulk senders to authenticate from February 2024 [131][132]. By the end of that month more than half a million of the top 10 million domains had published a DMARC record, according to Valimail, a DMARC vendor [133]</td>
+<td>The strongest model for Federated Ads: domain keys, aligned policy, aggregate reports, and a few large parties requiring them.</td>
 </tr>
 <tr>
-<td><strong>Email (SMTP, DKIM, DMARC)</strong></td>
-<td>Federated messaging with domain-bound signatures and aggregate reports</td>
-<td>Authentication adoption jumped once large receivers <em>required</em> it of bulk senders (Gmail/Yahoo, February 2024)</td>
-<td>The strongest model for Federated Ads: domain keys, aligned policy, aggregate reports and a few important parties requiring them.</td>
-</tr>
-<tr>
-<td><strong>ActivityPub and Fediverse Enhancement Proposals (FEPs); AT Protocol labelers</strong></td>
-<td>Federated social with a community extension process; composable, subscribable moderation [30][31]</td>
-<td>Living ecosystems</td>
-<td>A ready-made community process. Brand safety and fraud lists can be independent, subscribable "labelers".</td>
+<td><strong>ActivityPub and FEPs; AT Protocol labelers</strong></td>
+<td>Federated social networking with a community extension process; signed, subscribable moderation labels</td>
+<td>The FEP process is formalised and active [30]. AT Protocol labels are signed and served by labeler services that clients subscribe to [31]</td>
+<td>A ready-made community process. Brand-safety and fraud lists can be independent, subscribable labelers.</td>
 </tr>
 <tr>
 <td><strong>C2PA / Content Credentials</strong></td>
 <td>Signed provenance manifests for media [34]</td>
-<td>Growing adoption in cameras, phones and tools</td>
+<td>Built into shipping cameras (Leica M11-P, 2023) and phones (Google Pixel 10, 2025) [134][135]</td>
 <td>Creative manifests should interoperate with C2PA, not reinvent provenance.</td>
 </tr>
 <tr>
-<td><strong>AdCP and IAB Tech Lab AAMP</strong> (2025–26)</td>
+<td><strong>Agent protocols: AdCP and IAB Tech Lab AAMP</strong></td>
 <td>Protocols for AI agents to plan and buy media [28][29]</td>
-<td>Fast-moving; two camps</td>
-<td>Federated Ads should not be a third agent protocol. It can be the federated identity, licence and receipt layer that agent protocols call.</td>
+<td>AdCP 3.2, governed by AgenticAdvertising.org, became generally available in September 2026 [136]. AAMP 3.0 is in public comment until 22 October 2026 [138]. The two are not wire-compatible [137]</td>
+<td>Federated Ads complements agent protocols. It can bridge to AdCP for discovery and buying, and add acknowledged revocation of the advertiser's own creative, independently verifiable delivery records and settlement, which AdCP leaves out or marks experimental.</td>
 </tr>
 <tr>
-<td><strong>Academic privacy-preserving ad systems</strong> (Adnostic 2010, Privad 2011, ObliviAd 2012) [37][38][39]</td>
-<td>Local matching, cryptographic billing, anonymising intermediaries, click-fraud defence without identity</td>
-<td>Prototypes and small deployments; never adopted by industry</td>
-<td>The cryptography for private billing and fraud defence has existed for 15 years. What was missing was neutral governance and a reason for incumbents to adopt it.</td>
+<td><strong>Privacy-preserving ad research and measurement</strong> (Adnostic 2010, Privad 2011, ObliviAd 2012, THEMIS 2021; W3C Attribution; IETF DAP)</td>
+<td>Local matching, cryptographic billing and verifiable reports [37][38][39][40]; aggregate, privacy-preserving conversion measurement [24][140]</td>
+<td>Research prototypes; Privad reported a pilot with over 2,000 users [38]. THEMIS, by Brave Software and academic co-authors, used zero-knowledge proofs on a sidechain [40]. W3C Attribution is a Working Draft [24], IETF DAP has working-group consensus [140], and research on fraud-resistant attribution continues [44]. As far as we found, none was adopted commercially</td>
+<td>The cryptography has existed since 2010; what was missing was neutral governance and adoption. Receipts should be compatible with DAP and serve-time attestation.</td>
 </tr>
 <tr>
-<td><strong>THEMIS</strong> (Brave Research, 2020–21) [40]</td>
-<td>Decentralised ad platform with zero-knowledge-verifiable campaign reports on a sidechain</td>
-<td>Research prototype</td>
-<td>Advertisers can accept privacy if reports are verifiable. Federated Ads aims for the same auditability with signed receipts and transparency logs, without a chain or token.</td>
-</tr>
-<tr>
-<td><strong>Graze ads on Bluesky feeds</strong> (2025) [41]</td>
-<td>Advertisers buy placement in topical custom feeds; feed operators approve ads; no user-data targeting</td>
-<td>Live and small (reported $1 CPM, 30% intermediary share)</td>
-<td>Advertising by community and context works on federated social networks. Federated Ads would let many such operators interoperate without a single intermediary.</td>
-</tr>
-<tr>
-<td><strong>Nostr ad proposals</strong> (NOSTR-DAN, 2023; nostrads) [42][43]</td>
-<td>Signed ad-space offers and bids over relays, with Lightning payouts</td>
-<td>NOSTR-DAN unmerged after an ad-industry reviewer objected to auction-scale traffic over relays; nostrads experimental</td>
-<td>Per-impression auctions do not fit federated transports. Deals and standing offers do (<a href="#54-why-deals-and-not-per-impression-auctions">§5.4</a>).</td>
-</tr>
-<tr>
-<td><strong>Privacy-preserving attribution research and standards</strong> (IPA → W3C Attribution; IETF DAP; serve-time attestation) [24][44][45]</td>
-<td>Aggregate, differentially private conversion measurement; signatures at serve time to resist fraud</td>
-<td>Standards in progress at W3C and IETF</td>
-<td>Receipts should be compatible with DAP and serve-time attestation rather than inventing a parallel measurement stack.</td>
+<td><strong>Contextual and community ad networks: EthicalAds; Graze on Bluesky; Nostr proposals</strong></td>
+<td>EthicalAds: a contextual ad network. Graze: advertisers propose sponsored posts to custom feeds, and each feed operator sets a price and accepts or rejects campaigns [82]. Nostr: signed ad offers over relays (NOSTR-DAN) and bids with Lightning payment (NIP-AD) [42][139]</td>
+<td>EthicalAds pays publishers 70% of revenue [81]: $117,400 in the second quarter of 2026 [19]. Graze is live and takes a 30% platform fee [141]. NOSTR-DAN has been open and unmerged since 2023, after a reviewer said auction-scale bid traffic would bloat relays [42]; NIP-AD is unmerged, with a proof-of-concept implementation [139][43]</td>
+<td>Contextual and community advertising pays. Federation could let such networks interoperate. Per-impression auctions do not fit federated transports; deals and standing offers do (<a href="#54-why-deals-and-not-per-impression-auctions">§5.4</a>).</td>
 </tr>
 </tbody>
 </table></div>
-<p><strong>How Federated Ads differs from the closest work.</strong> A literature and project search (October 2026) found no existing proposal that combines domain federation, contextual-by-default matching, verifiable delivery without a blockchain, and advertiser-owned, revocable creatives. The closest academic work, THEMIS [40], provides verifiable reporting but depends on a sidechain and a token and matches on behaviour. The closest live deployment, Graze [41], is contextual and community-controlled but is a single company, not an open protocol. We found no prior work applying transparency logs to ad delivery receipts, and no prior proposal for time-limited, revocable creative licences. We make this claim cautiously, because absence of evidence in a search is not proof, and we welcome pointers to work we missed.</p>
+<p><strong>How Federated Ads differs from the closest work.</strong> In a search of literature and projects in October 2026, we found no open protocol that combines domain federation without a central exchange, advertiser-owned creative licences whose revocation recipients must acknowledge, delivery records that third parties can verify independently, and contextual-only matching. AdCP 3.2 overlaps on several of these: it has domain-based agent discovery, optional signed requests, and time-limited rights grants with a revocation webhook, but its rights lifecycle is experimental and settlement is out of its scope [136][137]. THEMIS makes reports verifiable with zero-knowledge proofs on a sidechain, pays rewards in tokens and matches ads to an on-device user profile [40]. Graze lets feed operators approve each campaign, but it is a single company's service, not an open protocol [82]. Absence from a search is not proof, and we welcome pointers to work we missed.</p>
 <p><strong>The ten lessons Federated Ads is designed around:</strong></p>
 <ol type="1">
 <li><strong>Bind identity to domains and make signing mandatory</strong>, as email authentication did.</li>
@@ -396,7 +404,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>No single vendor controls the standard.</strong> Require two independent interoperable implementations before calling anything stable.</li>
 <li><strong>Keep rule-making, enforcement and revenue separate.</strong></li>
 <li><strong>Write change control into governance from day one.</strong></li>
-<li><strong>Fund the stewards and avoid having the foundation operate critical infrastructure.</strong> Matrix's funding crisis is the warning [33].</li>
+<li><strong>Fund the stewards and avoid having the foundation operate critical infrastructure.</strong> The Matrix.org Foundation's 2025 funding shortfall, which put the bridges it hosted at risk, is the warning [33].</li>
 <li><strong>No token, no chain.</strong> Use PKI and verifiable logs.</li>
 <li><strong>Define every term narrowly and honour signals that have legal force.</strong></li>
 <li><strong>Plug into existing trust frameworks</strong> (C2PA, Media Rating Council (MRC) definitions, Privacy Pass, W3C Attribution, agent protocols) instead of rebuilding them.</li>
@@ -482,6 +490,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>Real-time auctions across nodes as the default.</strong> They are available only as a constrained optional profile (<a href="#64-price-discovery">§6.4</a>).</li>
 <li><strong>A native token, blockchain or mandatory payment provider.</strong></li>
 <li><strong>Conversion tracking at the individual level.</strong> Only aggregate, privacy-preserving measurement is supported (<a href="#106-conversions-and-attribution">§10.6</a>).</li>
+<li><strong>Third-party tracking of people.</strong> Third parties may measure deals through the measurement channels, but may not receive identifiers or per-person observations (<a href="#109-third-party-measurement-and-tracking">§10.9</a>).</li>
 <li><strong>Content moderation of publisher content.</strong> Federated Ads describes content but does not judge it.</li>
 </ul>
 <hr />
@@ -539,6 +548,11 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <td><strong>Labeler</strong></td>
 <td>Publishes signed labels about nodes, domains or creatives: brand safety, fraud, verified identity.</td>
 <td>Yes</td>
+</tr>
+<tr>
+<td><strong>Measurer</strong></td>
+<td>A third party named in a Deal for delivery reporting, verification, attribution, lift research or audit. Receives aggregate measurements; as an aggregator in the planned conversion profile, it receives only shares of individual reports, which reveal nothing unless the two aggregators collude (<a href="#109-third-party-measurement-and-tracking">§10.9</a>).</td>
+<td>Yes; an external vendor takes part through a node that holds the measurer role, such as a measurement bridge</td>
 </tr>
 <tr>
 <td><strong>Attester / token issuer</strong></td>
@@ -1090,9 +1104,9 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li>V0–V2 suits most direct deals.</li>
 <li>Large anonymous deals should require V3 or V4.</li>
 </ul>
-<h3 id="104-viewability-without-third-party-scripts">10.4 Viewability without third-party scripts</h3>
-<p>Federated Ads publishes an <strong>open-source measurement module</strong>. It is a small script whose hash is pinned, which measures viewability using standard browser APIs (Intersection Observer). Receipts record the module's hash, and auditors check that pages actually load that hash.</p>
-<p>This is weaker than an independent verification vendor's script, because the publisher controls the page. It is also more transparent: anyone can read the module, and tampering with it is detectable in audits. For apps, a native equivalent is planned, aligned with the IAB Open Measurement SDK concepts.</p>
+<h3 id="104-viewability-measurement-in-the-page">10.4 Viewability measurement in the page</h3>
+<p>Federated Ads publishes an open-source reference <strong>measurement module</strong>: a small script, pinned by hash, that measures viewability with standard browser APIs (Intersection Observer). Receipts record the module's hash, and auditors check that pages load that hash. Verification vendors may supply their own modules under the stricter conditions of <a href="#109-third-party-measurement-and-tracking">§10.9</a>: pinned, open or escrowed, and with no network access.</p>
+<p>This is weaker than a verification vendor's script that reports independently, because the publisher controls the page. It is also more transparent: anyone can read the module, and tampering with it is detectable in audits. A native profile for apps is planned (<a href="#appendix-d-measurement-channels-in-detail">Appendix D</a>).</p>
 <h3 id="105-client-attestation">10.5 Client attestation</h3>
 <p>Privacy Pass (RFC 9576–9578) lets an attester vouch for a client without identifying it.</p>
 <p><strong>How Federated Ads uses it:</strong></p>
@@ -1119,6 +1133,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 </ul></li>
 <li><strong>Prohibited:</strong> per-user conversion pixels and click identifiers that are unique to a person.</li>
 </ul>
+<p>Measurement providers may take part as DAP aggregators; see <a href="#109-third-party-measurement-and-tracking">§10.9</a>.</p>
 <h3 id="107-invalid-traffic-without-fingerprinting">10.7 Invalid traffic without fingerprinting</h3>
 <p>Selling nodes filter invalid traffic using:</p>
 <ul>
@@ -1141,6 +1156,98 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>Escrow.</strong> Under prepaid settlement, the disputed amount stays in escrow until resolved.</li>
 </ol>
 <p>The burden of proof is set by verification level: under V0-only deals the seller's log stands unless the buyer shows contrary evidence.</p>
+<h3 id="109-third-party-measurement-and-tracking">10.9 Third-party measurement and tracking</h3>
+<p>Buyers rely on third parties for an independent count to reconcile against the seller's invoice, for verification that a person could have seen the ad, and for evidence that the spend caused an outcome. Today they are met with third-party code and pixels, identifiers shared between companies, and per-person conversion tracking. Federated Ads keeps the needs and drops those mechanisms.</p>
+<p><strong>The rule: measurement, not observation.</strong> A third party may receive <em>measurements about a Deal</em>. It may never receive <em>observations about a person</em>. A data flow conforms only if the recipient cannot tell, from everything it receives, that two events came from the same person or device, and cannot recover an IP address, user agent, page URL or any identifier.</p>
+<p><strong>Measurers.</strong> The advertiser or buying node names third parties in the Deal as <strong>measurers</strong>, each with a declared purpose: delivery reporting, verification, attribution, lift research (measuring whether ads changed behaviour) or audit. A measurer is a node that declares the role <code>measurer</code> and publishes a signed data-handling statement covering purpose limitation, retention, no onward sale and no attempt at re-identification. Labelers can publish signed labels about measurers.</p>
+<p><strong>Five channels</strong> (details in <a href="#appendix-d-measurement-channels-in-detail">Appendix D</a>)</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Channel</th>
+<th>Replaces</th>
+<th>What the third party gets</th>
+<th>Conformance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A. Aggregate tracker callbacks</strong></td>
+<td>Tracking pixels, VAST tracking URLs, click-tracker redirects</td>
+<td>Signed Tracker Reports, sent server to server by the selling node, carrying the aggregate cells of its Receipt Batches</td>
+<td>Extended</td>
+</tr>
+<tr>
+<td><strong>B. Sandboxed measurement modules</strong></td>
+<td>Third-party verification tags</td>
+<td>Coarse counters from the vendor's own pinned code, which runs in the page with no network access; reported through Channel A</td>
+<td>Extended</td>
+</tr>
+<tr>
+<td><strong>C. Aggregate conversion measurement</strong></td>
+<td>Conversion pixels, click identifiers, per-install postbacks</td>
+<td>Deal-level conversion histograms with noise, as one of two non-colluding aggregators in the DAP profile (<a href="#106-conversions-and-attribution">§10.6</a>)</td>
+<td>Planned profile</td>
+</tr>
+<tr>
+<td><strong>D. Experiments</strong></td>
+<td>Per-person holdouts and lift cookies</td>
+<td>Outcome differences between holdout cells committed in advance</td>
+<td>Optional</td>
+</tr>
+<tr>
+<td><strong>E. Consented panels and audits</strong></td>
+<td>Cross-site audience and reach measurement</td>
+<td>Signed aggregate estimates from a panel whose members consented, or from an auditor</td>
+<td>Outside the protocol core</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>What the channels prove.</strong> A Tracker Report repeats the selling node's own committed numbers. It therefore matches the seller's invoice, but it is not an independent count: on its own it is V0 evidence (<a href="#103-verification-levels">§10.3</a>). Independent corroboration comes from Channel B modules, from verification levels V2 to V4, and from audits.</p>
+<p><strong>What remains prohibited</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Practice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Third-party cookies, and third-party JavaScript or pixels in the browser, other than the pinned, egress-free modules of Channel B</td>
+<td>Gives a third party a line of sight to the person and the page</td>
+</tr>
+<tr>
+<td>Cookie syncing, identity graphs, universal IDs, and hashed email or phone matching across parties</td>
+<td>A cross-site identifier by another name (<a href="#8-audience-matching-options-compared">§8</a>)</td>
+</tr>
+<tr>
+<td>Device fingerprinting for measurement or fraud scoring (<a href="#107-invalid-traffic-without-fingerprinting">§10.7</a> filters invalid traffic without it)</td>
+<td>The same</td>
+</tr>
+<tr>
+<td>Per-click or per-impression unique identifiers, and macros that expand to them</td>
+<td>Lets events be joined to a person</td>
+</tr>
+<tr>
+<td>Server-side forwarding of IP address, user agent or headers to a third party</td>
+<td>Server-to-server tracking is still tracking</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>What this costs</strong></p>
+<ul>
+<li><strong>No per-person or multi-touch attribution</strong> (crediting a sale across several ads a person saw). Deal-level conversion rates and experiments are what remain.</li>
+<li><strong>No cross-publisher deduplication or frequency</strong> (<a href="#65-budgets-pacing-and-frequency">§6.5</a>). Panels give estimates, not counts.</li>
+<li><strong>Weaker invalid-traffic detection.</strong> Fingerprinting and cross-site reputation are not available to vendors.</li>
+<li><strong>Slower feedback.</strong> Hourly aggregates replace per-event pixels; pacing uses spend totals.</li>
+<li><strong>Integration work.</strong> Vendors and agencies must ingest Tracker Reports.</li>
+<li><strong>Accreditation is open.</strong> Whether accreditation bodies and verification vendors accept egress-free modules and aggregate reports is an open question (<a href="#26-open-questions">§26</a>).</li>
+<li><strong>Price.</strong> Buyers may pay less where measurement is coarser (<a href="#203-the-evidence-on-revenue-without-tracking">§20.3</a>).</li>
+</ul>
+<p>In return there are fewer vendors in the render path, no third-party data leakage, and less regulatory exposure.</p>
+<p><strong>Device access.</strong> Sending Tracker Reports server to server (Channel A) involves no access to the user's device. Channel B's modules read signals on the device, Channel C relies on reports produced in the user's browser or app, and a publisher's own randomisation of its visitors (a first-party practice outside Channel D's holdouts) may use first-party state on the device; these carry the consent analysis of <a href="#183-device-access">§18.3</a>. Whether aggregate cells count as anonymous data depends on context, including the recipient's means of re-identification, and needs jurisdiction-specific review (<a href="#19-legal-and-regulatory-considerations">§19</a>). This is not legal advice.</p>
+<p><strong>Considered and left out of v1:</strong> a consent-gated cross-site tier, in which a person knowingly allows cross-site measurement through tokens they hold. It would amend principle P3 and carries the highest legal exposure. It is recorded as an open question (<a href="#26-open-questions">§26</a>).</p>
 <hr />
 <h2 id="11-settlement">11. Settlement</h2>
 <p>The protocol proves what is owed. <strong>Settlement profiles</strong> define how it is paid.</p>
@@ -1233,7 +1340,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>Native</strong> (default): a title, body, image or video asset and a CTA, rendered by the publisher's own template. No creative code.</li>
 <li><strong>Display:</strong> a static image (WebP, AVIF, PNG, JPEG, or SVG loaded as an image, never inline).</li>
 <li><strong>HTML5:</strong> allowed only at the extended conformance level. It runs in an <code>&lt;iframe sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"&gt;</code> served from a dedicated cookieless origin run by the selling node. The HTML and every file it loads must be hash-pinned assets of the approved manifest. A strict CSP lets the creative load only those assets from that origin, with scripts allowed by origin or hash and never <code>unsafe-eval</code>, and blocks every other request: no <code>connect-src</code>, no forms, no other origins. (A bare <code>default-src 'none'</code> would block the creative's own scripts and styles too.) <code>allow-same-origin</code> is never combined with <code>allow-scripts</code>.</li>
-<li><strong>Never allowed:</strong> third-party JavaScript, tracking pixels, or unpinned assets.</li>
+<li><strong>Never allowed:</strong> third-party JavaScript, tracking pixels, or unpinned assets. Vendor measurement uses the pinned, egress-free modules and server-side reports of <a href="#109-third-party-measurement-and-tracking">§10.9</a>, never code or pixels inside the creative.</li>
 </ol>
 <h3 id="132-social-and-fediverse-surfacesocial">13.2 Social and fediverse (<code>surface:social</code>)</h3>
 <p><strong>ActivityPub.</strong> ActivityStreams has no sponsorship concept, and remote servers drop properties they don't understand. The disclosure therefore appears <strong>in the visible content</strong> as well as in a machine-readable tag:</p>
@@ -1403,6 +1510,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 </ul>
 <p>Expect modest demand through the bridge. Existing buyers pay less for inventory without identifiers. The bridge exists to avoid a completely empty marketplace, not to replace direct Federated Ads buying.</p>
 <p><strong>VAST bridge.</strong> It turns a Federated Ads manifest into a VAST <code>InLine</code> response for ad-insertion servers and video players.</p>
+<p><strong>Measurement bridge.</strong> It lets agencies, verification vendors and attribution providers keep their reporting pipelines. It receives signed Tracker Reports from selling nodes and maps them onto the formats those tools already ingest (for example delivery feeds and verification dashboards), and it hosts vendor measurement modules for the sandbox (<a href="#109-third-party-measurement-and-tracking">§10.9</a>). It never passes through, or asks for, any user-level field.</p>
 <p><strong>Agent binding.</strong> It exposes Federated Ads operations as tools for agent frameworks, as described in <a href="#136-ai-agents-profileagent">§13.6</a>.</p>
 <hr />
 <h1 id="part-iii-how">Part III: How</h1>
@@ -1565,6 +1673,11 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <td>Signed aggregate delivery cells with a Merkle root and log inclusion</td>
 </tr>
 <tr>
+<td><code>TrackerReport</code></td>
+<td>Seller</td>
+<td>The aggregate cells of a Receipt Batch, or a deal's spend to date, sent to a measurer named in the Deal (<a href="#109-third-party-measurement-and-tracking">§10.9</a>)</td>
+</tr>
+<tr>
 <td><code>Statement</code> / <code>PaymentNotice</code></td>
 <td>Both / payer</td>
 <td>Settlement</td>
@@ -1707,7 +1820,7 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;region&quot;</span><span class="fu">:</span> <span class="st">&quot;*&quot;</span><span class="fu">,</span> <span class="dt">&quot;event&quot;</span><span class="fu">:</span> <span class="st">&quot;click&quot;</span><span class="fu">,</span> <span class="dt">&quot;count&quot;</span><span class="fu">:</span> <span class="dv">97</span> <span class="fu">}</span></span>
 <span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
 <span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;cellTree&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;alg&quot;</span><span class="fu">:</span> <span class="st">&quot;rfc6962-sha256&quot;</span><span class="fu">,</span> <span class="dt">&quot;size&quot;</span><span class="fu">:</span> <span class="dv">7</span><span class="fu">,</span> <span class="dt">&quot;root&quot;</span><span class="fu">:</span> <span class="st">&quot;sha256-…&quot;</span> <span class="fu">},</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;measurementModule&quot;</span><span class="fu">:</span> <span class="st">&quot;sha256-…&quot;</span><span class="fu">,</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;measurementModules&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;sha256-…&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
 <span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;attestation&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;tokenType&quot;</span><span class="fu">:</span> <span class="st">&quot;0x0002&quot;</span><span class="fu">,</span> <span class="dt">&quot;issuer&quot;</span><span class="fu">:</span> <span class="st">&quot;https://issuer.example&quot;</span><span class="fu">,</span> <span class="dt">&quot;count&quot;</span><span class="fu">:</span> <span class="dv">2104</span><span class="fu">,</span></span>
 <span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>                   <span class="dt">&quot;tokenTree&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;size&quot;</span><span class="fu">:</span> <span class="dv">2104</span><span class="fu">,</span> <span class="dt">&quot;root&quot;</span><span class="fu">:</span> <span class="st">&quot;sha256-…&quot;</span> <span class="fu">}</span> <span class="fu">},</span></span>
 <span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;log&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;origin&quot;</span><span class="fu">:</span> <span class="st">&quot;ads.example.com/fa/log&quot;</span><span class="fu">,</span> <span class="dt">&quot;index&quot;</span><span class="fu">:</span> <span class="dv">48213</span> <span class="fu">},</span></span>
@@ -1743,7 +1856,7 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 </tr>
 <tr>
 <td><strong>federated-ads-extended</strong></td>
-<td>Core + Standing Offers and RFPs; signed-cache tier; Spend Reports; Statements and at least one settlement profile; ad-free endpoint; HTML5 sandbox; dispute flow</td>
+<td>Core + Standing Offers and RFPs; signed-cache tier; Spend Reports; Statements and at least one settlement profile; ad-free endpoint; HTML5 sandbox; dispute flow; tracker callbacks and measurement-module sandbox (<a href="#109-third-party-measurement-and-tracking">§10.9</a>)</td>
 </tr>
 <tr>
 <td><strong>federated-ads-verified</strong></td>
@@ -1867,6 +1980,14 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <td>Short-lived subkeys; offline root; logged revocation</td>
 </tr>
 <tr>
+<td><strong>Covert identification through a measurer</strong> (small cells, overlapping windows, side channels in modules)</td>
+<td>k-thresholds; fixed non-overlapping windows; deal-level macros only; egress-free module sandbox; signed data-handling statements; labels for violators</td>
+</tr>
+<tr>
+<td><strong>Malicious or colluding measurement vendor</strong></td>
+<td>Tracker Reports share the receipt Merkle root, so a vendor cannot invent counts the seller did not commit; module hash pinned and audited; vendor sees aggregates only</td>
+</tr>
+<tr>
 <td><strong>Attester centralisation</strong></td>
 <td>V3 is optional; multiple issuers allowed; an open question on community attesters</td>
 </tr>
@@ -1936,6 +2057,18 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <td>Client → selling node → auditor</td>
 <td>Batch retention</td>
 <td>Yes, unlinkable</td>
+</tr>
+<tr>
+<td>Tracker Reports</td>
+<td>Selling node → measurer</td>
+<td>Contract and legal retention</td>
+<td>Yes, aggregated with k ≥ 50, no user-level fields (<a href="#109-third-party-measurement-and-tracking">§10.9</a>)</td>
+</tr>
+<tr>
+<td>Measurement-module signals (viewability, invalid-traffic flags)</td>
+<td>The user's device, then the selling node</td>
+<td>Transient</td>
+<td>Only as coarse counters in aggregate cells (<a href="#109-third-party-measurement-and-tracking">§10.9</a>, <a href="#183-device-access">§18.3</a>)</td>
 </tr>
 </tbody>
 </table></div>
@@ -2694,12 +2827,17 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <li><strong>C2PA.</strong> Should Federated Ads define a C2PA assertion for licences and revocation status?</li>
 <li><strong>Measurement module.</strong> Who maintains and audits the open-source viewability module?</li>
 <li><strong>Funding.</strong> Which funders can support early stewardship without compromising neutrality?</li>
+<li><strong>Measurers.</strong> Who accredits measurement modules and audits the sandbox: the MRC, the standards body, or independent auditors? Will major verification vendors accept egress-free modules and aggregate reports in place of their current tags?</li>
+<li><strong>Consent-gated cross-site tier.</strong> Should a later version offer an opt-in profile in which a person knowingly allows cross-site measurement (user-held tokens, for example)? It would amend P3 and carry the highest legal exposure. v1 says no.</li>
+<li><strong>Experiments.</strong> Are signed region and time holdouts workable for small advertisers, or does experimental measurement only suit large budgets?</li>
 </ol>
 <hr />
 <h2 id="27-frequently-asked-questions">27. Frequently asked questions</h2>
 <p><strong>Is this a blockchain or crypto project?</strong> No. Federated Ads uses ordinary signatures and Merkle logs, the same technology as Certificate Transparency. Stablecoin settlement is one optional payment profile among several.</p>
 <p><strong>Does Federated Ads replace OpenRTB or Prebid?</strong> No. It is a different model, based on deals and federation, for parties who want it. A bridge lets existing buyers participate.</p>
 <p><strong>Does Federated Ads track users?</strong> No. Matching is contextual. Receipts are aggregated. Cross-site identifiers are prohibited in protocol messages.</p>
+<p><strong>Can third-party verification and measurement vendors work with Federated Ads?</strong> Yes, through the measurement channels of <a href="#109-third-party-measurement-and-tracking">§10.9</a>, and through a measurement bridge for their existing tools (<a href="#143-bridges">§14.3</a>). They receive signed aggregate reports from the selling node, may supply sandboxed measurement modules that have no network access, and, once the planned profile is defined, may operate conversion aggregators (<a href="#106-conversions-and-attribution">§10.6</a>). They do not get pixels, cookies or identifiers.</p>
+<p><strong>Is server-side tracking allowed?</strong> Not if it forwards anything about a person. Moving a pixel from the browser to the server still sends the same data. Server-to-server reports carry aggregate cells only.</p>
 <p><strong>Can large companies participate?</strong> Yes, as nodes on equal terms. Governance prevents any single company from controlling the standard.</p>
 <p><strong>Is this related to "federated learning"?</strong> No. Some advertising research uses "federated" to mean federated machine learning, where models are trained across devices or servers (for example AdFL, 2026 [91]). Here "federated" means independent servers interoperating through an open protocol, as email and ActivityPub do.</p>
 <p><strong>Who runs Federated Ads?</strong> Nobody runs "the network". Independent operators run nodes. The initiative maintains the specification only.</p>
@@ -2789,42 +2927,90 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <td><strong>Bridge</strong></td>
 <td>A node translating between Federated Ads and a legacy protocol</td>
 </tr>
+<tr>
+<td><strong>Measurer</strong></td>
+<td>A third party named in a Deal that receives aggregate measurements, never per-person data; as an aggregator in the planned conversion profile, it receives only shares of individual reports</td>
+</tr>
+<tr>
+<td><strong>Tracker Report</strong></td>
+<td>The aggregate cells of a Receipt Batch, or a deal's spend to date, signed and sent to a measurer's endpoint</td>
+</tr>
+<tr>
+<td><strong>Cookie syncing</strong></td>
+<td>Companies matching their separate cookie identifiers for the same browser so they can share data about it</td>
+</tr>
+<tr>
+<td><strong>Identity graph</strong></td>
+<td>A database linking a person's identifiers across devices, sites and companies</td>
+</tr>
+<tr>
+<td><strong>Lift</strong></td>
+<td>The change in an outcome, such as sales, caused by advertising, usually measured against a control group</td>
+</tr>
+<tr>
+<td><strong>Measurement module</strong></td>
+<td>Pinned, open or escrowed code run in an egress-free sandbox to compute coarse counters</td>
+</tr>
+<tr>
+<td><strong>Demand-side platform (DSP)</strong></td>
+<td>Software advertisers and agencies use to buy ad impressions automatically across many sellers</td>
+</tr>
+<tr>
+<td><strong>Made-for-advertising (MFA) site</strong></td>
+<td>A site built mainly to resell ad traffic at a profit rather than to serve readers</td>
+</tr>
+<tr>
+<td><strong>Private marketplace (PMP)</strong></td>
+<td>An invitation-only programmatic deal between known buyers and sellers, identified by a deal ID</td>
+</tr>
+<tr>
+<td><strong>Log-level data</strong></td>
+<td>Impression-by-impression records from each party in the supply chain, used to reconcile spend</td>
+</tr>
+<tr>
+<td><strong>VAST</strong></td>
+<td>The IAB Tech Lab standard (Video Ad Serving Template) that tells a video player which ad to play and how to report on it</td>
+</tr>
+<tr>
+<td><strong>Ad stitching</strong></td>
+<td>Inserting ads into a video or audio stream on the server, so the player receives one continuous stream</td>
+</tr>
 </tbody>
 </table></div>
 <hr />
 <h2 id="appendix-b-references">Appendix B. References</h2>
 <p><em>Industry and market data</em></p>
 <ol type="1">
-<li>ISBA &amp; PwC, <em>Programmatic Supply Chain Transparency Study</em> (2020). Summary: <a href="https://www.thedrum.com/news/2020/05/06/big-hole-the-value-chain-one-third-adtech-costs-unattributable-finds-isba">https://www.thedrum.com/news/2020/05/06/big-hole-the-value-chain-one-third-adtech-costs-unattributable-finds-isba</a></li>
+<li>ISBA &amp; PwC, <em>Programmatic Supply Chain Transparency Study</em>, executive summary (May 2020). <a href="https://www.isba.org.uk/system/files/media/documents/2020-12/executive-summary-programmatic-supply-chain-transparency-study.pdf">https://www.isba.org.uk/system/files/media/documents/2020-12/executive-summary-programmatic-supply-chain-transparency-study.pdf</a></li>
 <li>ISBA &amp; PwC, <em>Programmatic Supply Chain Transparency Study II</em> (January 2023). <a href="https://www.isba.org.uk/system/files/media/documents/2023-01/ISBA%20%20PwC%20programmatic%20supply%20chain%20study%20II%20(summary)-%2018%20January%202023.pdf">https://www.isba.org.uk/system/files/media/documents/2023-01/ISBA%20%20PwC%20programmatic%20supply%20chain%20study%20II%20(summary)-%2018%20January%202023.pdf</a></li>
-<li>ANA, <em>Programmatic Media Supply Chain Transparency Study</em> (December 2023). <a href="https://www.ana.net/">https://www.ana.net/</a></li>
+<li>ANA, <em>Programmatic Media Supply Chain Transparency Study: Complete Report</em> (December 2023). ANA login required. <a href="https://www.ana.net/miccontent/show/id/rr-2023-12-ana-programmatic-media-supply-chain-transparency-study">https://www.ana.net/miccontent/show/id/rr-2023-12-ana-programmatic-media-supply-chain-transparency-study</a></li>
 <li>ANA / TAG TrustNet, <em>Programmatic Transparency Benchmark</em>, Q4 2025 (February 2026). <a href="https://www.ana.net/content/show/id/pr-2026-02-programatic">https://www.ana.net/content/show/id/pr-2026-02-programatic</a></li>
 <li>IAB &amp; PwC, <em>Internet Advertising Revenue Report, Full Year 2025</em> (April 2026). <a href="https://www.iab.com/wp-content/uploads/2026/04/IAB_PwC_Internet_Ad_Revenue_Report_Full_Year_2025_April_2026.pdf">https://www.iab.com/wp-content/uploads/2026/04/IAB_PwC_Internet_Ad_Revenue_Report_Full_Year_2025_April_2026.pdf</a></li>
 <li>WPP Media, <em>This Year Next Year, 2026 Midyear Forecast</em> (June 2026). <a href="https://www.wppmedia.com/news/report-this-year-next-year-midyear-2026">https://www.wppmedia.com/news/report-this-year-next-year-midyear-2026</a></li>
-<li><em>United States v. Google LLC</em> (E.D. Va.), liability opinion 17 April 2025; remedies decision September 2026. Coverage: <a href="https://www.adexchanger.com/antitrust/google-wont-have-to-break-up-its-ad-tech-business-judge-brinkema-rules/">https://www.adexchanger.com/antitrust/google-wont-have-to-break-up-its-ad-tech-business-judge-brinkema-rules/</a></li>
-<li>European Commission, Case AT.40670 (Google adtech), decision of 5 September 2025. Coverage: <a href="https://www.cnbc.com/2025/09/05/google-slapped-by-eu-with-3point45-billion-antitrust-fine.html">https://www.cnbc.com/2025/09/05/google-slapped-by-eu-with-3point45-billion-antitrust-fine.html</a></li>
-<li>Competition Bureau Canada, application against Google (November 2024). <a href="https://www.canada.ca/en/competition-bureau/news/2024/11/competition-bureau-sues-google-for-anti-competitive-conduct-in-online-advertising-in-canada.html">https://www.canada.ca/en/competition-bureau/news/2024/11/competition-bureau-sues-google-for-anti-competitive-conduct-in-online-advertising-in-canada.html</a></li>
+<li><em>United States v. Google LLC</em>, No. 1:23-cv-00108 (E.D. Va.), Memorandum Opinion on liability (17 April 2025). <a href="https://ag.ny.gov/sites/default/files/court-filings/united-states-of-america-et-al-v-google-llc-memorandum-opinion-2025.pdf">https://ag.ny.gov/sites/default/files/court-filings/united-states-of-america-et-al-v-google-llc-memorandum-opinion-2025.pdf</a> ; docket: <a href="https://www.courtlistener.com/docket/66753787/united-states-v-google-llc/">https://www.courtlistener.com/docket/66753787/united-states-v-google-llc/</a></li>
+<li>European Commission, "Commission fines Google €2.95 billion over abusive practices in online advertising technology," press release IP/25/1992, Case AT.40670 (5 September 2025). <a href="https://ec.europa.eu/commission/presscorner/detail/en/ip_25_1992">https://ec.europa.eu/commission/presscorner/detail/en/ip_25_1992</a></li>
+<li>Competition Bureau Canada, "Backgrounder: Competition Bureau sues Google for anti-competitive conduct in online advertising in Canada" (November 2024). <a href="https://www.canada.ca/en/competition-bureau/news/2024/11/backgrounder-competition-bureau-sues-google-for-anti-competitive-conduct-in-online-advertising-in-canada.html">https://www.canada.ca/en/competition-bureau/news/2024/11/backgrounder-competition-bureau-sues-google-for-anti-competitive-conduct-in-online-advertising-in-canada.html</a></li>
 <li>Google, "Update on plans for Privacy Sandbox technologies" (17 October 2025). <a href="https://privacysandbox.google.com/blog/update-on-plans-for-privacy-sandbox-technologies">https://privacysandbox.google.com/blog/update-on-plans-for-privacy-sandbox-technologies</a></li>
-<li>eyeo, <em>2026 Ad Blocking Report</em> (May 2026). <a href="https://eyeo.com/wp-content/uploads/2026/05/eyeo_2026-ad-blocking-report.pdf">https://eyeo.com/wp-content/uploads/2026/05/eyeo_2026-ad-blocking-report.pdf</a></li>
-<li>Juniper Research ad fraud estimate (September 2023). Coverage: <a href="https://www.mediapost.com/publications/article/389594/22-of-all-digital-ad-spend-30-of-mobile-lost-to.html">https://www.mediapost.com/publications/article/389594/22-of-all-digital-ad-spend-30-of-mobile-lost-to.html</a></li>
-<li>OpenAI, "Our approach to advertising and expanding access" (January 2026). <a href="https://openai.com/index/our-approach-to-advertising-and-expanding-access/">https://openai.com/index/our-approach-to-advertising-and-expanding-access/</a></li>
-<li>Campaign, "Perplexity pulls plug on ads citing trust concerns" (2026). <a href="https://www.campaignlive.com/article/perplexity-pulls-plug-ads-citing-trust-concerns-ai/1949142">https://www.campaignlive.com/article/perplexity-pulls-plug-ads-citing-trust-concerns-ai/1949142</a></li>
-<li>IAB &amp; PwC, US podcast advertising revenue 2025 (April 2026). Coverage: <a href="https://radioink.com/2026/04/16/iab-digital-audio-grew-10-in-2025-as-podcasts-near-3b/">https://radioink.com/2026/04/16/iab-digital-audio-grew-10-in-2025-as-podcasts-near-3b/</a></li>
+<li>eyeo, <em>Ad-blocking report 2026</em> (May 2026). User counts are eyeo estimates; survey data from The Harris Poll on behalf of eyeo, 21–23 April 2026, 2,058 US adults. <a href="https://eyeo.com/wp-content/uploads/2026/05/eyeo_2026-ad-blocking-report.pdf">https://eyeo.com/wp-content/uploads/2026/05/eyeo_2026-ad-blocking-report.pdf</a></li>
+<li>Juniper Research, <em>Quantifying the Cost of Ad Fraud: 2023–2028</em>, whitepaper (September 2023). <a href="https://s3.amazonaws.com/media.mediapost.com/uploads/Ad-Fraud-Whitepaper_Juniper-Research.pdf">https://s3.amazonaws.com/media.mediapost.com/uploads/Ad-Fraud-Whitepaper_Juniper-Research.pdf</a> Copy hosted by MediaPost; the whitepaper is also distributed by Fraud Blocker, a fraud-prevention vendor: <a href="https://fraudblocker.com/wp-content/uploads/2023/09/Ad-Fraud-Whitepaper_Juniper-Research.pdf">https://fraudblocker.com/wp-content/uploads/2023/09/Ad-Fraud-Whitepaper_Juniper-Research.pdf</a></li>
+<li>OpenAI, "Our approach to advertising and expanding access to ChatGPT" (16 January 2026). <a href="https://openai.com/index/our-approach-to-advertising-and-expanding-access/">https://openai.com/index/our-approach-to-advertising-and-expanding-access/</a></li>
+<li><em>Withdrawn.</em> Previously cited for Perplexity's withdrawal from advertising; the claim was removed because the original source could not be verified.</li>
+<li><em>Withdrawn.</em> A duplicate of reference 5, previously cited for the podcast figure.</li>
 <li>Mastodon. <a href="https://joinmastodon.org/">https://joinmastodon.org/</a></li>
-<li>TechCrunch, interview with Bluesky CEO Jay Graber (December 2024). <a href="https://techcrunch.com/2024/12/05/bluesky-ceo-jay-graber-is-reshaping-social-media-but-advertising-isnt-off-the-table">https://techcrunch.com/2024/12/05/bluesky-ceo-jay-graber-is-reshaping-social-media-but-advertising-isnt-off-the-table</a></li>
+<li>TechCrunch, interview with Bluesky chief executive Jay Graber (5 December 2024). <a href="https://techcrunch.com/2024/12/05/bluesky-ceo-jay-graber-is-reshaping-social-media-but-advertising-isnt-off-the-table">https://techcrunch.com/2024/12/05/bluesky-ceo-jay-graber-is-reshaping-social-media-but-advertising-isnt-off-the-table</a></li>
 <li>Brave, "100M monthly active users" (October 2025). <a href="https://brave.com/blog/100m-mau/">https://brave.com/blog/100m-mau/</a></li>
-<li>EthicalAds newsletter (July 2026). <a href="https://www.ethicalads.io/blog/2026/07/ethicalads-newsletter-july-2026/">https://www.ethicalads.io/blog/2026/07/ethicalads-newsletter-july-2026/</a></li>
+<li>EthicalAds, "EthicalAds newsletter, July 2026", second-quarter 2026 figures (July 2026). <a href="https://www.ethicalads.io/blog/2026/07/ethicalads-newsletter-july-2026/">https://www.ethicalads.io/blog/2026/07/ethicalads-newsletter-july-2026/</a></li>
 </ol>
 <p><em>Prior art and standards bodies</em></p>
 <ol start="20" type="1">
 <li>IAB Tech Lab, ads.cert. <a href="https://iabtechlab.com/ads-cert/">https://iabtechlab.com/ads-cert/</a></li>
-<li>BidSwitch, "OpenRTB 3.0: what is it and why is almost nobody using it yet" (2024). <a href="https://blog.bidswitch.com/openrtb-3.0-what-is-it-and-why-is-almost-nobody-using-it-yet">https://blog.bidswitch.com/openrtb-3.0-what-is-it-and-why-is-almost-nobody-using-it-yet</a></li>
+<li><em>Withdrawn.</em> A vendor blog previously cited for OpenRTB 3.0 adoption; replaced by IAB Tech Lab sources [114][115].</li>
 <li>AdExchanger, "Prebid.org is at a crossroads" (October 2025). <a href="https://www.adexchanger.com/publishers/prebid-org-is-at-a-crossroads-and-must-now-decide-whose-interests-it-serves/">https://www.adexchanger.com/publishers/prebid-org-is-at-a-crossroads-and-must-now-decide-whose-interests-it-serves/</a></li>
-<li>The Trade Desk, OpenAds announcement (2025). <a href="https://www.thetradedesk.com/press-room/the-trade-desk-execs-share-new-details-about-how-sell-side-solution-openads-will-work">https://www.thetradedesk.com/press-room/the-trade-desk-execs-share-new-details-about-how-sell-side-solution-openads-will-work</a></li>
-<li>W3C PAT WG, <em>Attribution Level 1</em> (Working Draft). <a href="https://www.w3.org/TR/attribution/">https://www.w3.org/TR/attribution/</a></li>
-<li>W3C, <em>Global Privacy Control</em> (Working Draft). <a href="https://www.w3.org/TR/gpc/">https://www.w3.org/TR/gpc/</a></li>
+<li><em>Withdrawn.</em> Previously cited for The Trade Desk's OpenAds; the page could not be opened to verify it.</li>
+<li>W3C Private Advertising Technology Working Group, <em>Attribution Level 1</em>, Working Draft (10 September 2026). <a href="https://www.w3.org/TR/attribution/">https://www.w3.org/TR/attribution/</a></li>
+<li>W3C Privacy Working Group, <em>Global Privacy Control</em>, Working Draft (24 September 2026). <a href="https://www.w3.org/TR/gpc/">https://www.w3.org/TR/gpc/</a></li>
 <li>W3C Tracking Protection Working Group (closed 2019). <a href="https://www.w3.org/2011/tracking-protection/">https://www.w3.org/2011/tracking-protection/</a></li>
-<li>Coil. <a href="https://coil.com/">https://coil.com/</a></li>
+<li>Coil, "Coil bids farewell, but not goodbye: an open letter" (2 February 2023). <a href="https://coil.com/">https://coil.com/</a></li>
 <li>AgenticAdvertising.org, Ad Context Protocol (AdCP). <a href="https://adcontextprotocol.org/">https://adcontextprotocol.org/</a></li>
 <li>IAB Tech Lab, Agentic advertising standards. <a href="https://iabtechlab.com/standards/agentic-advertising-and-ai/">https://iabtechlab.com/standards/agentic-advertising-and-ai/</a></li>
 <li>Fediverse Enhancement Proposals. <a href="https://codeberg.org/fediverse/fep">https://codeberg.org/fediverse/fep</a></li>
@@ -2845,10 +3031,10 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <li>Nostr NIPs, pull request #955, "NOSTR Decentralized Advertising Network (NOSTR-DAN)" (December 2023). <a href="https://github.com/nostr-protocol/nips/pull/955">https://github.com/nostr-protocol/nips/pull/955</a></li>
 <li>NostrGameEngine, nostrads. <a href="https://github.com/NostrGameEngine/nostrads">https://github.com/NostrGameEngine/nostrads</a></li>
 <li>R. Chairattana-Apirom, S. Tessaro, N. Tyagi, "Fraud Mitigation in Privacy-Preserving Attribution," IACR ePrint 2025/1891. <a href="https://eprint.iacr.org/2025/1891">https://eprint.iacr.org/2025/1891</a></li>
-<li>M. Thomson, "DAP Extensions for the Attribution API," draft-thomson-ppm-dap-attribution-01 (2026). <a href="https://datatracker.ietf.org/doc/html/draft-thomson-ppm-dap-attribution-01">https://datatracker.ietf.org/doc/html/draft-thomson-ppm-dap-attribution-01</a></li>
+<li><em>Withdrawn.</em> draft-thomson-ppm-dap-attribution-01, previously cited for fraud-resistant attribution; it expired on 21 August 2026.</li>
 <li>M. Goldin, A. Soleimani, J. Young, "The AdChain Registry" (May 2017); MetaX, "Learnings from launching the first token-curated registry." <a href="https://medium.com/metax-publication/learnings-from-metax-on-launching-the-first-token-curated-registry-c30140d5052c">https://medium.com/metax-publication/learnings-from-metax-on-launching-the-first-token-curated-registry-c30140d5052c</a></li>
-<li>Kochava, "Kochava introduces first blockchain-based digital advertising platform" (2017). <a href="https://www.kochava.com/blog/kochava-introduces-first-blockchain-based-digital-advertising-platform/">https://www.kochava.com/blog/kochava-introduces-first-blockchain-based-digital-advertising-platform/</a></li>
-<li>Brave Software, "Basic Attention Token (BAT): Blockchain Based Digital Advertising" (2017). <a href="https://basicattentiontoken.org/static-assets/documents/BasicAttentionTokenWhitePaper-4.pdf">https://basicattentiontoken.org/static-assets/documents/BasicAttentionTokenWhitePaper-4.pdf</a></li>
+<li><em>Withdrawn.</em> Previously cited for Kochava's blockchain platform; no primary source on its outcome was found.</li>
+<li><em>Withdrawn.</em> The Basic Attention Token whitepaper, previously cited for Brave's settlement; replaced by Brave's own FAQ [128].</li>
 <li>V. Marotta, V. Abhishek, A. Acquisti, "Online Tracking and Publishers' Revenues: An Empirical Analysis," WEIS 2019. <a href="https://weis2019.econinfosec.org/wp-content/uploads/sites/6/2019/05/WEIS_2019_paper_38.pdf">https://weis2019.econinfosec.org/wp-content/uploads/sites/6/2019/05/WEIS_2019_paper_38.pdf</a></li>
 <li>D. Ravichandran, N. Korula, "Effect of disabling third-party cookies on publisher revenue," Google (2019). <a href="https://services.google.com/fh/files/misc/disabling_third-party_cookies_publisher_revenue.pdf">https://services.google.com/fh/files/misc/disabling_third-party_cookies_publisher_revenue.pdf</a></li>
 <li>Z. Gu, G. A. Johnson, S. J. Kobayashi, "Can privacy technologies replace cookies? Ad revenue in a field experiment," PNAS 123(19) (May 2026). <a href="https://www.pnas.org/doi/10.1073/pnas.2603752123">https://www.pnas.org/doi/10.1073/pnas.2603752123</a></li>
@@ -2890,11 +3076,63 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <li><p>Passionfroot, "Newsletter Advertising 101: A Brand's Guide" (June 2024). <a href="https://www.passionfroot.me/blog/newsletter-advertising-101-a-brands-guide-to-newsletter-ads">https://www.passionfroot.me/blog/newsletter-advertising-101-a-brands-guide-to-newsletter-ads</a></p></li>
 <li><p>UK Competition and Markets Authority, <em>Online platforms and digital advertising: Market study final report</em> (1 July 2020). <a href="https://assets.publishing.service.gov.uk/media/5fa557668fa8f5788db46efc/Final_report_Digital_ALT_TEXT.pdf">https://assets.publishing.service.gov.uk/media/5fa557668fa8f5788db46efc/Final_report_Digital_ALT_TEXT.pdf</a></p></li>
 <li><p>J. Ryan, A. Toner (ICCL), "The True Cost of RTB" (October 2025). <a href="https://www.iccl.ie/digital-data/the-true-cost-of-rtb/">https://www.iccl.ie/digital-data/the-true-cost-of-rtb/</a> <em>Other sources (added in v0.3)</em></p></li>
-<li><p>Accountable Tech, "Ban Surveillance Advertising" campaign (March 2021). <a href="https://accountabletech.org/campaign/ban-surveillance-advertising/">https://accountabletech.org/campaign/ban-surveillance-advertising/</a></p></li>
+<li><p>Accountable Tech, "Ban Surveillance Advertising" campaign page (undated; accessed October 2026). <a href="https://accountabletech.org/campaign/ban-surveillance-advertising/">https://accountabletech.org/campaign/ban-surveillance-advertising/</a></p></li>
 <li><p>U.S. House of Representatives, H.R. 6416, <em>Banning Surveillance Advertising Act of 2022</em> (introduced January 2022). <a href="https://www.congress.gov/bill/117th-congress/house-bill/6416">https://www.congress.gov/bill/117th-congress/house-bill/6416</a></p></li>
 <li><p>Google, "How we're increasing transparency for gen AI content with the C2PA" (September 2024). <a href="https://blog.google/technology/ai/google-gen-ai-content-transparency-c2pa/">https://blog.google/technology/ai/google-gen-ai-content-transparency-c2pa/</a></p></li>
-<li><p>Digiday, "OpenAI's ChatGPT ads business hits $1 billion run rate as Europe gets self-serve access" (August 2026). <a href="https://digiday.com/media-buying/openais-chatgpt-ads-business-hits-1-billion-run-rate-as-europe-gets-self-serve-access/">https://digiday.com/media-buying/openais-chatgpt-ads-business-hits-1-billion-run-rate-as-europe-gets-self-serve-access/</a></p></li>
+<li><p>OpenAI, "A milestone in expanding access to AI" (31 August 2026). <a href="https://openai.com/index/expanding-access-to-ai-with-chatgpt-ads/">https://openai.com/index/expanding-access-to-ai-with-chatgpt-ads/</a></p></li>
 <li><p>A. Alemari, S. Sen, C. Borcea, "AdFL: In-Browser Federated Learning for Online Advertisement," arXiv:2602.06336 (February 2026). <a href="https://arxiv.org/abs/2602.06336">https://arxiv.org/abs/2602.06336</a></p></li>
+<li><p><em>United States v. Google LLC</em>, No. 1:23-cv-00108 (E.D. Va.), Order (Dkt. 1857) and Memorandum Opinion on remedies (Dkt. 1858), 2 September 2026, unsealed 16 September 2026. <a href="https://storage.courtlistener.com/recap/gov.uscourts.vaed.533508/gov.uscourts.vaed.533508.1858.0_1.pdf">https://storage.courtlistener.com/recap/gov.uscourts.vaed.533508/gov.uscourts.vaed.533508.1858.0_1.pdf</a> ; docket: <a href="https://www.courtlistener.com/docket/66753787/united-states-v-google-llc/">https://www.courtlistener.com/docket/66753787/united-states-v-google-llc/</a></p></li>
+<li><p>UK Competition and Markets Authority, "Investigation into suspected anti-competitive conduct by Google in ad tech" (case page; statement of objections issued 6 September 2024). <a href="https://www.gov.uk/cma-cases/investigation-into-suspected-anti-competitive-conduct-by-google-in-ad-tech">https://www.gov.uk/cma-cases/investigation-into-suspected-anti-competitive-conduct-by-google-in-ad-tech</a> Accessed October 2026.</p></li>
+<li><p>Competition Bureau Canada, "Statement by Acting Commissioner of Competition: Competition Tribunal dismisses Google's constitutional challenge" (March 2026). <a href="https://www.canada.ca/en/competition-bureau/news/2026/03/statement-by-acting-commissioner-of-competition-competition-tribunal-dismisses-googles-constitutional-challenge.html">https://www.canada.ca/en/competition-bureau/news/2026/03/statement-by-acting-commissioner-of-competition-competition-tribunal-dismisses-googles-constitutional-challenge.html</a></p></li>
+<li><p>Trustworthy Accountability Group (TAG), <em>2024 US Ad Fraud Savings Report</em> (2024). <a href="https://2848641.fs1.hubspotusercontent-na1.net/hubfs/2848641/TAG%20US%20Fraud%20Savings%20Report%202024.pdf">https://2848641.fs1.hubspotusercontent-na1.net/hubfs/2848641/TAG%20US%20Fraud%20Savings%20Report%202024.pdf</a></p></li>
+<li><p>Adblock Plus (eyeo GmbH), "About Adblock Plus", section on Acceptable Ads licensing (accessed October 2026). <a href="https://adblockplus.org/about">https://adblockplus.org/about</a></p></li>
+<li><p><em>United States v. Google LLC</em>, No. 1:23-cv-00108 (E.D. Va.), Parties' Jointly Proposed Final Judgment (Dkt. 1861), 2 October 2026. <a href="https://storage.courtlistener.com/recap/gov.uscourts.vaed.533508/gov.uscourts.vaed.533508.1861.0.pdf">https://storage.courtlistener.com/recap/gov.uscourts.vaed.533508/gov.uscourts.vaed.533508.1861.0.pdf</a></p></li>
+<li><p>Media Rating Council, <em>Invalid Traffic Detection and Filtration Standards Addendum</em> (June 2020 update). <a href="https://mediaratingcouncil.org/sites/default/files/Standards/IVT%20Addendum%20Update%20062520.pdf">https://mediaratingcouncil.org/sites/default/files/Standards/IVT%20Addendum%20Update%20062520.pdf</a></p></li>
+<li><p>J. Wilander, "Full Third-Party Cookie Blocking and More," WebKit blog (24 March 2020). <a href="https://webkit.org/blog/10218/full-third-party-cookie-blocking-and-more/">https://webkit.org/blog/10218/full-third-party-cookie-blocking-and-more/</a></p></li>
+<li><p>Mozilla, "Firefox rolls out Total Cookie Protection by default to all users worldwide" (14 June 2022, updated 28 August 2024). <a href="https://blog.mozilla.org/en/products/firefox/firefox-rolls-out-total-cookie-protection-by-default-to-all-users-worldwide/">https://blog.mozilla.org/en/products/firefox/firefox-rolls-out-total-cookie-protection-by-default-to-all-users-worldwide/</a></p></li>
+<li><p>Google, "Building a more private web" (22 August 2019). <a href="https://blog.google/products/chrome/building-a-more-private-web/">https://blog.google/products/chrome/building-a-more-private-web/</a></p></li>
+<li><p>A. Chavez, "A new path for Privacy Sandbox on the web," Google (22 July 2024). <a href="https://privacysandbox.google.com/blog/privacy-sandbox-update">https://privacysandbox.google.com/blog/privacy-sandbox-update</a></p></li>
+<li><p>Google, "Next steps for Privacy Sandbox and tracking protections in Chrome" (22 April 2025). <a href="https://privacysandbox.google.com/blog/privacy-sandbox-next-steps">https://privacysandbox.google.com/blog/privacy-sandbox-next-steps</a></p></li>
+<li><p>IAB Tech Lab, <em>VAST 4.4</em> (Video Ad Serving Template) specification, sections on ad stitching and the <code>Expires</code> element (accessed October 2026). <a href="https://github.com/InteractiveAdvertisingBureau/VAST4.x/blob/main/4.4.md">https://github.com/InteractiveAdvertisingBureau/VAST4.x/blob/main/4.4.md</a></p></li>
+<li><p>IAB Tech Lab, <em>AdCOM v1.0</em>, "Object: Audit" and "List: Audit Status Codes" (accessed October 2026). <a href="https://github.com/InteractiveAdvertisingBureau/AdCOM/blob/main/AdCOM%20v1.0%20FINAL.md">https://github.com/InteractiveAdvertisingBureau/AdCOM/blob/main/AdCOM%20v1.0%20FINAL.md</a></p></li>
+<li><p>IAB Tech Lab, <em>Ad Creative ID Framework (ACIF) v1.0</em> and <em>ACIF Validation API</em> (accessed October 2026). <a href="https://github.com/InteractiveAdvertisingBureau/ACIF">https://github.com/InteractiveAdvertisingBureau/ACIF</a></p></li>
+<li><p>OpenAI, "Testing ads in ChatGPT" (9 February 2026, updated 11 August 2026). <a href="https://openai.com/index/testing-ads-in-chatgpt/">https://openai.com/index/testing-ads-in-chatgpt/</a></p></li>
+<li><p>Wired, "Bluesky CEO Jay Graber says she won't 'enshittify the network with ads'" (9 February 2024). <a href="https://www.wired.com/story/bluesky-ceo-jay-graber-wont-enshittify-ads/">https://www.wired.com/story/bluesky-ceo-jay-graber-wont-enshittify-ads/</a></p></li>
+<li><p>IAB Tech Lab, "OpenRTB" standards page (OpenRTB 2.6 and 3.0; accessed October 2026). <a href="https://iabtechlab.com/standards/openrtb/">https://iabtechlab.com/standards/openrtb/</a></p></li>
+<li><p>AgenticAdvertising.org, <em>Ad Context Protocol (AdCP) 3.2</em> documentation, including the rights-licensing walkthrough and the <code>adagents.json</code> specification (accessed October 2026). <a href="https://docs.adcontextprotocol.org/dist/docs/3.2.1/brand-protocol/walkthrough-rights-licensing">https://docs.adcontextprotocol.org/dist/docs/3.2.1/brand-protocol/walkthrough-rights-licensing</a></p></li>
+<li><p>M. A. Bashir, S. Arshad, E. Kirda, W. Robertson, C. Wilson, "A Longitudinal Analysis of the ads.txt Standard," ACM IMC (2019). <a href="https://www.ahmadbashir.com/static/pdf/bashir-imc19.pdf">https://www.ahmadbashir.com/static/pdf/bashir-imc19.pdf</a></p></li>
+<li><p>M. Vekaria, R. Nithyanand, "The Inventory is Dark and Full of Misinformation," arXiv:2210.06654v3 (14 October 2023). <a href="https://arxiv.org/abs/2210.06654">https://arxiv.org/abs/2210.06654</a></p></li>
+<li><p>IAB Tech Lab, <em>adscert</em> reference implementation, README (last commit 8 March 2023; accessed October 2026). <a href="https://github.com/IABTechLab/adscert">https://github.com/IABTechLab/adscert</a></p></li>
+<li><p>IAB Tech Lab, <em>openrtb3-converter</em>, README (contributed by media.net; accessed October 2026). <a href="https://github.com/InteractiveAdvertisingBureau/openrtb3-converter">https://github.com/InteractiveAdvertisingBureau/openrtb3-converter</a></p></li>
+<li><p>IAB Tech Lab, "IAB Tech Lab Releases OpenRTB 2.6 For Public Comment" (9 December 2021). <a href="https://www.prnewswire.com/news-releases/iab-tech-lab-releases-openrtb-2-6-for-public-comment-301440606.html">https://www.prnewswire.com/news-releases/iab-tech-lab-releases-openrtb-2-6-for-public-comment-301440606.html</a></p></li>
+<li><p>Prebid.org, "Prebid.org Clarifies Transaction ID Updates in Prebid.js" (23 October 2025). <a href="https://prebid.org/prebid-org-clarifies-transaction-id-updates-in-prebid-js/">https://prebid.org/prebid-org-clarifies-transaction-id-updates-in-prebid-js/</a></p></li>
+<li><p>W3C, <em>Tracking Preference Expression (DNT)</em>, Working Group Note (17 January 2019). <a href="https://www.w3.org/TR/tracking-dnt/">https://www.w3.org/TR/tracking-dnt/</a></p></li>
+<li><p>W3C, <em>Tracking Compliance and Scope</em>, Working Group Note (2019). <a href="https://www.w3.org/TR/tracking-compliance/">https://www.w3.org/TR/tracking-compliance/</a></p></li>
+<li><p>California Privacy Protection Agency, <em>CCPA Regulations</em>, 11 CCR §7025 (effective 1 January 2026). <a href="https://cppa.ca.gov/regulations/pdf/ccpa_statute_eff_20260101.pdf">https://cppa.ca.gov/regulations/pdf/ccpa_statute_eff_20260101.pdf</a></p></li>
+<li><p>California Attorney General, "Attorney General Bonta Announces Settlement with Sephora as Part of Ongoing Enforcement of California Consumer Privacy Act" (24 August 2022). <a href="https://oag.ca.gov/news/press-releases/attorney-general-bonta-announces-settlement-sephora-part-ongoing-enforcement">https://oag.ca.gov/news/press-releases/attorney-general-bonta-announces-settlement-sephora-part-ongoing-enforcement</a></p></li>
+<li><p>Colorado Attorney General, "Universal Opt-Out and the Colorado Privacy Act" (accessed October 2026). <a href="https://coag.gov/opt-out/">https://coag.gov/opt-out/</a></p></li>
+<li><p>Coalition for Better Ads, <em>The Better Ads Standards</em> (accessed October 2026). <a href="https://www.betterads.org/standards/">https://www.betterads.org/standards/</a></p></li>
+<li><p>Coalition for Better Ads, <em>Members</em> (accessed October 2026). <a href="https://www.betterads.org/members/">https://www.betterads.org/members/</a></p></li>
+<li><p>Chromium Blog, "Improving advertising on the web" (1 June 2017). <a href="https://blog.chromium.org/2017/06/improving-advertising-on-web.html">https://blog.chromium.org/2017/06/improving-advertising-on-web.html</a></p></li>
+<li><p>Chromium Blog, "Under the hood: How Chrome's ad filtering works" (February 2018). <a href="https://blog.chromium.org/2018/02/how-chromes-ad-filtering-works.html">https://blog.chromium.org/2018/02/how-chromes-ad-filtering-works.html</a></p></li>
+<li><p>Brave, "An Introduction to Brave's In-Browser Ads" (3 September 2020). <a href="https://brave.com/blog/intro-to-brave-ads/">https://brave.com/blog/intro-to-brave-ads/</a></p></li>
+<li><p>Brave, "Security and privacy model for ad confirmations," brave-browser wiki (accessed October 2026). <a href="https://github.com/brave/brave-browser/wiki/Security-and-privacy-model-for-ad-confirmations">https://github.com/brave/brave-browser/wiki/Security-and-privacy-model-for-ad-confirmations</a></p></li>
+<li><p>Brave, <em>Frequently Asked Questions</em>, "How does Brave make money?" (accessed October 2026). <a href="https://brave.com/faq/">https://brave.com/faq/</a></p></li>
+<li><p>heyAura, "Introducing heyAura: The Next Chapter of AdEx" (2 April 2026). <a href="https://blog.heyaura.com/introducing-heyaura/">https://blog.heyaura.com/introducing-heyaura/</a></p></li>
+<li><p>Umbrella Network, "Umbrella Network Announces Strategic Acquisition of Lucidity, Leading Blockchain-Based Advertising and Analytics Platform" (23 September 2021). <a href="https://www.prnewswire.com/news-releases/umbrella-network-announces-strategic-acquisition-of-lucidity-leading-blockchain-based-advertising-and-analytics-platform-301384228.html">https://www.prnewswire.com/news-releases/umbrella-network-announces-strategic-acquisition-of-lucidity-leading-blockchain-based-advertising-and-analytics-platform-301384228.html</a></p></li>
+<li><p>Google, "New Gmail protections for a safer, less spammy inbox" (3 October 2023). <a href="https://blog.google/products/gmail/gmail-security-authentication-spam-protection/">https://blog.google/products/gmail/gmail-security-authentication-spam-protection/</a></p></li>
+<li><p>Yahoo, <em>Sender Best Practices: Email Sender Requirements</em> (accessed October 2026). <a href="https://senders.yahooinc.com/best-practices/">https://senders.yahooinc.com/best-practices/</a></p></li>
+<li><p>A. Iverson, Valimail, "DMARC growth in 2024: A snapshot of surging adoption" (September 2024). <a href="https://www.valimail.com/blog/dmarc-growth-data/">https://www.valimail.com/blog/dmarc-growth-data/</a></p></li>
+<li><p>Leica Camera AG, "New: Leica M11-P" (26 October 2023). <a href="https://leica-camera.com/sites/default/files/2023-10/press_release_leica_m11p_october_2023.pdf">https://leica-camera.com/sites/default/files/2023-10/press_release_leica_m11p_october_2023.pdf</a></p></li>
+<li><p>Google, "How Pixel and Android are bringing a new level of trust to your images with C2PA Content Credentials" (10 September 2025). <a href="https://blog.google/security/pixel-android-trusted-images-c2pa-content-credentials/">https://blog.google/security/pixel-android-trusted-images-c2pa-content-credentials/</a></p></li>
+<li><p>AgenticAdvertising.org, "What's new in AdCP 3.2" (30 September 2026). <a href="https://docs.adcontextprotocol.org/docs/reference/whats-new-in-3-2">https://docs.adcontextprotocol.org/docs/reference/whats-new-in-3-2</a></p></li>
+<li><p>AgenticAdvertising.org, <em>AdCP Frequently Asked Questions</em> (accessed October 2026). <a href="https://docs.adcontextprotocol.org/docs/faq">https://docs.adcontextprotocol.org/docs/faq</a></p></li>
+<li><p>IAB Tech Lab, "IAB Tech Lab Introduces AAMP 3.0 to Standardize the RFP-to-Buy Process for Agentic Advertising" (22 September 2026). <a href="https://iabtechlab.com/press-releases/iab-tech-lab-introduces-aamp-3-0-with-openproposal/">https://iabtechlab.com/press-releases/iab-tech-lab-introduces-aamp-3-0-with-openproposal/</a></p></li>
+<li><p>Nostr NIPs, pull request #2073, "NIP-AD: decentralized advertising protocol" (opened 27 September 2025). <a href="https://github.com/nostr-protocol/nips/pull/2073">https://github.com/nostr-protocol/nips/pull/2073</a></p></li>
+<li><p>IETF PPM Working Group, <em>Distributed Aggregation Protocol for Privacy Preserving Measurement</em>, draft-ietf-ppm-dap-19 (6 July 2026). <a href="https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/">https://datatracker.ietf.org/doc/draft-ietf-ppm-dap/</a></p></li>
+<li><p>Graze, "Terms and Conditions" (accessed October 2026). <a href="https://www.graze.social/terms-and-conditions">https://www.graze.social/terms-and-conditions</a></p></li>
+<li><p>Prebid.org, "About Prebid" (accessed October 2026). <a href="https://prebid.org/about/">https://prebid.org/about/</a></p></li>
+<li><p>IAB Tech Lab, "Open Measurement SDK" (OM SDK 1.5; accessed October 2026). <a href="https://iabtechlab.com/standards/open-measurement-sdk/">https://iabtechlab.com/standards/open-measurement-sdk/</a></p></li>
 </ol>
 <p><em>Technical specifications</em></p>
 <ul>
@@ -2932,7 +3170,10 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <h2 id="appendix-c-change-history">Appendix C. Change history</h2>
 <h3 id="after-v03">After v0.3</h3>
 <ul>
+<li><strong>Part I evidence review:</strong> §1.1–§1.3 rechecked against primary sources under the new evidence gate (<code>docs/STYLE.md</code>). §1.1 adds the UK case, updates the Canadian case and the September 2026 US remedies decision, and separates walled-garden concentration from open-web intermediation. §1.2 separates leakage from waste, states the ISBA restatement basis and names the studies' interests and samples. §1.3 presents fraud estimates as a range, distinguishes invalid traffic from fraud, and states where Federated Ads is weaker. References [1], [3], [7]–[9] and [12] now point to primary sources; [92]–[98] added. §1.4 renamed "Cross-site tracking and the failed replacement"; corrects Firefox's default (it confines third-party cookies rather than blocking them), cites Google's own Privacy Sandbox announcements and states which APIs were kept; references [99]–[103] added. §1.5 cites how VAST and AdCOM handle creatives, and narrows the claim that no stop signal exists: AdCOM's "expired" status, VAST's <code>Expires</code> and the Ad Creative ID Framework come close but give the advertiser no withdrawal with proof; references [104]–[106] added. §1.6 corrects the source and wording of the Bluesky quotes, gives EthicalAds' exact figures, cites OpenAI's own announcements (including its August 2026 targeting features), marks views as views, and drops the Perplexity example, whose original source could not be verified; reference 14 withdrawn, [107]–[108] added. §1.7 renamed "What ad blocking tells us"; names eyeo's interest and method, scopes the 81% figure to its US poll, and adds that most ad-filtering users keep non-intrusive ads enabled. §1.8 replaces the claim that no open advertising protocol exists with a precise one: OpenRTB and AdCP 3.2 are acknowledged, and the gap is the combination of properties Federated Ads targets; references [109]–[110] added. §2 rebuilt as 15 rows, each claim checked against a primary source: corrects Do Not Track (the W3C did define tracking), Global Privacy Control's legal basis, Brave's matching (behavioural, on the device), THEMIS's authorship and the Graze figures; removes Carbon Ads, the unsourced "a better PKI" quote and the unverified Graze CPM; updates the agent-protocol row for AdCP 3.2 and AAMP 3.0; references 21, 23, 47 and 48 withdrawn, [111]–[142] added.</li>
+<li><strong>§10.9 revised:</strong> shortened, with channel detail moved to the new <a href="#appendix-d-measurement-channels-in-detail">Appendix D</a>. The processor role for conversion data is removed, so third parties receive only aggregate measurements (or, in the planned conversion profile, shares of reports that reveal nothing on their own); Tracker Reports are stated to be the seller's own numbers, not independent counts; pacing data sent to measurers is limited to spend totals; the device-access note no longer overstates which channels avoid it. <a href="#104-viewability-measurement-in-the-page">§10.4</a> renamed and updated for vendor modules; <a href="#181-data-inventory">§18.1</a> gains a row for module signals; the Internet-Draft now defines the measurement members, the Tracker Report and <code>measurementModules</code>. Reference [143] added; 45 withdrawn (expired Internet-Draft) and 15 withdrawn (duplicate of reference 5).</li>
 <li>Arjun Krishna added as a contributor; governance (<a href="#231-what-the-federated-ads-initiative-is-today">§23.1</a>) and risk (<a href="#25-risks-and-mitigations">§25</a>) updated to reflect two maintainers.</li>
+<li><strong>Third-party measurement and tracking:</strong> new <a href="#109-third-party-measurement-and-tracking">§10.9</a> defining measurement channels (aggregate tracker callbacks, sandboxed measurement modules, aggregate conversion measurement, holdout experiments, consented panels), the measurer role, what stays prohibited and what it costs. Cross-references added in the executive summary, <a href="#33-non-goals-for-v1">§3.3</a>, <a href="#4-actors-and-roles">§4</a>, <a href="#106-conversions-and-attribution">§10.6</a>, <a href="#131-web-display-and-native-surfaceweb">§13.1</a>, <a href="#143-bridges">§14.3</a>, <a href="#1511-conformance-levels">§15.11</a>, <a href="#172-threats-and-mitigations">§17.2</a>, <a href="#181-data-inventory">§18.1</a>, <a href="#26-open-questions">§26</a>, the FAQ and the glossary.</li>
 </ul>
 <h3 id="changes-in-v03-5-october-2026">Changes in v0.3 (5 October 2026)</h3>
 <ul>
@@ -2941,7 +3182,7 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <li><strong>Protocol additions:</strong> Inventory quality signals (ad density, saturation limits), floors and support options; the <code>cpvh</code> attention pricing model; the cooperative selling-node profile.</li>
 <li><strong>AI surfaces:</strong> licensed creatives may not be paraphrased or blended into generated answers by default.</li>
 <li><strong>FAQ:</strong> clarified that "federated" does not mean federated learning.</li>
-<li><strong>Problem framing:</strong> added civil-society and policy calls for alternatives to surveillance advertising (<a href="#14-surveillance-as-infrastructure-and-the-collapse-of-its-replacement">§1.4</a>).</li>
+<li><strong>Problem framing:</strong> added civil-society and policy calls for alternatives to surveillance advertising (<a href="#14-cross-site-tracking-and-the-failed-replacement">§1.4</a>).</li>
 <li><strong>Creative provenance:</strong> noted Google's use of C2PA metadata in ad policy (<a href="#72-objects">§7.2</a>).</li>
 <li><strong>Governance:</strong> the W3C Community Group and the individual Internet-Draft move into the incubation phase; licensing now covers W3C and IETF terms (<a href="#23-governance-ipr-and-funding">§23</a>).</li>
 <li><strong>References:</strong> 55 new references (37–91).</li>
@@ -2965,6 +3206,49 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 </ul></li>
 <li><strong>Governance:</strong> stated plainly what the initiative is today; change control; IPR path; funding principles; competition-law safeguards.</li>
 </ul>
+<hr />
+<h2 id="appendix-d-measurement-channels-in-detail">Appendix D. Measurement channels in detail</h2>
+<p>This appendix gives the detail behind <a href="#109-third-party-measurement-and-tracking">§10.9</a>. The normative definitions are in the Internet-Draft.</p>
+<p><strong>A. Aggregate tracker callbacks.</strong> The Deal lists <code>trackers</code>: for each, an HTTPS endpoint on a domain the measurer has declared, the event types wanted and a cadence. The browser never calls the measurer. The selling node sends a signed Tracker Report to the endpoint:</p>
+<ul>
+<li>the same aggregate cells as its Receipt Batch (<a href="#102-aggregated-receipts">§10.2</a>), with the same k-threshold and the same Merkle root;</li>
+<li>no IP address, user agent, cookie, referrer or per-event request;</li>
+<li>URL macros limited to deal-level values (<code>deal</code>, <code>creative</code>, <code>window</code>, <code>context</code>, <code>region</code>); no macro expands to a value about a person;</li>
+<li>fixed, non-overlapping windows of an hour or longer, so that overlapping windows cannot be subtracted to isolate small groups. The one exception is a per-deal spend total at the Spend Report cadence (at least every 15 minutes), which carries no event counts by context or region.</li>
+</ul>
+<p>Clicks keep the existing path: the user follows the call to action through the selling node's redirect, which carries only the deal-level parameter (<a href="#106-conversions-and-attribution">§10.6</a>). Click counts reach the measurer in Tracker Reports, not through a redirect via the third party.</p>
+<p><strong>B. Sandboxed measurement modules.</strong> A verification vendor may supply a measurement module that runs in the page alongside the reference module of <a href="#104-viewability-measurement-in-the-page">§10.4</a>. Conditions:</p>
+<ul>
+<li>the module is pinned by hash and listed in the Deal, and Receipt Batches record the hash of every module used (<code>measurementModules</code>);</li>
+<li>its source is open, or available to auditors under escrow;</li>
+<li>it runs with <strong>no network access of its own</strong> (<code>connect-src 'none'</code>, no other origins) and talks only to the selling node's collector over a single message channel;</li>
+<li>it reads only standard signals (Intersection Observer, page visibility), and no cookies, storage or fingerprinting surfaces such as canvas, audio, fonts or device enumeration;</li>
+<li>its outputs are coarse counters, such as viewable-time buckets and invalid-traffic category flags, which the selling node folds into receipt cells.</li>
+</ul>
+<p>The vendor's code cannot send anything anywhere. A native profile for apps is planned after the web profile. It would follow the IAB Tech Lab Open Measurement SDK (OM SDK 1.5), in which measurement providers' scripts collect the signals; under Federated Ads those scripts would run with no network access [143].</p>
+<p><strong>C. Aggregate conversion measurement.</strong> A measurement provider may act as one of the two non-colluding aggregators in the DAP profile of <a href="#106-conversions-and-attribution">§10.6</a>. It receives only shares of reports that are useless on their own, and releases deal-level histograms with noise, under a fixed privacy budget per campaign per week. The advertiser may also count conversions on its own site in aggregate; that is first-party measurement, not a third-party channel.</p>
+<p><strong>D. Experiments instead of tracking.</strong> To learn whether ads caused an outcome, a Deal may commit in advance to holdouts by coarse region, context category or time window. Both parties sign the assignment, the transparency log shows delivery by cell, and the advertiser compares its own aggregate outcomes, such as sales or sign-ups, between treated and holdout cells. Separately, a publisher may randomise exposure among its own visitors using first-party state and run a brand-lift survey on its own surface, releasing only aggregate results; that is a first-party practice outside the Deal's holdouts, which are never assigned by person. Experiments need scale and careful design, and are slower and coarser than per-person measurement, but need no identifier.</p>
+<p><strong>E. Consented panels and audits.</strong> Cross-publisher reach and audience composition can come from a panel of people who knowingly join an independent measurement provider's panel under separate, informed consent. The panel sits outside the protocol. Its aggregate estimates (reach, frequency distribution, demographics, labelled as modelled where they are) can be attached to a Deal as signed statements. V4 auditors receive Receipt Batches, Merkle proofs and test-client results.</p>
+<p><strong>Wire sketch.</strong> The Terms <code>measurement</code> member, as defined in the Internet-Draft; values are illustrative.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;measurement&quot;</span><span class="er">:</span> <span class="fu">{</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;measurers&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;https://verify.example.net/fa/node&quot;</span><span class="fu">,</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;purpose&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;viewability&quot;</span><span class="ot">,</span> <span class="st">&quot;invalid-traffic&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;module&quot;</span><span class="fu">:</span> <span class="st">&quot;sha256-…&quot;</span> <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;https://reports.agency.example/fa/node&quot;</span><span class="fu">,</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;purpose&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;delivery-reporting&quot;</span><span class="ot">]</span> <span class="fu">}</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;trackers&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">&quot;measurer&quot;</span><span class="fu">:</span> <span class="st">&quot;https://reports.agency.example/fa/node&quot;</span><span class="fu">,</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;endpoint&quot;</span><span class="fu">:</span> <span class="st">&quot;https://reports.agency.example/fa/ingest/3d9e&quot;</span><span class="fu">,</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;events&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;impression&quot;</span><span class="ot">,</span> <span class="st">&quot;viewable&quot;</span><span class="ot">,</span> <span class="st">&quot;click&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;cadence&quot;</span><span class="fu">:</span> <span class="st">&quot;PT1H&quot;</span><span class="fu">,</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;macros&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;deal&quot;</span><span class="ot">,</span> <span class="st">&quot;creative&quot;</span><span class="ot">,</span> <span class="st">&quot;window&quot;</span><span class="ot">,</span> <span class="st">&quot;context&quot;</span><span class="ot">,</span> <span class="st">&quot;region&quot;</span><span class="ot">]</span> <span class="fu">}</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;holdouts&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;region&quot;</span><span class="fu">,</span> <span class="dt">&quot;cells&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;IN-GA&quot;</span><span class="ot">]</span> <span class="fu">}</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 
   </article>
 
