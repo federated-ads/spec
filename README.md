@@ -1,5 +1,10 @@
 # Federated Ads Protocol
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/logo/federated-ads-horizontal-reversed.svg">
+  <img src="docs/brand/logo/federated-ads-horizontal-colour.svg" alt="Federated Ads" width="320">
+</picture>
+
 An open, federated, owner-controlled protocol for advertising on the open web.
 
 The Federated Ads Protocol lets independent servers ("nodes") run by publishers, advertisers, agencies or cooperatives:
@@ -23,6 +28,7 @@ Matching is contextual by default, and the protocol carries no cross-site identi
 | [Whitepaper v0.3](docs/whitepaper/federated-ads-whitepaper.md) | Problem, prior art, design, market design, measurement, legal map, economics, governance, roadmap, publisher revenue |
 | [Internet-Draft](docs/ietf/) | Normative wire protocol: `draft-rajan-federated-ads-protocol` |
 | [Draft W3C Community Group charter](docs/governance/w3c-community-group-charter-draft.md) | Proposed home for the specification work |
+| [Brand kit](docs/brand/) | Logo, icons, implementation badges, design tokens, and guidance on using the name |
 | [Whitepaper v0.1 (archived)](docs/whitepaper/archive/openads-whitepaper-v0.1.md) | First draft, under the earlier working name |
 
 ## Get involved
@@ -47,5 +53,6 @@ This project is unrelated to The Trade Desk's "OpenAds" header-bidding wrapper, 
 
 - Specification and documentation text: [CC BY 4.0](LICENSE-docs)
 - Code (when published): [Apache-2.0](LICENSE)
+- Logo and brand artwork: CC BY 4.0; implementation badges: CC0 1.0. The name and mark are not registered trademarks. See [docs/brand/](docs/brand/README.md#licences-and-names).
 - Contributions are subject to the patent commitment in [CONTRIBUTING.md](CONTRIBUTING.md).
 - If the work moves to a W3C Community Group, new specification contributions follow W3C Community Group terms. Internet-Draft text is subject to the IETF Trust Legal Provisions (BCP 78 and BCP 79).
