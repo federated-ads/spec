@@ -143,7 +143,7 @@ Advertisers, agencies and ad-tech reviewers judge the paper by whether it uses t
 - **Use IAB glossary terminology** for industry terms, and match the IAB's meaning when defining them in Appendix A.
 - **When Federated Ads departs from an IAB or MRC definition**, say so explicitly and explain why (for example, email opens are not billable because privacy proxies inflate them).
 - **Map, don't replace.** Where an IAB standard exists for something, Federated Ads maps to it or bridges to it rather than defining a competing version, and says which.
-- **Respect the IAB Tech Lab process** when comparing: its standards are developed in working groups and released for public comment (typically 45 to 60 days) before finalisation. Describe a Tech Lab document's status accurately (draft, public comment, final).
+- **Respect the IAB Tech Lab process** when comparing: its standards are developed in working groups and released for public comment before finalisation. Describe a Tech Lab document's status accurately (draft, public comment, final).
 
 The Internet Architecture Board (also "IAB") publishes architecture guidance through the IETF; its documents are cited by RFC number to avoid confusion.
 

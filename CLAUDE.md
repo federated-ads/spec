@@ -11,7 +11,7 @@ The editorial rules for this repository live in `docs/STYLE.md`, which is shared
 - **Cross-section consistency.** When editing a section, read the sections it references and the sections that reference it, and report contradictions.
 - **Draft impact.** When a whitepaper change touches objects, fields, flows or conformance, tell the user the Internet-Draft (`docs/ietf/`) needs a matching change.
 - **HTML sync.** `docs/whitepaper/web/federated-ads-whitepaper.html` has no generator. Sync it by hand after Markdown edits, or batch the sync at the end of a review part and say so.
-- **Git.** Commit with `/atomic:atomic-commit`, never raw git. No AI co-author trailers. `main` is protected: work on a branch and open a pull request. Ask which source branch to use before creating one.
+- **Git.** Conventional Commits messages, one logical change per commit (STYLE.md §11). No AI co-author trailers. `main` is protected: work on a branch and open a pull request.
 - **Privacy.** Never send the maintainers' personal details (for example email addresses) to external services, including in request headers.
 
 ## Section-by-section review method
