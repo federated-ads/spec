@@ -205,6 +205,36 @@ def collect_anchors(text: str) -> set[str]:
     return anchors
 
 
+def check_contents(path: str, text: str) -> None:
+    """Every Contents entry is a link whose number and title match a heading.
+
+    Catches an entry overwritten by other text, renumbered or out of step
+    with the heading it points to.
+    """
+    if "## Contents" not in text:
+        return
+    start = text.index("## Contents")
+    block = text[start:]
+    end = re.search(r"^# ", block, re.M)
+    block = block[: end.start()] if end else block
+    offset = text[:start].count("\n")
+    headings = {}
+    for _, line in lines_outside_code(text):
+        m = re.match(r"^## (\d+)\. (.+)$", line)
+        if m:
+            headings[m.group(1)] = m.group(2).strip()
+    for i, line in enumerate(block.splitlines()):
+        m = re.match(r"^(\d+)\. (.*)$", line)
+        if not m:
+            continue
+        number, rest = m.groups()
+        link = re.fullmatch(r"\[([^\]]+)\]\(#[^)]+\)", rest.strip())
+        if not link:
+            error(path, offset + i + 1, f"Contents entry {number} is not a single link to a section")
+        elif headings.get(number) != link.group(1):
+            error(path, offset + i + 1, f"Contents entry {number} ({link.group(1)!r}) does not match heading {headings.get(number)!r}")
+
+
 def check_whitepaper(path: str, text: str) -> None:
     for no, line in lines_outside_code(text):
         body = strip_inline_code(line)
@@ -256,6 +286,8 @@ def check_whitepaper(path: str, text: str) -> None:
     for n, no in sorted(defined.items()):
         if n not in cited and n not in withdrawn:
             error(path, no, f"reference [{n}] is never cited in the text")
+
+    check_contents(path, text)
 
     anchors = collect_anchors(text)
     for no, line in lines_outside_code(text):
