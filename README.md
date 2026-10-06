@@ -1,9 +1,9 @@
-# Federated Ads Protocol
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/logo/federated-ads-horizontal-reversed.svg">
-  <img src="docs/brand/logo/federated-ads-horizontal-colour.svg" alt="Federated Ads" width="320">
-</picture>
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/logo/federated-ads-horizontal-reversed.svg">
+    <img src="docs/brand/logo/federated-ads-horizontal-colour.svg" alt="Federated Ads Protocol" width="320">
+  </picture>
+</h1>
 
 An open, federated, owner-controlled protocol for advertising on the open web.
 
