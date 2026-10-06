@@ -1,26 +1,29 @@
 #!/usr/bin/env bash
-# Install the repository's git hooks (.githooks/) for this clone.
+# Install the repository's git hooks for this clone.
 #
-# If you already use a global core.hooksPath (for example a dispatcher that
-# chains to .git/hooks), the hooks are linked into .git/hooks so your global
-# hooks keep running. Otherwise core.hooksPath is pointed at .githooks.
+# The hooks are COPIED into the clone's .git/hooks, not linked, and they run
+# the checks from the trusted ref origin/main. A branch you check out cannot
+# change what runs. Re-run this script after the hooks change on main.
+#
+# If you use a global core.hooksPath, make sure it chains to .git/hooks.
+# Otherwise core.hooksPath is pointed at .git/hooks for this clone.
 set -euo pipefail
 root=$(git rev-parse --show-toplevel)
 cd "$root"
-chmod +x .githooks/* scripts/check_docs.py scripts/ai_review.py
+# Always the clone's own hooks directory. (git rev-parse --git-path hooks
+# would follow a global core.hooksPath and overwrite shared hooks.)
+hooks_dir="$(git rev-parse --absolute-git-dir)/hooks"
+mkdir -p "$hooks_dir"
 
-if [ -n "$(git config --global --get core.hooksPath || true)" ]; then
-  # Use the clone's own hooks directory; --git-path would follow the
-  # global core.hooksPath and overwrite the shared hooks.
-  hooks_dir="$(git rev-parse --absolute-git-dir)/hooks"
-  mkdir -p "$hooks_dir"
-  for hook in .githooks/*; do
-    name=$(basename "$hook")
-    ln -sfn "$root/$hook" "$hooks_dir/$name"
-    echo "linked $hooks_dir/$name -> $hook"
-  done
-  echo "Global core.hooksPath detected: make sure it chains to .git/hooks."
+install -m 0644 .githooks/lib.sh "$hooks_dir/federated-ads-hooks-lib.sh"
+for name in pre-commit pre-push; do
+  rm -f "$hooks_dir/$name"
+  install -m 0755 ".githooks/$name" "$hooks_dir/$name"
+  echo "installed $hooks_dir/$name"
+done
+
+if [ -z "$(git config --global --get core.hooksPath || true)" ]; then
+  echo "No global core.hooksPath: git uses .git/hooks directly."
 else
-  git config core.hooksPath .githooks
-  echo "core.hooksPath set to .githooks"
+  echo "Global core.hooksPath detected: make sure it chains to .git/hooks."
 fi

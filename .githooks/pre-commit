@@ -2,5 +2,5 @@
 # Layer 1: fast, deterministic editorial checks (docs/STYLE.md).
 # Bypass in an emergency with: git commit --no-verify
 set -euo pipefail
-root=$(git rev-parse --show-toplevel)
-exec python3 "$root/scripts/check_docs.py" --staged
+. "$(dirname "$0")/federated-ads-hooks-lib.sh"
+run_trusted scripts/check_docs.py --staged

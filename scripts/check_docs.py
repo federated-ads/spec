@@ -28,7 +28,18 @@ import sys
 import unicodedata
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+def _repo_root() -> Path:
+    # The hooks run this script from the trusted ref via stdin, where __file__
+    # is not a path in the clone, so ask git for the working-tree root.
+    try:
+        top = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                             capture_output=True, text=True, check=True).stdout.strip()
+        return Path(top)
+    except (OSError, subprocess.CalledProcessError):
+        return Path(__file__).resolve().parent.parent
+
+
+ROOT = _repo_root()
 WHITEPAPER = ROOT / "docs/whitepaper/federated-ads-whitepaper.md"
 WHITEPAPER_HTML = ROOT / "docs/whitepaper/web/federated-ads-whitepaper.html"
 STYLE = ROOT / "docs/STYLE.md"
