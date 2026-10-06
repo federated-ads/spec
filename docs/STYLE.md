@@ -155,11 +155,13 @@ The Internet Architecture Board (also "IAB") publishes architecture guidance thr
 
 ## 11. Editing workflow
 
-1. Edit the Markdown source.
-2. Sync the HTML rendering by hand.
-3. Add a line to Appendix C (change history) for substantive changes.
-4. Note any Internet-Draft impact.
-5. Work on a branch and open a pull request; `main` is protected.
+1. Install the checks once per clone: `scripts/install-hooks.sh`.
+2. Edit the Markdown source.
+3. Sync the HTML rendering by hand.
+4. Add a line to Appendix C (change history) for substantive changes.
+5. Note any Internet-Draft impact.
+6. Run `scripts/check_docs.py`; for larger changes, run `scripts/ai_review.py --worktree` before committing.
+7. Work on a branch and open a pull request; `main` is protected. Commit with Conventional Commits messages, one logical change per commit.
 
 ## Sources for this guide
 
