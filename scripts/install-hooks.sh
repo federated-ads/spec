@@ -10,11 +10,13 @@ cd "$root"
 chmod +x .githooks/* scripts/check_docs.py scripts/ai_review.py
 
 if [ -n "$(git config --global --get core.hooksPath || true)" ]; then
-  hooks_dir=$(git rev-parse --git-path hooks)
+  # Use the clone's own hooks directory; --git-path would follow the
+  # global core.hooksPath and overwrite the shared hooks.
+  hooks_dir="$(git rev-parse --absolute-git-dir)/hooks"
   mkdir -p "$hooks_dir"
   for hook in .githooks/*; do
     name=$(basename "$hook")
-    ln -sf "$root/$hook" "$hooks_dir/$name"
+    ln -sfn "$root/$hook" "$hooks_dir/$name"
     echo "linked $hooks_dir/$name -> $hook"
   done
   echo "Global core.hooksPath detected: make sure it chains to .git/hooks."
