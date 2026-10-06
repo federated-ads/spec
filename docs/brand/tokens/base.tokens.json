@@ -1,0 +1,70 @@
+{
+  "font": {
+    "family": {
+      "$type": "fontFamily",
+      "display": {
+        "$value": [
+          "Schibsted Grotesk",
+          "Helvetica Neue",
+          "Arial",
+          "sans-serif"
+        ],
+        "$description": "Headings and the wordmark"
+      },
+      "body": {
+        "$value": [
+          "Source Serif 4",
+          "Georgia",
+          "Times New Roman",
+          "serif"
+        ],
+        "$description": "Body text"
+      },
+      "mono": {
+        "$value": [
+          "JetBrains Mono",
+          "ui-monospace",
+          "Menlo",
+          "Consolas",
+          "monospace"
+        ],
+        "$description": "Code, labels and metadata"
+      }
+    },
+    "weight": {
+      "$type": "fontWeight",
+      "regular": {
+        "$value": 400
+      },
+      "medium": {
+        "$value": 500
+      },
+      "semibold": {
+        "$value": 600
+      },
+      "bold": {
+        "$value": 700
+      },
+      "extrabold": {
+        "$value": 800
+      }
+    }
+  },
+  "mark": {
+    "$type": "dimension",
+    "min-size-symbol": {
+      "$value": {
+        "value": 16,
+        "unit": "px"
+      },
+      "$description": "Smallest size for the symbol on its own"
+    },
+    "min-width-horizontal": {
+      "$value": {
+        "value": 112,
+        "unit": "px"
+      },
+      "$description": "Smallest width for the horizontal lockup"
+    }
+  }
+}

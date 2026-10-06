@@ -1,0 +1,101 @@
+{
+  "color": {
+    "$type": "color",
+    "paper": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.0706,
+          0.0941,
+          0.0863
+        ],
+        "hex": "#121816"
+      },
+      "$description": "Page background"
+    },
+    "ink": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.8902,
+          0.9137,
+          0.902
+        ],
+        "hex": "#e3e9e6"
+      },
+      "$description": "Body text and the ring of the mark"
+    },
+    "ink-soft": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.6235,
+          0.6784,
+          0.6588
+        ],
+        "hex": "#9fada8"
+      },
+      "$description": "Secondary text"
+    },
+    "rule": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.1647,
+          0.2039,
+          0.1922
+        ],
+        "hex": "#2a3431"
+      },
+      "$description": "Rules and borders; decoration only, below 3:1"
+    },
+    "panel": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.098,
+          0.1294,
+          0.1176
+        ],
+        "hex": "#19211e"
+      },
+      "$description": "Panels and hover backgrounds"
+    },
+    "accent": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.4235,
+          0.7686,
+          0.6784
+        ],
+        "hex": "#6cc4ad"
+      },
+      "$description": "Links, the nodes of the mark, verified states"
+    },
+    "accent-wash": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.1098,
+          0.1843,
+          0.1647
+        ],
+        "hex": "#1c2f2a"
+      },
+      "$description": "Background for notes and seals"
+    },
+    "code-bg": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.102,
+          0.1373,
+          0.1255
+        ],
+        "hex": "#1a2320"
+      },
+      "$description": "Code background"
+    }
+  }
+}

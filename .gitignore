@@ -11,4 +11,6 @@ docs/outreach/
 *.tmp
 # xml2rfc/kramdown-rfc reference cache
 .refcache/
+# Fonts downloaded by scripts/build_brand.py
+.brandcache/
 __pycache__/
