@@ -8,7 +8,9 @@ drift apart. The masthead and footer are left untouched and must be updated
 by hand when the front matter changes.
 
 The conversion reproduces the page's existing conventions:
-  - the Markdown "Contents" block is omitted (the page builds its own index);
+  - the Markdown "Contents" block is omitted; instead the side index
+    (<nav class="toc">) is generated from the article's part and section
+    headings;
   - tables are wrapped in <div class="tbl">;
   - Mermaid diagrams are wrapped in <div class="diagram"><pre class="mermaid">.
 
@@ -60,16 +62,42 @@ def render(md: str) -> str:
     return out
 
 
+def toc(article: str) -> str:
+    """Side-index items: a label per part, a numbered link per section."""
+    items = []
+    appendices = False
+    for level, hid, text in re.findall(r'<h([12]) id="([^"]+)">(.*?)</h\1>', article):
+        text = re.sub(r"<[^>]+>", "", text)
+        if level == "1":
+            items.append(f'<li class="part">{text}</li>')
+            continue
+        m = re.match(r"(?:Appendix )?([0-9]+|[A-Z])\. (.*)", text)
+        num, title = (m.group(1), m.group(2)) if m else ("", text)
+        if text.startswith("Appendix ") and not appendices:
+            items.append('<li class="part">Appendices</li>')
+            appendices = True
+        items.append(f'<li><a href="#{hid}"><span>{num}</span>{title}</a></li>')
+    return "\n".join("      " + i for i in items)
+
+
 def splice(html: str, article: str) -> str:
     a = html.index("<article>") + len("<article>")
     b = html.index("</article>")
-    return html[:a] + "\n" + article + "\n  " + html[b:]
+    html = html[:a] + "\n" + article + "\n  " + html[b:]
+    nav = html.index('<nav class="toc"')
+    a = html.index("<ol>", nav) + len("<ol>")
+    b = html.index("</ol>", nav)
+    return html[:a] + "\n" + toc(article) + "\n    " + html[b:]
 
 
 def main() -> int:
     md = MD.read_text(encoding="utf-8")
     html = HTML.read_text(encoding="utf-8")
-    new = splice(html, render(md))
+    try:
+        new = splice(html, render(md))
+    except FileNotFoundError:
+        print("render_whitepaper: pandoc not found (tested with 3.9)", file=sys.stderr)
+        return 1
     if "--check" in sys.argv[1:]:
         if new != html:
             print(f"{HTML.relative_to(ROOT)} is out of date: run scripts/render_whitepaper.py", file=sys.stderr)
