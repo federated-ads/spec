@@ -16,6 +16,8 @@
     "revocationLog": { "@id": "fa:revocationLog", "@type": "@id" },
     "policy": { "@id": "fa:policy", "@type": "@id" },
     "inventory": { "@id": "fa:inventory", "@type": "@id" },
+    "measurer": { "@id": "fa:measurer", "@type": "@id" },
+    "endpoint": { "@id": "fa:endpoint", "@type": "@id" },
     "issuedAt": { "@id": "fa:issuedAt", "@type": "xsd:dateTime" },
     "expiresAt": { "@id": "fa:expiresAt", "@type": "xsd:dateTime" },
     "effectiveAt": { "@id": "fa:effectiveAt", "@type": "xsd:dateTime" }
