@@ -2566,9 +2566,10 @@ signature layers ({{auth}}).  The browser never contacts a measurer.
   headers, cookies or referrers to a measurer.
 
 Tracker Reports repeat the selling node's own records.  They are not
-independent evidence that the numbers are true; independent
-corroboration comes from measurement modules, verification levels V2
-to V4 ({{verification-levels}}) and audits.
+independent evidence that the numbers are true.  Pinned measurement
+modules make the measurement method auditable, but their results pass
+through the selling node; independent corroboration comes from
+verification levels V2 to V4 ({{verification-levels}}) and audits.
 
 ## Measurement Modules {#measurement-modules}
 
