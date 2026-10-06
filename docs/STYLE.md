@@ -1,0 +1,177 @@
+# Federated Ads Protocol: style and editorial guide
+
+This guide is for everyone who writes or edits the whitepaper, the Internet-Draft, the vocabulary or the site, whether a person or an AI assistant. Its purpose is to keep the work credible to standards bodies (W3C, IETF, IAB Tech Lab), publishers, advertisers, implementers and civil society, and faithful to the project's ideals.
+
+## 1. Ideals: check every change against these
+
+The design commitments are the principles in whitepaper §3.1. Editing does not change them. Changing one is a design decision for the maintainers, raised as an issue.
+
+- **Federated.** No mandatory central server, exchange, registry or token. Intermediaries are optional and replaceable.
+- **Owner control of creative.** Creatives are licensed, time-limited and revocable, never surrendered.
+- **Privacy by default.** Contextual matching. No cross-site identifiers. Aggregated receipts. Third parties may *measure* deals, never *observe* people.
+- **Verifiable.** Economically meaningful events are signed and logged.
+- **Rail-agnostic, surface-neutral, bridge to today, boring primitives.**
+- **User agency.** People can understand, refuse, pay to avoid and report ads.
+- **Honest limits.** Where the protocol cannot guarantee something, say so.
+
+If a proposed edit, a source or a reviewer's suggestion conflicts with these, raise the conflict rather than writing it in.
+
+## 2. The documents and their roles
+
+| Document | Path | Role | Register |
+|---|---|---|---|
+| Whitepaper | `docs/whitepaper/federated-ads-whitepaper.md` | Informative. Explains why, what and how; argues the case; records trade-offs | Plain English, evidence-led |
+| Whitepaper HTML | `docs/whitepaper/web/federated-ads-whitepaper.html` | Hand-maintained rendering of the Markdown | Same |
+| Internet-Draft | `docs/ietf/draft-rajan-federated-ads-protocol-00.md` (kramdown-rfc) | Normative wire protocol only | RFC style, BCP 14 keywords |
+| Vocabulary | `docs/ns/` | Namespace `https://w3id.org/federated-ads/v0` | Terse definitions |
+
+- The whitepaper is informative. It never uses BCP 14 keywords (MUST, SHOULD, MAY) normatively; normative requirements live in the Internet-Draft.
+- Market design, economics, governance and regulation stay in the whitepaper. The draft covers the wire protocol only.
+- A whitepaper change that affects objects, fields, flows or conformance needs a matching change in the draft.
+
+## 3. Naming
+
+- The project is the **Federated Ads Protocol**; short name **Federated Ads**; identifier `federated-ads`. Never "OpenAds", "FedAds" or "FAP".
+- The publisher is the **Federated Ads Initiative**. Do not imply it is a legal entity, has members or has funding until it does.
+- Keep the AI-authorship disclosure (front matter and §28) accurate whenever authorship or process changes.
+
+## 4. Research: dos and don'ts
+
+### The evidence gate
+
+**If a statement cannot be supported by a fact we have verified in a cited source, it does not go in the paper.** Unsupported statements are removed, not softened with "may" or "reportedly". This applies to every factual claim: figures, dates, quotations, legal status, what a standard says, what a company or project did, and claims about what does or does not exist.
+
+Every factual sentence must pass all of these before it is written:
+1. **Sourced.** It has a citation, or it follows directly from the protocol design described in the paper.
+2. **Verified.** Someone has opened the cited source and found the fact there, in the form we state it.
+3. **Current.** The source is the latest available, and the status it describes has not changed.
+4. **Faithful.** The claim keeps the source's own conditions, caveats and scope (geography, sample, time period).
+
+What passes without a citation:
+- descriptions of the Federated Ads design itself;
+- the project's opinions, recommendations and decisions, written so they read as ours ("we propose", "Federated Ads chooses");
+- clearly labelled hypotheticals and illustrative examples.
+
+Claims of absence ("no existing system does X") are the hardest to support. Make them only after a documented search, say how and when the search was done, and invite correction.
+
+**Do**
+- Cite the **primary source**: the court opinion or docket, the regulator's decision or press release, the study author's own report, the standard itself, the paper's DOI or arXiv page, the company's own announcement.
+- **Check that every figure and quotation appears in the source you cite**, in the form you quote it. Check after any rewording too.
+- Give **context with numbers**: who produced it, when, where (geography), and the sample size when it is small.
+- **Name the source's interest** in one neutral clause when it matters: advertiser or publisher trade bodies, vendors studying their own product or market, a company reporting on itself, sponsored research, advocacy groups.
+- **Show ranges.** Where estimates disagree, present both ends and explain why they differ.
+- **Use absolute dates** ("16 September 2026"). For matters still in motion, say "as of this writing" and give the status (appeal pending, remedies under review).
+- If a primary source is paywalled or behind a login, cite it anyway and say so.
+- Search for **counter-evidence** before relying on a claim, and include it when it is credible.
+- **Read the method**, not just the headline: what was measured, on whose inventory, compared with what.
+
+**Don't**
+- Don't cite news coverage, blogs, vendor re-hosts or aggregators when a primary source exists.
+- Don't cite a homepage, a landing page without the figure, or a press release for a figure that is only in the full paper (or the reverse) without checking both.
+- Don't count the same study twice as independent evidence (for example, a company paper and a regulator's report based on the same experiment).
+- Don't drop a source's own caveats or conditions when quoting its result.
+- Don't add labels the source does not use, such as calling an estimate an "upper bound".
+- Don't present a single case study, a vendor rate card or self-reported figures as general evidence without saying what they are.
+- Don't cite an expired Internet-Draft or a withdrawn standard as current work.
+- Don't keep a claim you cannot verify. Leave it out.
+
+**Reference format** (Appendix B): `N. Author or organisation, "Title" or *Title* (date). URL`, with a short note for login-only access, sponsorship or re-hosting. Add new references at the end of the numbered list with the next free number; do not renumber existing ones. When a claim is removed and its reference is no longer cited, keep the number and replace the entry with `*Withdrawn.*` and a one-line reason. A withdrawn reference must not be cited.
+
+## 5. Claims and tone
+
+- **Honest limits first.** Never claim more than the protocol delivers. A promise in one section must agree with the caveats elsewhere; when editing a section, check the sections it cross-references.
+- **State novelty cautiously**: "as far as our search found", with an invitation to point out missed work.
+- **Criticise practices, not companies.** Report court and regulator findings as findings, with date and status.
+- **Prefer the defensible claim to the punchy one.** Avoid rhetoric a fair reviewer from any side of the market would reject.
+- **Separate fact, estimate and assumption.** Label hypothetical numbers as hypothetical.
+- **Lead with the problem**, as people experience it, before the mechanism (W3C TAG explainer guidance).
+
+## 6. Writing style
+
+- **British English**: -ise spellings ("monopolised"), "licence" as the noun and "license" as the verb, "programme" except for computer programs.
+- **Plain English.** Short sentences, one idea each. Active voice. Write for a technically literate reader who does not work in ad tech.
+- **Jargon**: define each industry term in a short inline phrase at first use, and add it to the Appendix A glossary.
+- **Structure**: lead each section with what it says; bulleted lists for three or more parallel items; tables for comparisons and options; short paragraphs.
+- **Options, then decision**: when comparing approaches, show the options, then state the decision and why.
+- **Punctuation**: avoid em dashes; use colons, commas or a new sentence.
+- **Emphasis**: bold only key figures and defined terms, sparingly.
+- **Cross-references**: `[§10.7](#107-invalid-traffic-without-fingerprinting)`. Check anchors after renaming headings.
+- **Examples**: fictional names and reserved domains (`example.com`, `.example`; RFC 2606, RFC 6761). Mark example values as illustrative; use placeholders for keys and signatures.
+
+## 7. Length budget
+
+Reviewers' time is the scarcest resource. These are soft limits; going over needs a reason, or the material belongs in an appendix or the Internet-Draft.
+
+| Part | Budget |
+|---|---|
+| Executive summary | ≤ 500 words |
+| Each subsection (### heading) | ≤ 500 words, excluding tables and code |
+| Comparison tables | ≤ 15 rows; move longer lists to an appendix |
+| Whole paper, excluding references | about 20,000 words |
+
+When a section grows past its budget, split it, move detail to an appendix, or move normative detail to the draft.
+
+## 8. Accessibility of the documents
+
+- Every diagram (Mermaid or image) has a short text description of what it shows, either as alt text or in the sentence before it.
+- Tables have a header row and make sense when read row by row by a screen reader; do not use tables for layout.
+- Never convey meaning by colour alone, in diagrams or in the HTML.
+- Headings are hierarchical with no skipped levels; link text describes its target ("the remedies opinion", not "here").
+- The HTML rendering meets WCAG 2.2 AA: contrast, keyboard navigation, readable in both light and dark themes.
+
+## 9. Inclusive language
+
+- Follow the RFC Editor style guide's inclusive-language guidance, which points to the NIST guidance on inclusive language in standards, and the W3C Manual of Style.
+- Use "allowlist" and "blocklist" (or "block list"), "primary" and "secondary" (or "leader" and "follower"), never "whitelist", "blacklist", "master" or "slave".
+- Use "they" for people whose pronouns are not known, and gender-neutral role names ("chair", "editor").
+
+## 10. Standards-body conventions
+
+**IETF (Internet-Draft)**
+- RFC Style Guide (RFC 7322) and the RFC Editor's web style guide.
+- BCP 14 keywords (RFC 2119, RFC 8174), uppercase, only for requirements an implementation can test.
+- Security Considerations (RFC 3552), Privacy Considerations (RFC 6973), IANA Considerations.
+- Keep the end user central (RFC 8890). Show how the design enables decentralised operation (RFC 9518). Consider human-rights impacts (RFC 9620).
+- A problem statement wins support before a solution does (RFC 5434); keep the problem and requirements separable from the protocol design.
+- IPR: IETF Trust Legal Provisions, BCP 78 and BCP 79.
+
+**IAB Tech Lab and the Media Rating Council (industry standards)**
+
+Advertisers, agencies and ad-tech reviewers judge the paper by whether it uses the industry's own definitions correctly.
+- **Use IAB and MRC definitions** for measurement terms, and cite the document and version: impression, viewable impression (MRC Viewable Ad Impression Measurement Guidelines), invalid traffic and its GIVT and SIVT categories (MRC IVT Guidelines), podcast downloads and delivered ads (IAB Tech Lab Podcast Measurement Technical Guidelines), attention (IAB/MRC Attention Measurement Guidelines).
+- **Name IAB Tech Lab standards precisely, with versions**: OpenRTB 2.6, AdCOM, VAST 4.x, ads.txt, sellers.json, SupplyChain object, Content Taxonomy 3.x, Ad Product Taxonomy 2.0, Global Privacy Platform (GPP). Describe what they do accurately; check the current specification, not memory.
+- **Use IAB glossary terminology** for industry terms, and match the IAB's meaning when defining them in Appendix A.
+- **When Federated Ads departs from an IAB or MRC definition**, say so explicitly and explain why (for example, email opens are not billable because privacy proxies inflate them).
+- **Map, don't replace.** Where an IAB standard exists for something, Federated Ads maps to it or bridges to it rather than defining a competing version, and says which.
+- **Respect the IAB Tech Lab process** when comparing: its standards are developed in working groups and released for public comment before finalisation. Describe a Tech Lab document's status accurately (draft, public comment, final).
+
+The Internet Architecture Board (also "IAB") publishes architecture guidance through the IETF; its documents are cited by RFC number to avoid confusion.
+
+**W3C (vocabulary, Community Group work, horizontal review)**
+- W3C Manual of Style.
+- Measure designs against the W3C Privacy Principles (a W3C Statement since May 2025), the TAG Ethical Web Principles and the TAG Web Platform Design Principles.
+- Prepare an explainer in the TAG format (*Writing Effective Explainers*, W3C Group Note, 2025): user-facing problem, proposed approach, use cases, and accessibility, security and privacy considerations.
+- Be ready for horizontal review: answer the Security and Privacy Self-Review Questionnaire, and consider accessibility and internationalisation (languages, currencies, regions).
+
+## 11. Editing workflow
+
+1. Install the checks once per clone: `scripts/install-hooks.sh`.
+2. Edit the Markdown source.
+3. Sync the HTML rendering by hand.
+4. Add a line to Appendix C (change history) for substantive changes.
+5. Note any Internet-Draft impact.
+6. Run `scripts/check_docs.py`; for larger changes, run `scripts/ai_review.py --worktree` before committing.
+7. Work on a branch and open a pull request; `main` is protected. Commit with Conventional Commits messages, one logical change per commit.
+
+## Sources for this guide
+
+- RFC Editor, [Style Guide](https://www.rfc-editor.org/authors/rfc-style-guide/) and RFC 7322
+- [RFC 9518](https://www.rfc-editor.org/rfc/rfc9518.html), *Centralization, Decentralization, and Internet Standards*
+- [RFC 9620](https://www.rfc-editor.org/rfc/rfc9620.html), *Guidelines for Human Rights Protocol and Architecture Considerations*
+- [RFC 5434](https://www.rfc-editor.org/rfc/rfc5434), *Considerations for Having a Successful Birds-of-a-Feather (BOF) Session*
+- RFC 3552, RFC 6973, RFC 8890, RFC 2119, RFC 8174
+- W3C TAG, [Writing Effective Explainers](https://www.w3.org/TR/explainer-explainer)
+- W3C, [Privacy Principles](https://www.w3.org/news/2025/privacy-principles-is-a-w3c-statement)
+- W3C Manual of Style; TAG Ethical Web Principles; TAG Web Platform Design Principles; Security and Privacy Self-Review Questionnaire
+- WCAG 2.2
+- IAB, [Glossary of Terminology](https://www.iab.com/insights/glossary-of-terminology/); IAB Tech Lab standards and public-comment releases; Media Rating Council measurement guidelines

@@ -1,7 +1,7 @@
 # This repo publishes Markdown specs: override the global *.md ignore
 !*.md
-# ...but keep the global convention for assistant notes and brainstorms
-CLAUDE.md
+# ...but keep personal assistant notes and brainstorms local.
+# The repo-level assistant instructions (CLAUDE.md) are shared.
 CLAUDE.local.md
 .claude/
 docs/brainstorms/
@@ -11,3 +11,4 @@ docs/outreach/
 *.tmp
 # xml2rfc/kramdown-rfc reference cache
 .refcache/
+__pycache__/

@@ -9,6 +9,21 @@ Thank you for helping improve the Federated Ads Protocol. The project is at an e
 - **Pull requests** are welcome for corrections and proposed text. For substantive changes, open an issue first so the change can be discussed.
 - **Security issues:** please report privately to suneeshtr@gmail.com rather than opening a public issue.
 
+## Editorial standards
+
+All text follows the [style and editorial guide](docs/STYLE.md). Its central rule is the evidence gate: a factual statement goes in only if it is supported by a primary source that someone has checked. Unverifiable claims are removed, not hedged.
+
+To install the repository's checks locally:
+
+```sh
+scripts/install-hooks.sh
+```
+
+- **pre-commit** runs fast, deterministic checks (`scripts/check_docs.py`): naming, inclusive language, punctuation, reference integrity and links.
+- **pre-push** runs those checks again, then an AI editorial review of your document changes against the guide. It needs the Claude Code CLI; without it the review is skipped. Set `FA_SKIP_AI_REVIEW=1` to skip it for one push, or `FA_AI_REVIEW_WARN=1` to see findings without blocking.
+- The hooks run the checks from `origin/main`, so a branch you check out cannot change what runs on your machine.
+- Pull requests run the deterministic checks in CI.
+
 ## Process
 
 Proposals follow a simple path:

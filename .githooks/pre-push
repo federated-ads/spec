@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Federated Ads editorial hooks (installed by scripts/install-hooks.sh).
+# Layer 1 again, then layer 2: AI editorial review of the pushed doc changes.
+# See scripts/ai_review.py for FA_SKIP_AI_REVIEW, FA_AI_REVIEW_WARN and FA_AI_VERIFY_WEB.
+set -euo pipefail
+. "$(dirname "$0")/federated-ads-hooks-lib.sh"
+# git sends '<local ref> <local sha> <remote ref> <remote sha>' lines on
+# stdin; pass them on so the review covers exactly what is being pushed.
+FA_PUSH_REFS=$(cat)
+export FA_PUSH_REFS
+run_trusted scripts/check_docs.py
+run_trusted scripts/ai_review.py
