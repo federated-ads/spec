@@ -129,6 +129,12 @@ informative:
     author:
       - org: Federated Ads Initiative
     date: 2026-10
+  CSP3:
+    title: "Content Security Policy Level 3"
+    target: https://www.w3.org/TR/CSP3/
+    author:
+      - org: W3C
+    date: 2026-09-16
   GPC:
     title: "Global Privacy Control (GPC)"
     target: https://www.w3.org/TR/gpc/
@@ -2504,11 +2510,14 @@ observations about any person.
 
 ## Rule {#measurement-rule}
 
-A node MUST NOT send to a measurer, or to any other third party, data
-from which the recipient could tell that two events came from the same
-person or device, or recover an IP address, user agent, page URL,
-cookie or other identifier.  A measurer receives only the data defined
-in this section.
+The aim of this section is that no measurer can tell that two events
+came from the same person or device, or recover an IP address, user
+agent, page URL, cookie or other identifier.  To that end, a node
+MUST NOT send to a measurer per-event records, and MUST NOT send to a
+measurer or to any other third party identifiers of people or devices,
+or IP addresses, user agents, page URLs, cookies, referrers or request
+headers taken from end users' requests.  A measurer receives only the
+data defined in this section.
 
 ## Measurers {#measurers}
 
@@ -2560,8 +2569,8 @@ signature layers ({{auth}}).  The browser never contacts a measurer.
 * `cadence` MUST NOT be shorter than the deal's `receiptWindow` for
   `"cells"` reports.  Windows MUST NOT overlap.
 * `macros`, if used, MAY expand only to `deal`, `creative`, `window`,
-  `context` and `region` values.  No macro may expand to a value about
-  a person, device or request.
+  `context` and `region` values.  A macro MUST NOT expand to a value
+  about a person, device or request.
 * A selling node MUST NOT forward IP addresses, user agents, request
   headers, cookies or referrers to a measurer.
 
@@ -2581,18 +2590,25 @@ module:
 
 * MUST load it only by its content hash, and MUST list the hash of
   every module used in the Receipt Batch `measurementModules` member;
-* MUST run it in an isolated context with no network access of its own
-  (for example under a Content Security Policy with
-  `connect-src 'none'` and no other permitted origins), exchanging
-  messages only with the selling node's collector;
-* MUST NOT give it access to cookies, storage or device-identifying
-  interfaces;
-* MUST accept from it only coarse counters (for example viewable-time
-  buckets and invalid-traffic category flags) and fold them into
-  aggregate cells.
+* MUST run it in a sandboxed frame that permits scripts but not
+  same-origin access, forms, pop-ups or top-level navigation, under a
+  Content Security Policy that blocks its fetches and subresource loads
+  (for example `default-src 'none'; form-action 'none'; base-uri
+  'none'`, with only the pinned module permitted in `script-src`),
+  exchanging messages only with the selling node's collector;
+* MUST NOT expose cookies or storage to it, and MUST NOT run a module
+  whose source reads signals other than those of Intersection Observer
+  and Page Visibility;
+* MUST accept from it only viewable-time buckets and invalid-traffic
+  category flags, and fold them into aggregate cells.
 
-The source of a vendor module SHOULD be public, and MUST be available
-to auditors.
+These measures do not guarantee that no data leaves the page: for
+example, Content Security Policy defines navigation directives only for
+form submissions and framing {{CSP3}}, so it does not govern a frame
+navigating itself.  Source review is therefore part of the safeguard:
+the measurer SHOULD publish the source of its module, and MUST make it
+available to the selling node, the buying node and the auditors the
+Deal names.
 
 ## Holdouts {#holdouts}
 
