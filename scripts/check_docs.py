@@ -2,19 +2,23 @@
 """Deterministic editorial checks for the Federated Ads documents.
 
 Enforces the mechanical rules in docs/STYLE.md:
-  - project naming (no "OpenAds" / "FedAds" outside the naming note and history);
-  - inclusive language (no whitelist/blacklist/master/slave);
-  - no em dashes in the whitepaper or style guide;
+  - project naming (no "OpenAds", "FedAds" or "FAP" outside the phrases that
+    explain the old and confusable names), in every tracked Markdown file;
+  - inclusive language (no whitelist, blacklist, master or slave), in every
+    tracked Markdown file;
+  - no em dashes in the whitepaper and the editorial documents;
   - no uppercase BCP 14 keywords in the informative whitepaper;
   - whitepaper references: every [N] cited exists in Appendix B, every
     reference is cited, numbering is sequential with no duplicates;
-  - every in-page #anchor link in the whitepaper resolves to a heading;
+  - every in-page #anchor link in the whitepaper resolves;
   - whitepaper Markdown and HTML are changed together (warning only).
 
 Usage:
-  scripts/check_docs.py            check the working tree
-  scripts/check_docs.py --staged   also warn if the whitepaper .md is staged
-                                   without the .html rendering
+  scripts/check_docs.py            check the working tree; the HTML-sync
+                                   warning covers this branch's commits
+                                   (against origin/main) and local changes
+  scripts/check_docs.py --staged   check the staged (index) content instead,
+                                   as the pre-commit hook does
 
 Exit status 1 if any error is found. Warnings never fail the run.
 Standard library only, so it runs unchanged in CI.
@@ -28,6 +32,7 @@ import sys
 import unicodedata
 from pathlib import Path
 
+
 def _repo_root() -> Path:
     # The hooks run this script from the trusted ref via stdin, where __file__
     # is not a path in the clone, so ask git for the working-tree root.
@@ -40,35 +45,64 @@ def _repo_root() -> Path:
 
 
 ROOT = _repo_root()
-WHITEPAPER = ROOT / "docs/whitepaper/federated-ads-whitepaper.md"
-WHITEPAPER_HTML = ROOT / "docs/whitepaper/web/federated-ads-whitepaper.html"
-STYLE = ROOT / "docs/STYLE.md"
-DRAFT_DIR = ROOT / "docs/ietf"
+WHITEPAPER = "docs/whitepaper/federated-ads-whitepaper.md"
+WHITEPAPER_HTML = "docs/whitepaper/web/federated-ads-whitepaper.html"
+# Documents that follow the full punctuation rules (STYLE.md §6).
+EDITORIAL = [WHITEPAPER, "docs/STYLE.md", "CLAUDE.md", "CONTRIBUTING.md", "README.md"]
+# Markdown that is historical or private and is not checked.
+SKIP_PREFIXES = ("docs/whitepaper/archive/", "docs/outreach/", "docs/brainstorms/")
 
+STAGED = "--staged" in sys.argv[1:]
 errors: list[str] = []
 warnings: list[str] = []
 
 
-def rel(path: Path) -> str:
-    return str(path.relative_to(ROOT))
+def git(*args: str) -> str:
+    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
+                          text=True, check=True).stdout
 
 
-def error(path: Path, line: int, msg: str) -> None:
-    errors.append(f"{rel(path)}:{line}: {msg}")
+def read(path: str) -> str | None:
+    """Content to check: the staged blob with --staged, else the working file."""
+    if STAGED:
+        try:
+            return git("show", f":{path}")
+        except subprocess.CalledProcessError:
+            return None
+    file = ROOT / path
+    return file.read_text(encoding="utf-8") if file.exists() else None
+
+
+def tracked_markdown() -> list[str]:
+    files = git("ls-files", "--cached", "--", "*.md").split("\n")
+    if not STAGED:
+        files += git("ls-files", "--others", "--exclude-standard", "--", "*.md").split("\n")
+    return sorted({f for f in files if f and not f.startswith(SKIP_PREFIXES)})
+
+
+def error(path: str, line: int, msg: str) -> None:
+    errors.append(f"{path}:{line}: {msg}")
 
 
 def warn(msg: str) -> None:
     warnings.append(msg)
 
 
+FENCE = re.compile(r"^\s*(```|~~~)")
+
+
 def lines_outside_code(text: str):
     """Yield (line_no, line) for lines outside fenced code blocks."""
-    in_fence = False
+    fence = None
     for no, line in enumerate(text.splitlines(), 1):
-        if line.lstrip().startswith("```"):
-            in_fence = not in_fence
+        m = FENCE.match(line)
+        if m:
+            if fence is None:
+                fence = m.group(1)
+            elif m.group(1) == fence:
+                fence = None
             continue
-        if not in_fence:
+        if fence is None:
             yield no, line
 
 
@@ -77,69 +111,115 @@ def strip_inline_code(line: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Naming and inclusive language: all Markdown documents
+# Naming and inclusive language: all tracked Markdown
 # ---------------------------------------------------------------------------
 
-NAMING = re.compile(r"\b(OpenAds|Open Ads|FedAds|Fed Ads)\b")
-# Lines that legitimately discuss the old or confusable names.
+NAMING = re.compile(r"\b(OpenAds|Open Ads|FedAds|Fed Ads|FAP)\b")
+# Phrases that legitimately name the old or confusable names. They are removed
+# from the line before searching, so an unrelated hit on the same line is
+# still reported.
 NAMING_ALLOWED = re.compile(
-    r"Naming note|unrelated|renamed|Renamed|working name|Trade Desk|OpenAds announcement|"
-    r"Open Ads Protocol|Openads|openads-initiative|avoid confusion|\"OpenAds\"",
+    r"[\"“](?:OpenAds|Open Ads|FedAds|Fed Ads|FAP)[\"”]|"
+    r"Trade Desk(?:'s|’s)? (?:sell-side solution )?\"?OpenAds\"?(?: header-bidding wrapper)?|"
+    r"OpenAds announcement|Open Ads Protocol|openads-initiative"
 )
-EXCLUSIONARY = re.compile(r"\b(whitelist\w*|blacklist\w*|master|slave\w*)\b", re.IGNORECASE)
-# "Master" is fine in established proper nouns and degrees; extend if needed.
-EXCLUSIONARY_ALLOWED = re.compile(r"Mastodon|MasterCard|Master's degree|never \"whitelist\"", re.IGNORECASE)
+EXCLUSIONARY = re.compile(r"\b(whitelist\w*|blacklist\w*|master\w*|slave\w*)\b", re.IGNORECASE)
+EXCLUSIONARY_ALLOWED = re.compile(
+    r"MasterCard|Master's degree|"
+    r"never \"whitelist\", \"blacklist\", \"master\" or \"slave\"",
+    re.IGNORECASE,
+)
 
 
-def check_language(path: Path) -> None:
-    text = path.read_text(encoding="utf-8")
+def check_language(path: str, text: str) -> None:
     for no, line in lines_outside_code(text):
         body = strip_inline_code(line)
-        if NAMING.search(body) and not NAMING_ALLOWED.search(body):
-            error(path, no, f"old or wrong project name {NAMING.search(body).group(0)!r}; use 'Federated Ads'")
-        m = EXCLUSIONARY.search(body)
-        if m and not EXCLUSIONARY_ALLOWED.search(body):
+        for m in NAMING.finditer(NAMING_ALLOWED.sub("", body)):
+            error(path, no, f"old or wrong project name {m.group(0)!r}; use 'Federated Ads' (STYLE.md §3)")
+        for m in EXCLUSIONARY.finditer(EXCLUSIONARY_ALLOWED.sub("", body)):
             error(path, no, f"non-inclusive term {m.group(0)!r} (STYLE.md §9)")
+
+
+def check_punctuation(path: str, text: str) -> None:
+    for no, line in lines_outside_code(text):
+        if "—" in strip_inline_code(line):
+            error(path, no, "em dash; use a colon, comma or new sentence (STYLE.md §6)")
 
 
 # ---------------------------------------------------------------------------
 # Whitepaper-specific checks
 # ---------------------------------------------------------------------------
 
-BCP14 = re.compile(r"\b(MUST NOT|MUST|SHALL NOT|SHALL|SHOULD NOT|SHOULD|REQUIRED|RECOMMENDED|OPTIONAL)\b")
+BCP14 = re.compile(
+    r"\b(NOT RECOMMENDED|MUST NOT|MUST|SHALL NOT|SHALL|SHOULD NOT|SHOULD|"
+    r"REQUIRED|RECOMMENDED|MAY|OPTIONAL)\b"
+)
+CITATION = re.compile(r"\[(\d+(?:\s*[,–-]\s*\d+)*)\](?!\()")
+
+
+def expand_citation(group: str) -> list[int]:
+    numbers: list[int] = []
+    for part in re.split(r"\s*,\s*", group):
+        bounds = re.split(r"\s*[–-]\s*", part)
+        if len(bounds) == 2:
+            lo, hi = int(bounds[0]), int(bounds[1])
+            numbers.extend(range(lo, hi + 1))
+        else:
+            numbers.append(int(bounds[0]))
+    return numbers
 
 
 def slugify(heading: str) -> str:
-    """GitHub-style heading anchor."""
-    text = re.sub(r"`", "", heading.strip())
+    """GitHub-style heading anchor (before duplicate suffixes)."""
+    text = re.sub(r"\s+#+\s*$", "", heading.strip())  # closing hashes
+    text = text.replace("`", "")
     text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
     text = unicodedata.normalize("NFKC", text).lower()
     text = re.sub(r"[^\w\- ]", "", text)
     return text.replace(" ", "-")
 
 
-def check_whitepaper() -> None:
-    path = WHITEPAPER
-    text = path.read_text(encoding="utf-8")
+def collect_anchors(text: str) -> set[str]:
+    anchors: set[str] = set()
+    seen: dict[str, int] = {}
+    previous = ""
+    for _, line in lines_outside_code(text):
+        heading = None
+        m = re.match(r"^#{1,6} (.+)$", line)
+        if m:
+            heading = m.group(1)
+        elif re.match(r"^(=+|-+)\s*$", line) and previous.strip() and not previous.lstrip().startswith(("|", "-", "*")):
+            heading = previous  # setext heading
+        if heading is not None:
+            slug = slugify(heading)
+            count = seen.get(slug, 0)
+            anchors.add(slug if count == 0 else f"{slug}-{count}")
+            seen[slug] = count + 1
+        for m in re.finditer(r"""<a\s[^>]*\b(?:id|name)=["']([^"']+)["']""", line):
+            anchors.add(m.group(1))
+        for m in re.finditer(r"""\bid=["']([^"']+)["']""", line):
+            anchors.add(m.group(1))
+        previous = line
+    return anchors
 
-    # Em dashes and BCP 14 keywords (prose only).
+
+def check_whitepaper(path: str, text: str) -> None:
     for no, line in lines_outside_code(text):
         body = strip_inline_code(line)
-        if "—" in body and not line.lstrip().startswith("*The Federated Ads Protocol"):
-            error(path, no, "em dash; use a colon, comma or new sentence (STYLE.md §6)")
-        m = BCP14.search(body)
-        if m and "BCP 14" not in body and "RFC 2119" not in body:
+        if "BCP 14" in body or "RFC 2119" in body:
+            continue
+        for m in BCP14.finditer(body):
             error(path, no, f"uppercase {m.group(0)!r} in the informative whitepaper; normative keywords belong in the Internet-Draft (STYLE.md §2)")
 
-    # References.
-    if "## Appendix B. References" not in text:
+    marker = "## Appendix B. References"
+    if marker not in text:
         error(path, 1, "Appendix B. References heading not found")
         return
-    body, refs_part = text.split("## Appendix B. References", 1)
-    refs_part = refs_part.split("## Appendix C", 1)[0]
+    before, rest = text.split(marker, 1)
+    refs_part, after = (rest.split("## Appendix C", 1) + [""])[:2]
+    ref_line_offset = before.count("\n") + 1
 
     defined: dict[int, int] = {}
-    ref_line_offset = body.count("\n") + 1
     for i, line in enumerate(refs_part.splitlines()):
         m = re.match(r"^(\d+)\. ", line)
         if m:
@@ -148,15 +228,18 @@ def check_whitepaper() -> None:
                 error(path, ref_line_offset + i, f"reference [{n}] defined twice")
             defined[n] = ref_line_offset + i
     if defined:
-        expected = list(range(1, max(defined) + 1))
-        missing_numbers = sorted(set(expected) - set(defined))
-        if missing_numbers:
-            error(path, ref_line_offset, f"gap in reference numbering: missing {missing_numbers}")
+        missing = sorted(set(range(1, max(defined) + 1)) - set(defined))
+        if missing:
+            error(path, ref_line_offset, f"gap in reference numbering: missing {missing}")
 
+    # Citations anywhere outside Appendix B itself (Appendix C included).
     cited: dict[int, int] = {}
-    for no, line in lines_outside_code(body):
-        for m in re.finditer(r"\[(\d+)\](?!\()", strip_inline_code(line)):
-            cited.setdefault(int(m.group(1)), no)
+    after_offset = ref_line_offset + refs_part.count("\n")
+    for chunk, offset in ((before, 0), (after, after_offset)):
+        for no, line in lines_outside_code(chunk):
+            for m in CITATION.finditer(strip_inline_code(line)):
+                for n in expand_citation(m.group(1)):
+                    cited.setdefault(n, offset + no)
     for n, no in sorted(cited.items()):
         if n not in defined:
             error(path, no, f"citation [{n}] has no entry in Appendix B")
@@ -164,48 +247,46 @@ def check_whitepaper() -> None:
         if n not in cited:
             error(path, no, f"reference [{n}] is never cited in the text")
 
-    # Anchors.
-    anchors = set()
-    for _, line in lines_outside_code(text):
-        m = re.match(r"^#{1,6} (.+)$", line)
-        if m:
-            anchors.add(slugify(m.group(1)))
+    anchors = collect_anchors(text)
     for no, line in lines_outside_code(text):
         for m in re.finditer(r"\]\(#([^)\s]+)\)", line):
             if m.group(1) not in anchors:
                 error(path, no, f"link to missing anchor #{m.group(1)}")
 
 
-def check_html_sync(staged: bool) -> None:
+def changed_files() -> set[str]:
+    if STAGED:
+        return set(git("diff", "--cached", "--name-only").split())
+    changed: set[str] = set()
     try:
-        if staged:
-            out = subprocess.run(
-                ["git", "diff", "--cached", "--name-only"],
-                cwd=ROOT, capture_output=True, text=True, check=True,
-            ).stdout.split()
-        else:
-            out = subprocess.run(
-                ["git", "status", "--porcelain"],
-                cwd=ROOT, capture_output=True, text=True, check=True,
-            ).stdout
-            out = [l[3:] for l in out.splitlines()]
+        base = git("merge-base", "HEAD", "origin/main").strip()
+        changed |= set(git("diff", "--name-only", f"{base}...HEAD").split())
+    except subprocess.CalledProcessError:
+        pass
+    changed |= {l[3:] for l in git("status", "--porcelain").splitlines()}
+    return changed
+
+
+def check_html_sync() -> None:
+    try:
+        changed = changed_files()
     except (OSError, subprocess.CalledProcessError):
         return
-    md, html = rel(WHITEPAPER), rel(WHITEPAPER_HTML)
-    if md in out and html not in out:
-        warn(f"{md} changed but {html} did not: sync the HTML rendering (STYLE.md §11)")
+    if WHITEPAPER in changed and WHITEPAPER_HTML not in changed:
+        warn(f"{WHITEPAPER} changed but {WHITEPAPER_HTML} did not: sync the HTML rendering (STYLE.md §11)")
 
 
 def main() -> int:
-    staged = "--staged" in sys.argv[1:]
-    docs = [WHITEPAPER, STYLE, ROOT / "README.md", ROOT / "CONTRIBUTING.md"]
-    docs += sorted(DRAFT_DIR.glob("draft-*.md"))
-    for path in docs:
-        if path.exists():
-            check_language(path)
-    if WHITEPAPER.exists():
-        check_whitepaper()
-    check_html_sync(staged)
+    for path in tracked_markdown():
+        text = read(path)
+        if text is None:
+            continue
+        check_language(path, text)
+        if path in EDITORIAL:
+            check_punctuation(path, text)
+        if path == WHITEPAPER:
+            check_whitepaper(path, text)
+    check_html_sync()
 
     for w in warnings:
         print(f"warning: {w}", file=sys.stderr)
