@@ -281,13 +281,12 @@ def og_card(F: dict[str, Face]) -> str:
     W, H = 1200, 630
     L = LIGHT
     parts = [f'<rect width="{W}" height="{H}" fill="{L["paper"]}"/>',
-             mark(L["rule"], L["accent"], "translate(750 35) scale(17.5)"),
-             mark(L["ink"], L["accent"], "translate(80 72) scale(1.375)")]
-    parts.append(F["display"].text(WORDMARK, 28, 138, 104, L["ink"], WORD_TRACK)[0])
-    parts.append(F["display"].text("The Federated Ads", 68, 78, 262, L["ink"], -0.025)[0])
-    parts.append(F["display"].text("Protocol", 68, 78, 332, L["ink"], -0.025)[0])
-    parts.append(F["display-medium"].text("An open, federated, owner-controlled protocol", 28, 80, 398, L["ink-soft"])[0])
-    parts.append(F["display-medium"].text("for advertising on the open web", 28, 80, 434, L["ink-soft"])[0])
+             mark(L["rule"], L["accent"], "translate(750 35) scale(17.5)")]
+    # The large mark and the title already carry the identity, so no small lockup.
+    parts.append(F["display"].text("The Federated Ads", 68, 78, 214, L["ink"], -0.025)[0])
+    parts.append(F["display"].text("Protocol", 68, 78, 284, L["ink"], -0.025)[0])
+    parts.append(F["display-medium"].text("An open, federated, owner-controlled protocol", 28, 80, 350, L["ink-soft"])[0])
+    parts.append(F["display-medium"].text("for advertising on the open web", 28, 80, 386, L["ink-soft"])[0])
     parts.append(F["mono"].text(f"Discussion draft · Not a standard · {SITE_ADDRESS}",
                                 18, 80, 558, L["ink-soft"])[0])
     return svg(W, H, "".join(parts),
