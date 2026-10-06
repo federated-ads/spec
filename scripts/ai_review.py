@@ -96,7 +96,7 @@ PROMPT = """You are the editorial reviewer for the Federated Ads Protocol reposi
 Your job is to stop changes that would get the documents rejected by W3C, IETF,
 IAB Tech Lab or a careful industry reader.
 
-First read docs/STYLE.md in full. It is the standard you apply. Then review ONLY
+{style_rule} Then review ONLY
 the added or changed lines in the diff below (lines starting with '+'). Read the
 surrounding file text, and any section a changed line cross-references, when you
 need context. Do not report problems in unchanged text.
@@ -188,6 +188,24 @@ def trusted_fetch_rules(base: str) -> list[str]:
     refs = text.split("## Appendix B", 1)[-1]
     hosts = sorted({h.lower() for h in re.findall(r"https://([A-Za-z0-9.-]+)", refs)})
     return [f"WebFetch(domain:{h})" for h in hosts]
+
+
+STYLE = "docs/STYLE.md"
+
+
+def style_rule(base: str) -> str:
+    """Point the reviewer at STYLE.md as it stands at the trusted base.
+
+    The working-tree copy may be edited by the change under review, which
+    could otherwise weaken the standard it is judged against.
+    """
+    try:
+        text = git("show", f"{base}:{STYLE}")
+    except subprocess.CalledProcessError:
+        return f"First read {STYLE} in full. It is the standard you apply."
+    return (f"The standard you apply is {STYLE} as it stands on the base branch, "
+            "given in full below. Use this copy, not the working-tree file, which "
+            f"the change under review may have edited.\n\n<style_guide>\n{text}</style_guide>\n")
 
 
 ZERO_SHA = "0" * 40
@@ -291,7 +309,8 @@ def main() -> int:
     tools = "Read,Grep,Glob" + (",WebFetch" if web else "")
     allowed = ALLOW_READ + (trusted_fetch_rules(base) if web else [])
     nonce = secrets.token_hex(8)
-    prompt = PROMPT.format(web_rule=WEB_ON if web else WEB_OFF, diff=diff, nonce=nonce)
+    prompt = PROMPT.format(style_rule=style_rule(base), web_rule=WEB_ON if web else WEB_OFF,
+                           diff=diff, nonce=nonce)
 
     print(f"ai_review: reviewing documentation changes since {base[:8]}"
           f"{' with web verification' if web else ''} (this can take a few minutes)...",
