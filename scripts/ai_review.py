@@ -154,8 +154,20 @@ DENY_READ = [
     "Read(./.git/**)",
     "Read(./.claude/**)",
     "Read(./**/.env*)",
-    "Read(~/**)",
+    # Credential stores, denied explicitly as well as by restricted mode's
+    # working-directory confinement. (A blanket home-directory rule would
+    # also block the repository when it is checked out under $HOME.)
+    "Read(~/.ssh/**)",
+    "Read(~/.aws/**)",
+    "Read(~/.config/**)",
+    "Read(~/.gnupg/**)",
+    "Read(~/.docker/**)",
+    "Read(~/.kube/**)",
+    "Read(~/.netrc)",
+    "Read(~/.claude/**)",
 ]
+# File tools are allowed inside the repository only.
+ALLOW_READ = ["Read(./**)", "Grep(./**)", "Glob(./**)"]
 WHITEPAPER = "docs/whitepaper/federated-ads-whitepaper.md"
 
 
@@ -233,7 +245,7 @@ def main() -> int:
 
     web = os.environ.get("FA_AI_VERIFY_WEB") == "1"
     tools = "Read,Grep,Glob" + (",WebFetch" if web else "")
-    allowed = ["Read", "Grep", "Glob"] + (trusted_fetch_rules(base) if web else [])
+    allowed = ALLOW_READ + (trusted_fetch_rules(base) if web else [])
     nonce = secrets.token_hex(8)
     prompt = PROMPT.format(web_rule=WEB_ON if web else WEB_OFF, diff=diff, nonce=nonce)
 
