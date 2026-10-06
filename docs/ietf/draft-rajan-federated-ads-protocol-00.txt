@@ -118,7 +118,7 @@ Internet-Draft           Federated Ads Protocol             October 2026
        4.2.4.  Key-Lifecycle Proofs  . . . . . . . . . . . . . . . .  17
      4.3.  Relays  . . . . . . . . . . . . . . . . . . . . . . . . .  18
    5.  Identity, Keys and Discovery  . . . . . . . . . . . . . . . .  18
-     5.1.  Well-Known Document . . . . . . . . . . . . . . . . . . .  18
+     5.1.  Well-Known Document . . . . . . . . . . . . . . . . . . .  19
      5.2.  WebFinger Alternative . . . . . . . . . . . . . . . . . .  20
      5.3.  Node Descriptor . . . . . . . . . . . . . . . . . . . . .  20
      5.4.  Delegation  . . . . . . . . . . . . . . . . . . . . . . .  20
@@ -989,18 +989,18 @@ Internet-Draft           Federated Ads Protocol             October 2026
    and abuse handling.  A relay MUST NOT modify any member of a signed
    object; any modification invalidates the proof.
 
+   A relay SHOULD forward Revocation and RevocationAck objects ahead of
+   other traffic.  It MAY rate-limit them, but only per issuer, so that
+   one issuer's revocations cannot delay another's.
+
 5.  Identity, Keys and Discovery
 
    A node's identity is rooted in control of a DNS name and the HTTPS
    origin served under it.
 
-5.1.  Well-Known Document
 
-   A domain that participates in this protocol MUST serve a discovery
-   document at the well-known URI /.well-known/federated-ads
-   (Section 18.2) over HTTPS, with media type application/federated-
-   ads+json.  The document lists the domain's own node, the nodes
-   authorized to act for it, or both.
+
+
 
 
 
@@ -1009,6 +1009,14 @@ Rajan & Krishna           Expires 8 April 2027                 [Page 18]
 
 Internet-Draft           Federated Ads Protocol             October 2026
 
+
+5.1.  Well-Known Document
+
+   A domain that participates in this protocol MUST serve a discovery
+   document at the well-known URI /.well-known/federated-ads
+   (Section 18.2) over HTTPS, with media type application/federated-
+   ads+json.  The document lists the domain's own node, the nodes
+   authorized to act for it, or both.
 
       +==========+==========+======================================+
       | Member   | Req.     | Description                          |
@@ -1050,14 +1058,6 @@ Internet-Draft           Federated Ads Protocol             October 2026
    }
 
                         Figure 5: Discovery document
-
-
-
-
-
-
-
-
 
 
 
@@ -5500,7 +5500,8 @@ Internet-Draft           Federated Ads Protocol             October 2026
       member; the TrackerReport object; measurement modules and
       holdouts; measurementModules replaces measurementModule in Receipt
       Batches; Tracker Reports and measurement modules are added to
-      federated-ads-extended.
+      federated-ads-extended.  Relays SHOULD forward revocations ahead
+      of other traffic.
 
 Acknowledgments
 
@@ -5525,7 +5526,6 @@ Authors' Addresses
    Arjun Krishna
    Federated Ads Initiative
    Email: mail@arjunkrishna.dev
-
 
 
 
