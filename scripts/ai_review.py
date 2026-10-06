@@ -244,6 +244,11 @@ def main() -> int:
         proc = subprocess.run(
             [
                 claude, "-p",
+                # The working tree may come from an untrusted branch: ignore any
+                # settings, hooks or MCP servers it defines, and allow no tools
+                # that run commands.
+                "--restricted",
+                "--strict-mcp-config",
                 "--output-format", "json",
                 "--json-schema", json.dumps(SCHEMA),
                 "--tools", tools,
