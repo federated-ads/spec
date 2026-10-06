@@ -93,7 +93,7 @@ Claims of absence ("no existing system does X") are the hardest to support. Make
 - **Jargon**: define each industry term in a short inline phrase at first use, and add it to the Appendix A glossary.
 - **Structure**: lead each section with what it says; bulleted lists for three or more parallel items; tables for comparisons and options; short paragraphs.
 - **Options, then decision**: when comparing approaches, show the options, then state the decision and why.
-- **Punctuation**: avoid em dashes; use colons, commas or a new sentence.
+- **Punctuation**: avoid em dashes; use colons, commas or a new sentence. Exception: boilerplate copied from W3C or IETF templates (for example in the Community Group charter) is kept word for word, including its punctuation.
 - **Emphasis**: bold only key figures and defined terms, sparingly.
 - **Cross-references**: `[§10.7](#107-invalid-traffic-without-fingerprinting)`. Check anchors after renaming headings.
 - **Examples**: fictional names and reserved domains (`example.com`, `.example`; RFC 2606, RFC 6761). Mark example values as illustrative; use placeholders for keys and signatures.
