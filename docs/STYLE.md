@@ -124,6 +124,7 @@ When a section grows past its budget, split it, move detail to an appendix, or m
 - Follow the RFC Editor style guide's inclusive-language guidance, which points to the NIST guidance on inclusive language in standards, and the W3C Manual of Style.
 - Use "allowlist" and "blocklist" (or "block list"), "primary" and "secondary" (or "leader" and "follower"), never "whitelist", "blacklist", "master" or "slave".
 - Use "they" for people whose pronouns are not known, and gender-neutral role names ("chair", "editor").
+- Titles of cited works are quoted exactly as published, even when they use terms we avoid.
 
 ## 10. Standards-body conventions
 
