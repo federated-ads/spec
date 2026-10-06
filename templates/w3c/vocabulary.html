@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<!--
+  Skeleton for the W3C Community Group deliverable
+  "Federated Ads Protocol: Vocabulary and Schemas" (see
+  docs/governance/w3c-community-group-charter-draft.md, Deliverables).
+
+  This file is deliberately kept OUTSIDE docs/ so that GitHub Pages does not
+  publish it. It uses specStatus "unofficial" because no W3C Community Group
+  exists yet: using the Community Group status, logo or name before the group
+  is created would misrepresent this as a W3C publication.
+
+  When the Community Group has been created:
+    1. Set specStatus to "CG-DRAFT" and group to "cg/<the group's short name>".
+       ReSpec then adds the draft Community Group logo, the group link, the
+       CLA copyright notice and the "not a W3C Standard" status text required
+       by https://www.w3.org/community/reports/reqs/
+    2. Check those generated sections against that page before publishing.
+    3. Move the source into the group's repository, which must carry the
+       W3C Community Group LICENSE file.
+    4. Publish the static ReSpec output, not this dynamic source, for any
+       final report.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Federated Ads Protocol: Vocabulary and Schemas</title>
+  <script src="https://www.w3.org/Tools/respec/respec-w3c" class="remove" defer></script>
+  <script class="remove">
+    var respecConfig = {
+      specStatus: "unofficial",
+      // group: "cg/<short-name>",   // set when the Community Group exists
+      shortName: "federated-ads-vocabulary",
+      editors: [
+        { name: "Suneesh Rajan" },
+        { name: "Arjun Krishna" },
+      ],
+      github: "federated-ads/spec",
+      latestVersion: null,
+      xref: ["data-integrity", "json-ld11"],
+      localBiblio: {
+        "FEDERATED-ADS-PROTOCOL": {
+          title: "The Federated Ads Protocol",
+          href: "https://datatracker.ietf.org/doc/draft-rajan-federated-ads-protocol/",
+          status: "Internet-Draft",
+        },
+      },
+    };
+  </script>
+</head>
+<body>
+  <section id="abstract">
+    <p>
+      This document defines the vocabulary, JSON-LD context, JSON Schemas and
+      registries used by the Federated Ads Protocol. The wire protocol itself is
+      specified in [[FEDERATED-ADS-PROTOCOL]].
+    </p>
+  </section>
+
+  <section id="sotd">
+    <p>
+      This is an unofficial draft prepared for a proposed W3C Community Group.
+      It has no standing at W3C.
+    </p>
+  </section>
+
+  <section class="informative">
+    <h2>Introduction</h2>
+    <p>
+      Federated Ads Protocol objects are plain JSON. Verifiers work on the JSON
+      bytes, so JSON-LD processing is optional. The vocabulary exists so the
+      objects can also be read as linked data.
+    </p>
+  </section>
+
+  <section id="conformance"></section>
+
+  <section>
+    <h2>Namespace and context</h2>
+    <p>
+      The namespace is <code>https://w3id.org/federated-ads/v0#</code>, with the
+      prefix <code>fa:</code>. The JSON-LD context is published at
+      <code>https://w3id.org/federated-ads/v0</code>.
+    </p>
+  </section>
+
+  <section>
+    <h2>Object types</h2>
+    <p class="issue">
+      To be written from the object model in [[FEDERATED-ADS-PROTOCOL]] and
+      the current vocabulary page (docs/ns/v0.md).
+    </p>
+  </section>
+
+  <section>
+    <h2>JSON Schemas</h2>
+    <p class="issue">To be written.</p>
+  </section>
+
+  <section>
+    <h2>Registries</h2>
+    <p class="issue">
+      Event types, pricing models, surface profiles, settlement profiles,
+      jurisdiction profiles, revocation reasons, error types, taxonomy versions
+      and critical extensions.
+    </p>
+  </section>
+
+  <section>
+    <h2>Privacy considerations</h2>
+    <p class="issue">To be written; see the Internet-Draft's Privacy Considerations.</p>
+  </section>
+
+  <section>
+    <h2>Security considerations</h2>
+    <p class="issue">To be written; see the Internet-Draft's Security Considerations.</p>
+  </section>
+</body>
+</html>
