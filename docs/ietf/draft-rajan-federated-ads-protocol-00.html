@@ -2864,9 +2864,10 @@ object proofs, not on the identity of the transport sender.
 Receivers <span class="bcp14">MAY</span> use the transport sender's identity for rate limiting
 and abuse handling.  A relay <span class="bcp14">MUST NOT</span> modify any member of a signed
 object; any modification invalidates the proof.<a href="#section-4.3-1" class="pilcrow">¶</a></p>
-<p id="section-4.3-2">A relay <span class="bcp14">SHOULD</span> forward Revocation and RevocationAck objects ahead of
-other traffic.  It <span class="bcp14">MAY</span> rate-limit them, but only per issuer, so that
-one issuer's revocations cannot delay another's.<a href="#section-4.3-2" class="pilcrow">¶</a></p>
+<p id="section-4.3-2">A relay <span class="bcp14">SHOULD</span> forward Revocation and RevocationAck objects before
+other objects it has queued.  A relay <span class="bcp14">MUST NOT</span> rate-limit Revocation
+or RevocationAck objects except per issuer, so that one issuer's
+revocations cannot delay another's.<a href="#section-4.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>

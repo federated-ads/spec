@@ -772,9 +772,10 @@ Receivers MAY use the transport sender's identity for rate limiting
 and abuse handling.  A relay MUST NOT modify any member of a signed
 object; any modification invalidates the proof.
 
-A relay SHOULD forward Revocation and RevocationAck objects ahead of
-other traffic.  It MAY rate-limit them, but only per issuer, so that
-one issuer's revocations cannot delay another's.
+A relay SHOULD forward Revocation and RevocationAck objects before
+other objects it has queued.  A relay MUST NOT rate-limit Revocation
+or RevocationAck objects except per issuer, so that one issuer's
+revocations cannot delay another's.
 
 # Identity, Keys and Discovery {#discovery}
 
