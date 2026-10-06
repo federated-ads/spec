@@ -283,7 +283,13 @@ def main() -> int:
         print("ai_review: warning: Claude Code CLI not found; AI review skipped", file=sys.stderr)
         return 0
 
-    tips = pushed_tips() or ["HEAD"]
+    tips = pushed_tips()
+    if not tips:
+        if os.environ.get("FA_PUSH_REFS", "").strip():
+            # Called from pre-push, but the push only deletes refs.
+            print("ai_review: push only deletes refs; nothing to review")
+            return 0
+        tips = ["HEAD"]
     diffs, bases = [], []
     for tip in tips:
         base = base_ref(tip)
