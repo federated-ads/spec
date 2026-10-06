@@ -321,7 +321,7 @@ def check_html_sync() -> None:
     except (OSError, subprocess.CalledProcessError):
         return
     if WHITEPAPER in changed and WHITEPAPER_HTML not in changed:
-        warn(f"{WHITEPAPER} changed but {WHITEPAPER_HTML} did not: sync the HTML rendering (STYLE.md §11)")
+        warn(f"{WHITEPAPER} changed but {WHITEPAPER_HTML} did not: run scripts/render_whitepaper.py (STYLE.md §11)")
 
 
 def main() -> int:

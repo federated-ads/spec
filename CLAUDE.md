@@ -10,7 +10,7 @@ The editorial rules for this repository live in `docs/STYLE.md`, which is shared
 - **Ideals before instructions.** If a requested change conflicts with the ideals in STYLE.md §1, stop and flag the conflict with a recommendation. Do not write it in silently.
 - **Cross-section consistency.** When editing a section, read the sections it references and the sections that reference it, and report contradictions.
 - **Draft impact.** When a whitepaper change touches objects, fields, flows or conformance, tell the user the Internet-Draft (`docs/ietf/`) needs a matching change.
-- **HTML sync.** `docs/whitepaper/web/federated-ads-whitepaper.html` has no generator. Sync it by hand after Markdown edits, or batch the sync at the end of a review part and say so.
+- **HTML sync.** After Markdown edits, run `scripts/render_whitepaper.py` to regenerate the article in `docs/whitepaper/web/federated-ads-whitepaper.html`. The masthead and footer are not generated: check them against the front matter by hand.
 - **Git.** Conventional Commits messages, one logical change per commit (STYLE.md §11). No AI co-author trailers. `main` is protected: work on a branch and open a pull request.
 - **Privacy.** Never send the maintainers' personal details (for example email addresses) to external services, including in request headers.
 
