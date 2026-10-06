@@ -49,7 +49,11 @@ ROOT = _repo_root()
 TIMEOUT_SECONDS = 900
 
 # Documentation that is written by hand. Generated renderings are excluded.
-PATHS = ["docs", "README.md", "CONTRIBUTING.md"]
+# .gitattributes is included because it can change how diffs render.
+PATHS = ["docs", "README.md", "CONTRIBUTING.md", "CLAUDE.md", ".gitattributes"]
+# Force plain text diffs: a branch could otherwise mark files "-diff" or set
+# a textconv driver in .gitattributes to hide its changes from the review.
+DIFF_OPTS = ["--unified=3", "--text", "--no-textconv", "--no-ext-diff"]
 EXCLUDE = [
     ":(exclude)docs/whitepaper/web/*.html",
     ":(exclude)docs/ietf/*.xml",
@@ -186,16 +190,46 @@ def trusted_fetch_rules(base: str) -> list[str]:
     return [f"WebFetch(domain:{h})" for h in hosts]
 
 
-def base_ref() -> str | None:
+ZERO_SHA = "0" * 40
+
+
+def base_ref(tip: str = "HEAD") -> str | None:
     override = os.environ.get("FA_AI_REVIEW_BASE")
     if override:
         return override
     for candidate in ("origin/main", "main"):
         try:
-            return git("merge-base", "HEAD", candidate).strip()
+            return git("merge-base", tip, candidate).strip()
         except subprocess.CalledProcessError:
             continue
     return None
+
+
+def pushed_tips() -> list[str]:
+    """Commits being pushed, from the lines git gives the pre-push hook.
+
+    The hook passes them in FA_PUSH_REFS as '<local ref> <local sha>
+    <remote ref> <remote sha>' lines. Deleted refs are skipped.
+    """
+    tips = []
+    for line in os.environ.get("FA_PUSH_REFS", "").splitlines():
+        parts = line.split()
+        if len(parts) == 4 and parts[1] != ZERO_SHA:
+            tips.append(parts[1])
+    return tips
+
+
+def untracked_docs() -> str:
+    """Diffs for new, untracked documentation files (worktree mode)."""
+    out = []
+    names = git("ls-files", "--others", "--exclude-standard", "--", *PATHS).split("\n")
+    for name in filter(None, names):
+        if any(name.startswith(x) for x in ("docs/outreach/", "docs/brainstorms/")):
+            continue
+        proc = subprocess.run(["git", "diff", "--no-index", *DIFF_OPTS, "/dev/null", name],
+                              cwd=ROOT, capture_output=True, text=True)
+        out.append(proc.stdout)
+    return "".join(out)
 
 
 def extract(output: str) -> dict | None:
@@ -231,14 +265,24 @@ def main() -> int:
         print("ai_review: warning: Claude Code CLI not found; AI review skipped", file=sys.stderr)
         return 0
 
-    base = base_ref()
-    if not base:
+    tips = pushed_tips() or ["HEAD"]
+    diffs, bases = [], []
+    for tip in tips:
+        base = base_ref(tip)
+        if not base:
+            print(f"ai_review: warning: no base ref found for {tip[:8]}; skipped", file=sys.stderr)
+            continue
+        bases.append(base)
+        if "--worktree" in sys.argv[1:]:
+            diffs.append(git("diff", *DIFF_OPTS, base, "--", *PATHS, *EXCLUDE))
+            diffs.append(untracked_docs())
+        else:
+            diffs.append(git("diff", *DIFF_OPTS, f"{base}...{tip}", "--", *PATHS, *EXCLUDE))
+    if not bases:
         print("ai_review: warning: no base ref found; AI review skipped", file=sys.stderr)
         return 0
-    if "--worktree" in sys.argv[1:]:
-        diff = git("diff", "--unified=3", base, "--", *PATHS, *EXCLUDE)
-    else:
-        diff = git("diff", "--unified=3", f"{base}...HEAD", "--", *PATHS, *EXCLUDE)
+    base = bases[0]
+    diff = "".join(diffs)
     if not diff.strip():
         print("ai_review: no documentation changes to review")
         return 0
