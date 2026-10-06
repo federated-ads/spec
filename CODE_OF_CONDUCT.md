@@ -1,6 +1,6 @@
 # Code of Conduct
 
-The Federated Ads Protocol project adopts the [W3C Code of Conduct](https://www.w3.org/policies/code-of-conduct/). This page summarises how it applies here and how to report a problem. Where this page and the W3C Code of Conduct differ, the W3C Code of Conduct takes precedence.
+The Federated Ads Protocol project adopts the W3C Code of Conduct, [*Positive Work Environment at W3C: Code of Conduct*](https://www.w3.org/policies/code-of-conduct/) (18 March 2024). This page summarises how it applies here and how to report a problem. Where this page and the W3C Code of Conduct differ, the W3C Code of Conduct takes precedence.
 
 ## Our commitment
 
@@ -29,7 +29,7 @@ This applies in all project spaces: GitHub issues, discussions and pull requests
 
 ## Reporting
 
-Report concerns to either maintainer: Suneesh Rajan (suneeshtr@gmail.com) or Arjun Krishna (mail@arjunkrishna.dev). If your report concerns one of them, send it to the other. Reports are kept confidential and shared only as needed to resolve them. If you would prefer to report to someone independent of the project, you can contact the [W3C Ombudspeople](https://www.w3.org/guide/process/coc-incident-resolution-ombuds.html) once the work is hosted in a W3C Community Group.
+Report concerns to either maintainer: Suneesh Rajan (suneeshtr@gmail.com) or Arjun Krishna (mail@arjunkrishna.dev). If your report concerns one of them, send it to the other. Reports are kept confidential and shared only as needed to resolve them. If you would prefer to report to someone independent of the project, you can contact the [W3C Ombudspeople](https://www.w3.org/guide/process/coc-incident-resolution-ombuds.html) at CoC@w3.org once the work is hosted in a W3C Community Group.
 
 Please include what happened, where and when, who was involved, and any links or screenshots. You do not need to have every detail before reporting.
 
