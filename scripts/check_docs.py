@@ -220,6 +220,7 @@ def check_whitepaper(path: str, text: str) -> None:
     ref_line_offset = before.count("\n") + 1
 
     defined: dict[int, int] = {}
+    withdrawn: set[int] = set()
     for i, line in enumerate(refs_part.splitlines()):
         m = re.match(r"^(\d+)\. ", line)
         if m:
@@ -227,6 +228,10 @@ def check_whitepaper(path: str, text: str) -> None:
             if n in defined:
                 error(path, ref_line_offset + i, f"reference [{n}] defined twice")
             defined[n] = ref_line_offset + i
+            # References are never renumbered; a removed claim's source is
+            # kept as a "*Withdrawn.*" entry, which must not be cited.
+            if line[m.end():].startswith("*Withdrawn.*"):
+                withdrawn.add(n)
     if defined:
         missing = sorted(set(range(1, max(defined) + 1)) - set(defined))
         if missing:
@@ -243,8 +248,10 @@ def check_whitepaper(path: str, text: str) -> None:
     for n, no in sorted(cited.items()):
         if n not in defined:
             error(path, no, f"citation [{n}] has no entry in Appendix B")
+        elif n in withdrawn:
+            error(path, no, f"citation [{n}] points to a withdrawn reference")
     for n, no in sorted(defined.items()):
-        if n not in cited:
+        if n not in cited and n not in withdrawn:
             error(path, no, f"reference [{n}] is never cited in the text")
 
     anchors = collect_anchors(text)

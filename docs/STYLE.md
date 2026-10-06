@@ -75,7 +75,7 @@ Claims of absence ("no existing system does X") are the hardest to support. Make
 - Don't cite an expired Internet-Draft or a withdrawn standard as current work.
 - Don't keep a claim you cannot verify. Leave it out.
 
-**Reference format** (Appendix B): `N. Author or organisation, "Title" or *Title* (date). URL`, with a short note for login-only access, sponsorship or re-hosting. Add new references at the end of the numbered list with the next free number; do not renumber existing ones.
+**Reference format** (Appendix B): `N. Author or organisation, "Title" or *Title* (date). URL`, with a short note for login-only access, sponsorship or re-hosting. Add new references at the end of the numbered list with the next free number; do not renumber existing ones. When a claim is removed and its reference is no longer cited, keep the number and replace the entry with `*Withdrawn.*` and a one-line reason. A withdrawn reference must not be cited.
 
 ## 5. Claims and tone
 
