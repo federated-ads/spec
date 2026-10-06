@@ -11,3 +11,4 @@ docs/outreach/
 *.tmp
 # xml2rfc/kramdown-rfc reference cache
 .refcache/
+__pycache__/
