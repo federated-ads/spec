@@ -1,7 +1,22 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Federated Ads Protocol</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<meta name="description" content="An open, federated, owner-controlled protocol for advertising on the open web. Whitepaper, discussion draft for public comment.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="The Federated Ads Protocol">
+<meta property="og:description" content="An open, federated, owner-controlled protocol for advertising on the open web. Discussion draft for public comment.">
+<meta property="og:url" content="https://federated-ads.github.io/spec/whitepaper/web/federated-ads-whitepaper.html">
+<meta property="og:image" content="https://federated-ads.github.io/spec/brand/social/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Federated Ads Protocol: an open, federated, owner-controlled protocol for advertising on the open web">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#17211f">
+<link rel="icon" href="../../brand/web/favicon.ico" sizes="32x32">
+<link rel="icon" href="../../brand/web/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../brand/web/apple-touch-icon.png">
+<!-- Fonts are self-hosted (SIL OFL 1.1) so reading the paper sends no requests to third parties. -->
+<link rel="stylesheet" href="../../assets/fonts/fonts.css">
 <style>
 /* Layout: RFC-style standards document — metadata header block, sticky section index on the left, single reading column. Signed-message motif: seal for the AI disclosure. */
 :root {
@@ -43,6 +58,8 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 
 /* Header */
 .masthead { grid-column: 1 / -1; padding-block: 48px 32px; border-bottom: 2px solid var(--ink); display: grid; gap: 24px; }
+.masthead .brand { display: flex; align-items: center; gap: 12px; }
+.masthead .brand svg { flex: 0 0 auto; width: 32px; height: 32px; }
 .masthead .eyebrow { font-family: var(--mono); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
 .masthead h1 { font-family: var(--display); font-weight: 800; font-size: clamp(2.3rem, 6vw, 4.2rem); line-height: 1.02; letter-spacing: -.02em; margin: 0; text-wrap: balance; }
 .masthead .sub { font-family: var(--display); font-weight: 500; font-size: clamp(1.1rem, 2.2vw, 1.4rem); color: var(--ink-soft); margin: 0; max-width: 40ch; text-wrap: balance; }
@@ -108,7 +125,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 
 <div class="shell">
   <header class="masthead">
-    <div class="eyebrow">Federated Ads Initiative · Whitepaper · Draft for public comment</div>
+    <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"><path d="M22.16 8.12A10 10 0 0 1 25.9 14.61"/><path d="M19.75 25.27A10 10 0 0 1 12.25 25.27"/><path d="M6.1 14.61A10 10 0 0 1 9.84 8.12"/></g><g fill="var(--accent)"><circle cx="16" cy="6" r="3.5"/><circle cx="24.66" cy="21" r="3.5"/><circle cx="7.34" cy="21" r="3.5"/></g></svg><div class="eyebrow">Federated Ads Initiative · Whitepaper · Draft for public comment</div></div>
     <h1>The Federated Ads Protocol</h1>
     <p class="sub">An open, federated, owner-controlled protocol for advertising on the open web</p>
     <dl class="meta">

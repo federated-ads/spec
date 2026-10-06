@@ -1,5 +1,7 @@
 # Federated Ads Protocol
 
+<img src="brand/logo/federated-ads-horizontal-colour.svg" alt="Federated Ads" width="280" height="42">
+
 An open, federated, owner-controlled protocol for advertising on the open web. Independent servers run by publishers, advertisers and cooperatives find each other by domain, agree signed deals, serve creatives the advertiser still owns and can revoke at any time, prove delivery with signed aggregated receipts in witnessed transparency logs, and settle payment on any rail. Matching is contextual by default and the protocol carries no cross-site identifiers.
 
 **Status:** discussion draft for public comment. Not a standard, and not endorsed by any standards body.
@@ -11,6 +13,7 @@ An open, federated, owner-controlled protocol for advertising on the open web. I
 - [Whitepaper v0.3](whitepaper/federated-ads-whitepaper.html): problem, prior art, design, market design, measurement, legal map, economics, governance and roadmap
 - [Internet-Draft `draft-rajan-federated-ads-protocol-00`](ietf/draft-rajan-federated-ads-protocol-00.html): the normative wire protocol ([text version](ietf/draft-rajan-federated-ads-protocol-00.txt))
 - [Draft W3C Community Group charter](governance/w3c-community-group-charter-draft.html)
+- [Brand kit](brand/): logo, icons, implementation badges, design tokens and guidance on using the name
 
 ## Identifiers
 
