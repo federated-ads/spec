@@ -772,6 +772,11 @@ Receivers MAY use the transport sender's identity for rate limiting
 and abuse handling.  A relay MUST NOT modify any member of a signed
 object; any modification invalidates the proof.
 
+A relay SHOULD forward Revocation and RevocationAck objects before
+other objects it has queued.  A relay MUST NOT rate-limit Revocation
+or RevocationAck objects except per issuer, so that one issuer's
+revocations cannot delay another's.
+
 # Identity, Keys and Discovery {#discovery}
 
 A node's identity is rooted in control of a DNS name and the HTTPS
@@ -3370,7 +3375,8 @@ draft-rajan-federated-ads-protocol-00:
   `measurement` member; the TrackerReport object; measurement modules
   and holdouts; `measurementModules` replaces `measurementModule` in
   Receipt Batches; Tracker Reports and measurement modules are added to
-  `federated-ads-extended`.
+  `federated-ads-extended`.  Relays SHOULD forward revocations ahead of
+  other traffic.
 
 # Acknowledgments {#acknowledgments}
 {:numbered="false"}

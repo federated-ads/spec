@@ -8,8 +8,8 @@ The design commitments are the principles in whitepaper §3.1. Editing does not 
 
 - **Federated.** No mandatory central server, exchange, registry or token. Intermediaries are optional and replaceable.
 - **Owner control of creative.** Creatives are licensed, time-limited and revocable, never surrendered.
-- **Privacy by default.** Contextual matching. No cross-site identifiers. Aggregated receipts. Third parties may *measure* deals, never *observe* people.
-- **Verifiable.** Economically meaningful events are signed and logged.
+- **Privacy by default.** Contextual matching by default. No cross-site identifiers. Aggregated receipts. Third parties may *measure* deals, never *observe* people.
+- **Verifiable.** Economically meaningful records (deals, revocations and their acknowledgements, receipt batches and statements) are signed and recorded in an append-only log that independent witnesses can cosign.
 - **Rail-agnostic, surface-neutral, bridge to today, boring primitives.**
 - **User agency.** People can understand, refuse, pay to avoid and report ads.
 - **Honest limits.** Where the protocol cannot guarantee something, say so.
@@ -140,7 +140,7 @@ When a section grows past its budget, split it, move detail to an appendix, or m
 
 Advertisers, agencies and ad-tech reviewers judge the paper by whether it uses the industry's own definitions correctly.
 - **Use IAB and MRC definitions** for measurement terms, and cite the document and version: impression, viewable impression (MRC Viewable Ad Impression Measurement Guidelines), invalid traffic and its GIVT and SIVT categories (MRC IVT Guidelines), podcast downloads and delivered ads (IAB Tech Lab Podcast Measurement Technical Guidelines), attention (IAB/MRC Attention Measurement Guidelines).
-- **Name IAB Tech Lab standards precisely, with versions**: OpenRTB 2.6, AdCOM, VAST 4.x, ads.txt, sellers.json, SupplyChain object, Content Taxonomy 3.x, Ad Product Taxonomy 2.0, Global Privacy Platform (GPP). Describe what they do accurately; check the current specification, not memory.
+- **Name IAB Tech Lab standards precisely, with versions**: OpenRTB 2.6, AdCOM, VAST 4.x, ads.txt, sellers.json, SupplyChain object, Content Taxonomy 3.1, Ad Product Taxonomy 2.0, Global Privacy Platform (GPP). Describe what they do accurately; check the current specification, not memory.
 - **Use IAB glossary terminology** for industry terms, and match the IAB's meaning when defining them in Appendix A.
 - **When Federated Ads departs from an IAB or MRC definition**, say so explicitly and explain why (for example, email opens are not billable because privacy proxies inflate them).
 - **Map, don't replace.** Where an IAB standard exists for something, Federated Ads maps to it or bridges to it rather than defining a competing version, and says which.

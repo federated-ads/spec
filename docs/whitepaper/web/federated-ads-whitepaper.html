@@ -374,7 +374,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <tr>
 <td><strong>Acceptable Ads; Coalition for Better Ads</strong></td>
 <td>Industry criteria for acceptable ad formats</td>
-<td>Acceptable Ads' criteria are set by an independent committee, but its operator, eyeo, charges large platforms that benefit commercially a licensing fee that covers reviewing and enforcing them [96]. Google sits on the Coalition's board [123], and since February 2018 Chrome has blocked ads on sites that fail the Coalition's standards [122][124][125]</td>
+<td>Acceptable Ads' criteria are set by an independent committee, but its operator, eyeo, charges large platforms that benefit commercially a licensing fee that covers reviewing and enforcing them [96]. Google sits on the Coalition's board [123], and since February 2018 Chrome has blocked ads on sites that fail the Coalition's standards [70][124][125]</td>
 <td>Keep rule-making, enforcement and revenue separate.</td>
 </tr>
 <tr>
@@ -474,12 +474,12 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <tr>
 <td>P3</td>
 <td><strong>Privacy by default</strong></td>
-<td>Contextual matching. No cross-site personal identifiers in protocol messages. Aggregated receipts. Personal signals only by opt-in and preferably on the device.</td>
+<td>Contextual matching by default. No cross-site personal identifiers in protocol messages. Aggregated receipts. Personal signals only by opt-in and preferably on the device. Third parties measure deals, never observe people.</td>
 </tr>
 <tr>
 <td>P4</td>
 <td><strong>Verifiable</strong></td>
-<td>Every economically meaningful event is a signed object recorded in an append-only, witnessable log.</td>
+<td>Every economically meaningful record (deals, revocations and their acknowledgements, receipt batches and statements) is signed and recorded in an append-only log that independent witnesses can cosign.</td>
 </tr>
 <tr>
 <td>P5</td>
@@ -499,7 +499,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <tr>
 <td>P8</td>
 <td><strong>Bridge to today</strong></td>
-<td>Interoperate with existing buying and measurement systems.</td>
+<td>Interoperate with existing buying and measurement systems, and with agent protocols such as AdCP.</td>
 </tr>
 <tr>
 <td>P9</td>
@@ -518,14 +518,14 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li>Interoperable discovery, deal-making, licensing, revocation, receipts and statements between independently built nodes.</li>
 <li>At least two independent node implementations passing a shared conformance suite.</li>
 <li>Profiles for five surfaces: web display/native, social, email, audio and AI/chat.</li>
-<li>A privacy design that works with <strong>no personal data</strong> for matching and billing.</li>
+<li>A privacy design in which matching and billing need <strong>no personal data leaving the selling node</strong> and no cross-site identifiers.</li>
 <li>A bridge that lets existing demand buy Federated Ads inventory without receiving personal data.</li>
 </ul>
 <h3 id="33-non-goals-for-v1">3.3 Non-goals for v1</h3>
 <ul>
-<li><strong>Cross-publisher reach and frequency management.</strong> This is impossible without cross-site identity, and Federated Ads deliberately gives that up.</li>
+<li><strong>Counted cross-publisher reach and frequency</strong>, which need cross-site identity; Federated Ads deliberately gives that up. The planned on-device profile could cap frequency on the device, and panels can estimate reach (<a href="#65-budgets-pacing-and-frequency">§6.5</a>, <a href="#109-third-party-measurement-and-tracking">§10.9</a>).</li>
 <li><strong>Video and connected TV</strong> beyond what VAST bridging gives. These are deferred to v2 because of format and measurement complexity.</li>
-<li><strong>Real-time auctions across nodes as the default.</strong> They are available only as a constrained optional profile (<a href="#64-price-discovery">§6.4</a>).</li>
+<li><strong>Real-time auctions across nodes as the default.</strong> They are planned only as a constrained optional profile (<a href="#64-price-discovery">§6.4</a>).</li>
 <li><strong>A native token, blockchain or mandatory payment provider.</strong></li>
 <li><strong>Conversion tracking at the individual level.</strong> Only aggregate, privacy-preserving measurement is supported (<a href="#106-conversions-and-attribution">§10.6</a>).</li>
 <li><strong>Third-party tracking of people.</strong> Third parties may measure deals through the measurement channels, but may not receive identifiers or per-person observations (<a href="#109-third-party-measurement-and-tracking">§10.9</a>).</li>
@@ -589,8 +589,8 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 </tr>
 <tr>
 <td><strong>Measurer</strong></td>
-<td>A third party named in a Deal for delivery reporting, verification, attribution, lift research or audit. Receives aggregate measurements; as an aggregator in the planned conversion profile, it receives only shares of individual reports, which reveal nothing unless the two aggregators collude (<a href="#109-third-party-measurement-and-tracking">§10.9</a>).</td>
-<td>Yes; an external vendor takes part through a node that holds the measurer role, such as a measurement bridge</td>
+<td>A third party named in a Deal for delivery reporting, verification, attribution, lift research or audit. Receives aggregate measurements only, except as an aggregator in the planned conversion profile, where it receives report shares that reveal nothing on their own (<a href="#109-third-party-measurement-and-tracking">§10.9</a>).</td>
+<td>Yes, or through a node that holds the measurer role, such as a measurement bridge</td>
 </tr>
 <tr>
 <td><strong>Attester / token issuer</strong></td>
@@ -609,7 +609,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 </tr>
 </tbody>
 </table></div>
-<p>One organisation may hold several roles. Each node declares its roles in its signed Node Descriptor, the signed, machine-verifiable successor to ads.txt and sellers.json.</p>
+<p>One organisation may hold several roles. Each node declares its roles in its Node Descriptor, which does the job of ads.txt and sellers.json but is signed and machine-verifiable.</p>
 <hr />
 <h2 id="5-architecture">5. Architecture</h2>
 <h3 id="51-models-considered">5.1 Models considered</h3>
@@ -639,12 +639,13 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <td><strong>C. Fully peer-to-peer or on-chain</strong></td>
 <td>Matching and settlement on a public ledger.</td>
 <td>Programmable settlement; public auditability.</td>
-<td>Latency and cost per event; public ledgers leak commercial data; regulatory burden; history of failure (<a href="#2-what-has-been-tried-lessons-from-prior-art">§2</a>).</td>
+<td>Latency and cost per event; public ledgers leak commercial data; regulatory burden; earlier projects pivoted, were acquired or reported governance problems (<a href="#2-what-has-been-tried-lessons-from-prior-art">§2</a>).</td>
 </tr>
 </tbody>
 </table></div>
 <p>Federated Ads adopts <strong>Model A</strong>. Model B is a subset, since a network can run a Federated Ads node. Model C appears only as an optional settlement profile (<a href="#11-settlement">§11</a>).</p>
 <h3 id="52-topology">5.2 Topology</h3>
+<p>The diagram shows a buying node, acting for an advertiser and holding its creatives, and a selling node, acting for a publisher and rendering to its surfaces. They exchange signed offers and deals directly or through an optional relay. The selling node fetches licensed creatives within their time limit, receives revocations, and sends aggregated signed receipts to the buyer and Tracker Reports to any measurer. Witnesses and auditors cosign both nodes' logs, and a bridge node connects the selling node to existing ad servers.</p>
 <div class="diagram"><pre class="mermaid">flowchart LR
   subgraph Buy side
     ADV[Advertiser] --&gt; BN[Buying node]
@@ -660,6 +661,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
   CH -- &quot;licensed fetch&lt;br/&gt;(TTL-bounded)&quot; --&gt; SN
   BN -- &quot;revocations (push + log)&quot; --&gt; SN
   SN -- &quot;aggregated signed receipts&quot; --&gt; BN
+  SN -. &quot;Tracker Reports (aggregate)&quot; .-&gt; M[Measurer - optional]
   W[Witnesses / auditors] -. &quot;cosign logs, sample&quot; .- SN
   W -. &quot;cosign logs&quot; .- BN
   BRIDGE[Bridge node] -- &quot;OpenRTB / VAST&quot; --- LEGACY[Existing DSPs and ad servers]
@@ -669,10 +671,10 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>Discover.</strong> A node is found from a domain via <code>/.well-known/federated-ads</code> or WebFinger. It publishes a signed Node Descriptor listing roles, endpoints, keys, policies and profiles.</li>
 <li><strong>Describe.</strong> Selling nodes publish <strong>Policies</strong>: what they accept, their floors and their content categories. They also publish <strong>Inventory</strong> descriptions: forecast volumes, formats and contexts.</li>
 <li><strong>Offer.</strong> Buying nodes send signed <strong>Offers</strong> to specific sellers, or publish <strong>Standing Offers</strong> that any matching seller may claim.</li>
-<li><strong>Agree.</strong> The seller accepts, counters or declines. Acceptance creates a <strong>Deal</strong> with an allocated budget and the approved creative hashes.</li>
+<li><strong>Agree.</strong> The seller accepts, counters or declines. After acceptance, the buyer issues a <strong>Deal</strong> recording the allocated budget and the approved creative hashes; it takes effect when the seller countersigns it.</li>
 <li><strong>License.</strong> For each approved creative, the advertiser issues a <strong>Licence</strong> bound to the deal, the licensee, the surfaces and an expiry.</li>
 <li><strong>Serve.</strong> At render time the selling node chooses among active deals (<a href="#66-ad-decisioning-on-the-selling-node">§6.6</a>) and renders the creative with a "why this ad" disclosure.</li>
-<li><strong>Report.</strong> The selling node sends frequent <strong>Spend Reports</strong> for pacing and signed, aggregated <strong>Receipt Batches</strong> for billing. Both are committed to its transparency log.</li>
+<li><strong>Report.</strong> The selling node sends frequent <strong>Spend Reports</strong> for pacing and signed, aggregated <strong>Receipt Batches</strong> for billing. Receipt Batches are committed to its transparency log, and Spend Reports should be.</li>
 <li><strong>Revoke, any time.</strong> The advertiser logs and pushes a <strong>Revocation</strong>. Receivers acknowledge it with a signed, logged <strong>Revocation Acknowledgement</strong>.</li>
 <li><strong>Settle.</strong> Both sides agree a <strong>Statement</strong> with two signatures and pay through the settlement profile they agreed.</li>
 </ol>
@@ -682,11 +684,11 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>Privacy.</strong> User context stays on the publisher's node. Nothing is broadcast to dozens of bidders.</li>
 <li><strong>Latency.</strong> No network round trip is needed when rendering.</li>
 <li><strong>Accessibility.</strong> A small operator can run a node.</li>
-<li><strong>Market evidence.</strong> Even in conventional programmatic advertising, over 90% of median spend now runs through deals [4].</li>
+<li><strong>Market evidence.</strong> Even in conventional programmatic advertising, most spend has moved from open auctions to invitation-only private marketplaces between known buyers and sellers: over 92% of median spend in the ANA/TAG TrustNet benchmark [4].</li>
 </ul>
 <hr />
 <h2 id="6-market-design-how-buying-and-selling-works">6. Market design: how buying and selling works</h2>
-<p>Version 0.1 left the market mechanism vague, and reviewers rightly called that the paper's largest gap. This section specifies it.</p>
+<p>Version 0.1 left the market mechanism vague; the project's internal review of that version (<a href="#28-ai-assistance-disclosure">§28</a>) flagged this gap. This section specifies it.</p>
 <h3 id="61-inventory-and-rate-cards">6.1 Inventory and rate cards</h3>
 <p>A selling node publishes an <strong>Inventory</strong> document so buyers can plan:</p>
 <ul>
@@ -694,7 +696,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>Forecasts:</strong> expected impressions, sends or downloads per week by placement and context. Forecasts are always aggregated and rounded.</li>
 <li><strong>Rate card:</strong> a posted price per placement and pricing model, plus minimum spend, lead time and whether creatives need approval.</li>
 <li><strong>Avails:</strong> optional near-term availability by week.</li>
-<li><strong>Quality signals:</strong> maximum ratio of ads to content and whether the page meets the Better Ads Standards [70]; ads per hour (audio) and per issue (email); refresh policy; and a saturation limit for feeds, as Bluesky feed operators already set [82]. Buyers can filter and price on low clutter (<a href="#204-improving-publisher-revenue">§20.4</a>).</li>
+<li><strong>Quality signals:</strong> maximum ratio of ads to content and whether the page meets the Better Ads Standards [70]; ads per hour (audio) and per issue (email); refresh policy; and a saturation limit for feeds, which Graze already lets Bluesky feed operators set [82]. Buyers can filter and price on low clutter (<a href="#204-improving-publisher-revenue">§20.4</a>).</li>
 <li><strong>Floors and calendar:</strong> per-placement floor prices for each pricing model, day-parts and a seasonal rate calendar.</li>
 <li><strong>Support options:</strong> subscription, contribution and ad-free offers the publisher accepts.</li>
 </ul>
@@ -757,7 +759,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <td>Newsletters, podcasts, sponsorships</td>
 </tr>
 <tr>
-<td>Cost per delivered audio ad (IAB "Ad Delivered")</td>
+<td>Cost per delivered audio ad ("Ad Delivered" in the IAB Tech Lab Podcast Measurement Technical Guidelines v2.2 [36])</td>
 <td><code>cpad</code></td>
 <td>Podcasts</td>
 </tr>
@@ -767,7 +769,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <td>All</td>
 </tr>
 <tr>
-<td>Cost per viewable hour (attention), from aggregate in-view time measured by the open module [65]</td>
+<td>Cost per viewable hour, from aggregate in-view time measured by a pinned module (<a href="#104-viewability-measurement-in-the-page">§10.4</a>); on attention measurement generally, see the IAB/MRC guidelines [65]</td>
 <td><code>cpvh</code></td>
 <td>Web, social, AI</td>
 </tr>
@@ -776,11 +778,11 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <h3 id="64-price-discovery">6.4 Price discovery</h3>
 <p>Federated Ads does not mandate a single auction. Prices form in three ways:</p>
 <ol type="1">
-<li><strong>Posted prices.</strong> Sellers publish rate cards and buyers accept them. This is how newsletter and podcast sponsorship is sold today.</li>
+<li><strong>Posted prices.</strong> Sellers publish rate cards and buyers accept them.</li>
 <li><strong>Offer prices.</strong> Standing Offers carry the buyer's price, and sellers choose which offers to claim.</li>
 <li><strong>Local competition.</strong> Each selling node ranks its eligible deals by effective price at render time (<a href="#66-ad-decisioning-on-the-selling-node">§6.6</a>). Buyers who want delivery must pay competitive prices.</li>
 </ol>
-<p>An optional <code>rtb</code> profile lets a selling node run a real-time auction among <em>pre-qualified</em> buyers. Bid requests are limited to context, coarse geography and placement, with no user or device identifiers.</p>
+<p>A planned optional <code>rtb</code> profile, not yet specified in the Internet-Draft, would let a selling node run a real-time auction among <em>pre-qualified</em> buyers, with bid requests limited to context, coarse geography and placement and no user or device identifiers.</p>
 <p><strong>Price indices and competition law.</strong> Public, aggregated price indices would help small participants. They must be designed to stay clear of competition law (<a href="#198-competition-law">§19.8</a>):</p>
 <ul>
 <li>published by independent parties;</li>
@@ -800,13 +802,13 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <ul>
 <li>Deals specify <code>even</code>, <code>asap</code> or day-parted pacing.</li>
 <li>Selling nodes send lightweight signed <strong>Spend Reports</strong> at least every 15 minutes (configurable per deal), so buyers can pause or shift budget.</li>
-<li>Signed hourly or daily <strong>Receipt Batches</strong> remain the billing record.</li>
+<li>Signed <strong>Receipt Batches</strong>, hourly or, for low-volume nodes, up to weekly, remain the billing record.</li>
 </ul>
 <p><strong>Frequency.</strong> Federated Ads is explicit about what is possible:</p>
 <ul>
 <li><strong>Per publisher:</strong> supported. The selling node or the user's client enforces a frequency cap using first-party state only.</li>
-<li><strong>On-device:</strong> supported through the optional on-device profile (<a href="#8-audience-matching-options-compared">§8</a>), where the client holds the counters.</li>
-<li><strong>Across publishers:</strong> not supported, by design. Deduplicated reach across publishers requires cross-site identity, which Federated Ads does not use. Buyers should plan Federated Ads buying as contextual, community-based reach, not upper-funnel reach-and-frequency buying.</li>
+<li><strong>On-device:</strong> planned in the optional, experimental on-device profile (<a href="#8-audience-matching-options-compared">§8</a>), where the client holds the counters and can cap frequency across publishers on the device itself.</li>
+<li><strong>Across publishers, by the network:</strong> not supported, by design. Deduplicated reach across publishers requires cross-site identity, which Federated Ads does not use. Buyers should plan Federated Ads buying as contextual, community-based reach, not upper-funnel reach-and-frequency buying.</li>
 </ul>
 <h3 id="66-ad-decisioning-on-the-selling-node">6.6 Ad decisioning on the selling node</h3>
 <p>When an ad slot renders, the selling node:</p>
@@ -824,7 +826,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <p>An advertiser grants a <strong>licence to display</strong>. It does not hand over a copy. The licence is limited in time, in scope (which deal, which licensee, which surfaces) and in purpose, and it can be withdrawn.</p>
 <h3 id="72-objects">7.2 Objects</h3>
 <ul>
-<li><strong>Creative Manifest:</strong> a signed description of a creative's assets, each pinned by a content hash, plus metadata. Where the asset carries a C2PA manifest, the Creative Manifest references it [34]. Google has said its ad systems are starting to use C2PA metadata in policy enforcement [89].</li>
+<li><strong>Creative Manifest:</strong> a signed description of a creative's assets, each pinned by a content hash, plus metadata. Where the asset carries a C2PA manifest, the Creative Manifest references it [34]. In September 2024 Google said its ad systems were starting to integrate C2PA metadata, with the goal of using it to inform policy enforcement [89].</li>
 <li><strong>Licence:</strong> a separate signed object linking a manifest hash to a licensee node, a deal, surfaces, an issue time, a time-to-live (TTL) and a revocation source. Keeping the licence separate from the manifest means one creative can be licensed to many nodes, including through relays, without re-signing the creative.</li>
 <li><strong>Approval:</strong> the selling node's signed acceptance of specific creative hashes, recorded in the Deal. A changed creative gets a new hash and needs a new approval. That closes the "swap the creative after approval" loophole.</li>
 </ul>
@@ -834,7 +836,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <tr>
 <th>Tier</th>
 <th>Mechanism</th>
-<th>Default TTL</th>
+<th>TTL (default, maximum)</th>
 <th>Use</th>
 </tr>
 </thead>
@@ -842,13 +844,13 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <tr>
 <td><strong>Pointer</strong> (default)</td>
 <td>Assets stay on the creative host. The selling node fetches and caches them only within the TTL, renewing ahead of time so revocation checks never sit in the page's rendering path.</td>
-<td>15 minutes</td>
+<td>15 minutes, 1 hour</td>
 <td>Web, social, AI</td>
 </tr>
 <tr>
 <td><strong>Signed cache</strong></td>
-<td>The selling node may hold assets longer. It must subscribe to revocations.</td>
-<td>Up to 24 hours</td>
+<td>The selling node may hold assets until the licence expires. It must subscribe to revocations.</td>
+<td>1 hour, 24 hours</td>
 <td>Email rendering, podcast ad insertion, offline apps</td>
 </tr>
 </tbody>
@@ -856,11 +858,11 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <p><strong>Why the selling node fetches, not the browser.</strong> If people's devices fetched creatives directly from the advertiser's host, the advertiser would learn every viewer's IP address, which is a tracking channel. The selling node, or an Oblivious HTTP relay with a gateway at the creative host, does the fetching instead. The advertiser keeps control without gaining surveillance.</p>
 <h3 id="74-revocation-mechanics">7.4 Revocation mechanics</h3>
 <ol type="1">
-<li><strong>Log.</strong> The advertiser appends a signed <code>Revocation</code> to its transparency log (<a href="#158-transparency-logs">§15.8</a>). <code>effectiveAt</code> may not be earlier than the log inclusion time, so revocations cannot be backdated to avoid paying for impressions already served.</li>
-<li><strong>Push.</strong> The advertiser posts the revocation to every licensee. Relays forward it unaltered and with priority, subject to rate limits.</li>
+<li><strong>Log.</strong> The advertiser appends a signed <code>Revocation</code> to its transparency log (<a href="#158-transparency-logs">§15.8</a>). The revocation deadline is the later of <code>effectiveAt</code> and the time the entry was logged, plus a grace period, so revocations cannot be backdated to avoid paying for impressions already served.</li>
+<li><strong>Push.</strong> The advertiser posts the revocation to every licensee. Relays forward it unaltered and ahead of other traffic, subject to rate limits.</li>
 <li><strong>Acknowledge.</strong> Each receiver returns a signed <code>RevocationAck</code> and logs it. A receiver cannot later deny having received a revocation.</li>
-<li><strong>Pull.</strong> Licensees poll the advertiser's log checkpoint at least once per TTL, which covers missed pushes.</li>
-<li><strong>Effect.</strong> Impressions after <code>effectiveAt</code> (plus a grace period, 60 s by default) are <strong>not billable</strong>. Receipts and logs make them provable.</li>
+<li><strong>Pull.</strong> Licensees check the advertiser's log at least once per licence TTL, and at least hourly, which covers missed pushes.</li>
+<li><strong>Effect.</strong> Impressions after the deadline are <strong>not billable</strong>. The grace period is set in the deal: 60 seconds by default, at most 300. Receipts and logs make late impressions provable.</li>
 </ol>
 <h3 id="75-what-revocation-guarantees-per-surface">7.5 What revocation guarantees, per surface</h3>
 <p>Version 0.1 overstated revocation. The guarantees actually achievable are below.</p>
@@ -875,7 +877,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <tbody>
 <tr>
 <td><strong>Web / native</strong></td>
-<td>No new renders after the deadline (TTL or acknowledgement + 60 s). Assets purged from node caches.</td>
+<td>No new renders after the revocation deadline or licence expiry. Assets purged from node caches.</td>
 <td>Screenshots; copies in users' browser caches until they expire.</td>
 </tr>
 <tr>
@@ -940,7 +942,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 </tr>
 <tr>
 <td><strong>On-device</strong></td>
-<td>The client stores interest signals and selects among candidate ads locally; only aggregate, anonymous reports leave the device (the model Brave has proven [18])</td>
+<td>The client stores interest signals and selects among candidate ads locally; only aggregate, anonymous reports leave the device (the approach Brave Ads runs at scale [18][126])</td>
 <td>Very good</td>
 <td>Good to high</td>
 <td>High (needs client support)</td>
@@ -971,7 +973,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>First-party opt-in</strong> signals may be used only by the publisher's own node and are never forwarded raw.</li>
 <li><strong>Cross-site identifiers are prohibited</strong> in protocol messages.</li>
 </ul>
-<p>Targeting in offers may therefore refer only to context categories (from the IAB Content Taxonomy 3.x, mapped into Federated Ads vocabulary), language, coarse region (country or first-level subdivision), time, device class and placement.</p>
+<p>Targeting in offers may therefore refer only to context categories (from the IAB Tech Lab Content Taxonomy 3.1 [148], mapped into Federated Ads vocabulary), language, coarse region (country or first-level subdivision), time, device class and placement.</p>
 <hr />
 <h2 id="9-brand-safety-and-content-policy-options-compared">9. Brand safety and content policy: options compared</h2>
 <div class="tbl"><table>
@@ -1007,10 +1009,10 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 </table></div>
 <p><strong>Decision: shared vocabulary, bilateral enforcement, subscribable labelers.</strong></p>
 <ul>
-<li>Federated Ads defines an open, versioned taxonomy. It is mapped to the IAB Tech Lab Content Taxonomy 3.x and Ad Product Taxonomy 2.0 for compatibility.</li>
+<li>Federated Ads defines an open, versioned taxonomy. It is mapped to the IAB Tech Lab Content Taxonomy 3.1 and Ad Product Taxonomy 2.0 for compatibility [148][149].</li>
 <li>Policies are written in that taxonomy and evaluated by machine on both sides.</li>
 <li>Brand-safety, fraud and verification judgements come from <strong>labelers</strong> that advertisers and publishers choose to subscribe to. There is no central certifier.</li>
-<li>The taxonomy separates <strong>"sensitive" from "unsafe"</strong>, so news, health and LGBTQ+ content are not blocked by default. That is a known failure of keyword blocklists.</li>
+<li>The taxonomy separates <strong>"sensitive" from "unsafe"</strong>, so news, health and LGBTQ+ content are not blocked by default. Keyword blocklists over-block: in a September 2019 study, CHEQ, a vendor of brand-safety technology, found that a typical blocklist flagged 57% of neutral or positive stories on 15 major news sites as unsafe [150].</li>
 <li><strong>Regulated categories</strong> require jurisdiction profiles (<a href="#196-jurisdiction-policy-profiles">§19.6</a>). These include political and issue ads, alcohol, gambling, pharmaceuticals, financial and crypto promotions, and anything aimed at minors.</li>
 <li><strong>Landing-page cloaking</strong>, where a page changes after approval, is countered in four ways:
 <ul>
@@ -1022,7 +1024,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 </ul>
 <hr />
 <h2 id="10-measurement-and-verification">10. Measurement and verification</h2>
-<p>Version 0.1's measurement design was its second-largest weakness. In particular, its claim that creative-host fetch logs corroborate volume was wrong, because a caching node fetches the same number of times whether it serves a thousand impressions or a million. This section rebuilds the trust model.</p>
+<p>The project's internal review of version 0.1 (<a href="#28-ai-assistance-disclosure">§28</a>) flagged its measurement design as weak. In particular, its claim that creative-host fetch logs corroborate volume was wrong, because a caching node fetches the same number of times whether it serves a thousand impressions or a million. This section rebuilds the trust model.</p>
 <h3 id="101-events">10.1 Events</h3>
 <div class="tbl"><table>
 <thead>
@@ -1044,8 +1046,8 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <td>Yes</td>
 </tr>
 <tr>
-<td><code>viewable_time</code></td>
-<td>Aggregate in-view seconds measured by the open measurement module; the basis for <code>cpvh</code> (<a href="#63-pricing-models">§6.3</a>)</td>
+<td><code>viewableSeconds</code> (a cell value, not an event)</td>
+<td>Aggregate in-view seconds measured by a pinned measurement module; the basis for <code>cpvh</code> (<a href="#63-pricing-models">§6.3</a>)</td>
 <td>If the deal says so</td>
 </tr>
 <tr>
@@ -1071,7 +1073,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <tr>
 <td><code>open</code></td>
 <td>Email: image load</td>
-<td><strong>No.</strong> Informational only, because privacy proxies such as Apple Mail Privacy Protection inflate it</td>
+<td><strong>No.</strong> Informational only, because opens are unreliable: Apple's Mail Privacy Protection, for example, prevents senders from seeing whether a message was opened [151]</td>
 </tr>
 <tr>
 <td><code>engagement</code></td>
@@ -1085,7 +1087,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <ul>
 <li>deal;</li>
 <li>creative hash;</li>
-<li>hour;</li>
+<li>window (an hour, or longer for low-volume nodes);</li>
 <li>context category;</li>
 <li>coarse region;</li>
 <li>event type;</li>
@@ -1156,8 +1158,8 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <p><strong>Limits:</strong></p>
 <ul>
 <li>A token proves only that an <em>attester</em> vouched for the client. It does not prove a human.</li>
-<li>Deployment is uneven. Apple's Private Access Tokens cover recent Safari. Chrome implements a different API (Private State Tokens). The rate-limited token draft has expired.</li>
-<li>The attesters that exist today are large platform companies, which is in tension with P1.</li>
+<li>Deployment is uneven. Apple's Private Access Tokens work in Safari on iOS 16 and macOS Ventura or later, with Apple's iCloud service as the attester [152]. Chrome supports a different API, Private State Tokens [10]. The IETF draft for rate-limited tokens expired in October 2024 [153].</li>
+<li>The attester that supports Private Access Tokens is a large platform company, which is in tension with P1.</li>
 </ul>
 <p>V3 is therefore optional and sampled. Who should act as attesters is an open question (<a href="#26-open-questions">§26</a>).</p>
 <h3 id="106-conversions-and-attribution">10.6 Conversions and attribution</h3>
@@ -1184,8 +1186,10 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <h3 id="108-disputes">10.8 Disputes</h3>
 <p>A party may open a signed <code>Dispute</code> against a receipt batch or statement when:</p>
 <ul>
-<li>verification signals diverge from receipts beyond the deal's tolerance (default 10%); or</li>
-<li>impressions appear after a revocation.</li>
+<li>verification signals diverge from receipts beyond the deal's tolerance (default 10%);</li>
+<li>impressions appear after a revocation;</li>
+<li>creatives were delivered without a valid licence; or</li>
+<li>a statement's arithmetic is wrong.</li>
 </ul>
 <p>The dispute process in this draft:</p>
 <ol type="1">
@@ -1334,7 +1338,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <p><strong>Design rules:</strong></p>
 <ul>
 <li><strong>Nodes should not hold other people's money.</strong> Holding funds usually requires payment, e-money or money-transmission licences. Settlement profiles route funds through regulated providers, and a node that does hold funds must declare its licensing status.</li>
-<li><strong>All intermediary fees are declared in the signed deal</strong>, so every party sees how each unit of currency is split. This attacks the "unknown delta" structurally.</li>
+<li><strong>All intermediary fees within the protocol are declared in the signed deal</strong>, so every party sees how each unit of currency is split. This addresses the "unknown delta" structurally (<a href="#12-opacity-and-leakage">§1.2</a>).</li>
 <li><strong>Statements carry tax metadata:</strong> supplier and customer jurisdiction, VAT or GST identifiers, and a reverse-charge indicator, so invoices can be generated.</li>
 <li><strong>Each deal states its terms:</strong> payment terms, cancellation notice, make-good policy and currency. Deals may adopt existing industry terms by reference.</li>
 </ul>
@@ -1350,19 +1354,19 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <tbody>
 <tr>
 <td><strong>Why this ad</strong></td>
-<td>Every ad carries a human-readable and machine-readable disclosure. It covers the advertiser's verified legal name; the payer, if different; the main reasons the ad was selected (e.g. "matched to: article topic <em>cycling</em>; region: <em>Kerala</em>"); the intermediaries and their declared fees; and how to change preferences. This matches the EU DSA Article 26 transparency elements and must render on every surface, including spoken disclosures in audio and AI.</td>
+<td>Every ad carries a clear "Sponsored" marking and a human-readable and machine-readable disclosure. It covers the advertiser's verified legal name; the payer, if different; the main reasons the ad was selected (e.g. "matched to: article topic <em>cycling</em>; region: <em>Kerala</em>"); the intermediaries and their declared fees; and how to change preferences. This includes the information that Article 26(1) of the EU Digital Services Act requires online platforms to show for each advertisement [154], and must render on every surface, including spoken disclosures in audio and AI.</td>
 </tr>
 <tr>
 <td><strong>Opt-out</strong></td>
-<td>Nodes honour the Global Privacy Control signal (<code>Sec-GPC: 1</code>) as a binding opt-out wherever law gives it effect. They honour equivalent legally recognised signals as these emerge. Because Federated Ads is contextual-only by default, opting out turns off every optional profile beyond contextual (on-device, first-party opt-in, conversion measurement).</td>
+<td>Nodes honour the Global Privacy Control signal (<code>Sec-GPC: 1</code>) as a binding opt-out wherever law gives it effect. They honour equivalent legally recognised signals as these emerge. Because Federated Ads is contextual by default, opting out turns off every optional profile beyond contextual (on-device, first-party opt-in, conversion measurement).</td>
 </tr>
 <tr>
 <td><strong>Ad-free option</strong></td>
-<td>A selling node may advertise an ad-free offer (subscription, one-time payment or micropayment) at a standard endpoint. Following EDPB guidance, the ad-free option sits <em>alongside</em> a free contextual tier, never as a forced choice between consent and payment.</td>
+<td>A selling node may advertise an ad-free offer (subscription, one-time payment or micropayment) at a standard endpoint. Following EDPB guidance (<a href="#191-european-union">§19.1</a>), the ad-free option sits <em>alongside</em> a free contextual tier, never as a forced choice between consent and payment.</td>
 </tr>
 <tr>
 <td><strong>Report and block</strong></td>
-<td>People can report an ad (misleading, offensive, scam, sensitive) or block an advertiser. Reports go to the selling node and are forwarded in aggregate to the buyer and advertiser. Block lists stay on the device or with the first party and never become cross-site identifiers. Scam reports in financial categories have a defined takedown time.</td>
+<td>People can report an ad (misleading, offensive, scam, sensitive) or block an advertiser. Reports go to the selling node and are forwarded in aggregate to the buyer and advertiser. Block lists stay on the device or with the first party and never become cross-site identifiers. A defined takedown time for scam reports in financial categories is planned.</td>
 </tr>
 <tr>
 <td><strong>Minor-safe default</strong></td>
@@ -1394,7 +1398,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Acme Bikes Pvt Ltd&quot;</span></span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span><span class="ot">]</span></span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p>Federated Ads will propose <code>fa:Sponsorship</code> as a Fediverse Enhancement Proposal [30]. We found no existing FEP for sponsored posts, only community concept documents. On Bluesky, Graze already sells ads placed in topical custom feeds and approved by feed operators [41], which shows demand for this model. Rules for this surface:</p>
+<p>Federated Ads will propose, as a Fediverse Enhancement Proposal [30], a vendor-neutral way to mark a post as sponsored: a visible label plus a machine-readable tag that any project can use, not one tied to Federated Ads. An open proposal would add guidance to the FEP process document that proposals should not promote a specific product or service and that vendor-neutral solutions are preferred [156]; a shared marker would also help instances let users declare commercial content, as Article 26(2) of the EU Digital Services Act requires of online platforms [154]. Federated Ads will adopt that tag, and use its own <code>fa:</code> terms only to link a post to its manifest and deal; the example above uses <code>fa:Sponsorship</code> as a placeholder. In October 2026 we searched the FEP repository [30], which then held 147 proposals, and its pull requests for "sponsor", "advert" and "promot", and found no proposal for marking sponsored posts; we welcome corrections. On Bluesky, Graze already sells placement in topical custom feeds, with feed operators approving each campaign [82]. Rules for this surface:</p>
 <ul>
 <li><strong>Opt-in.</strong> Instance administrators choose whether to participate. Sponsored posts appear only in the feeds of that instance's users.</li>
 <li><strong>No federation as organic content.</strong> Sponsored posts are addressed to local users only, never federated as public posts.</li>
@@ -1424,7 +1428,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li><strong>Labelling.</strong> A persistent "Sponsored" label and a why-this-ad disclosure on every sponsored unit.</li>
 <li><strong>Context handling.</strong> Matching may use the topic of the current conversation, derived in the session on the AI provider's node. Conversation content is never sent to buying nodes and is not kept for advertising beyond the session unless the user opts in.</li>
 <li><strong>Ineligible contexts.</strong> Conversations classified as health, mental health, crisis, politics or legal or financial distress, and accounts known to belong to minors, receive no ads by default. This is broadly in line with what OpenAI announced for ChatGPT [13].</li>
-<li><strong>No emotional targeting.</strong> Sponsored units may not be selected or worded using inferences about the user's emotional state or vulnerabilities (relevant to EU AI Act Article 5).</li>
+<li><strong>No emotional targeting.</strong> Sponsored units may not be selected or worded using inferences about the user's emotional state or vulnerabilities (compare EU AI Act Article 5(1)(a) and (b), which prohibit manipulative techniques and the exploitation of vulnerabilities [155]).</li>
 <li><strong>Synthetic creatives</strong> are marked as AI-generated and carry provenance metadata (C2PA where available).</li>
 <li><strong>Creative integrity.</strong> Research on LLM advertising proposes merging ads into the generated answer itself, through auctions on summaries or retrieval-augmented insertion [62][63][64]. Federated Ads does not allow this by default. A licensed creative is shown as the advertiser approved it and may not be paraphrased, summarised or blended into generated text unless its Licence explicitly permits adaptation, and an adapted unit must still be labelled and kept separate from the organic answer. This answers the concern that commercial influence in AI answers must be attributable, measurable and contestable [61].</li>
 </ol>
@@ -1433,7 +1437,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <ul>
 <li>It must disclose to the user when a sponsored option influenced its choice.</li>
 <li>It must not prefer a sponsored option over a better organic one without disclosure.</li>
-<li>Federated Ads offers a binding that exposes node functions (discover inventory, create offers, fetch receipts) as tools for agent frameworks. This lets agent protocols such as AdCP and IAB Tech Lab's AAMP use Federated Ads as their <strong>identity, licence and receipt layer</strong>, instead of Federated Ads competing with them [28][29].</li>
+<li>A planned binding will expose node functions (discover inventory, create offers, fetch receipts) as tools for agent frameworks. Agent protocols such as AdCP already provide their own discovery and request signing [136]; Federated Ads complements them rather than competing. An agent can discover and buy through AdCP, while As far as we found in the AdCP 3.2 documentation, Federated Ads adds what AdCP leaves out or marks experimental: independently verifiable delivery records, acknowledged revocation of the advertiser's own creative, and settlement [110][137][145]. We welcome corrections.</li>
 </ul>
 <hr />
 <h2 id="14-interoperability-with-existing-standards">14. Interoperability with existing standards</h2>
@@ -1450,7 +1454,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <tr>
 <td><strong>Extend existing protocols</strong> (ActivityPub, OpenRTB)</td>
 <td>Existing buyers and servers; continuity for standards bodies; mature libraries</td>
-<td>Inherits OpenRTB's data leakage and ActivityPub's loose typing; ownership and revocation would be bolted on</td>
+<td>Inherits OpenRTB's sending of user data in bid requests to many bidders, and ActivityPub's loose typing; ownership and revocation would be bolted on</td>
 </tr>
 <tr>
 <td><strong>Clean slate</strong></td>
@@ -1526,7 +1530,7 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <td>Social surfaces</td>
 </tr>
 <tr>
-<td>IAB Content Taxonomy 3.x, Ad Product Taxonomy 2.0, ads.txt, sellers.json</td>
+<td>IAB Tech Lab Content Taxonomy 3.1, Ad Product Taxonomy 2.0, ads.txt, sellers.json</td>
 <td>Vocabulary and seller authorisation mapping</td>
 </tr>
 <tr>
@@ -1537,6 +1541,10 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <td>C2PA</td>
 <td>Creative provenance</td>
 </tr>
+<tr>
+<td>AdCP (AgenticAdvertising.org)</td>
+<td>Agent-led discovery and buying, complemented through a planned agent binding (<a href="#136-ai-agents-profileagent">§13.6</a>)</td>
+</tr>
 </tbody>
 </table></div>
 <h3 id="143-bridges">14.3 Bridges</h3>
@@ -1546,10 +1554,10 @@ nav.toc li.part { font-family: var(--mono); font-size: .68rem; letter-spacing: .
 <li>It removes all user and device identifiers, precise location and other personal fields.</li>
 <li>It converts winning bids into Federated Ads deals and licences.</li>
 </ul>
-<p>Expect modest demand through the bridge. Existing buyers pay less for inventory without identifiers. The bridge exists to avoid a completely empty marketplace, not to replace direct Federated Ads buying.</p>
+<p>Expect modest demand through the bridge. Existing buyers pay less for inventory without identifiers (<a href="#203-the-evidence-on-revenue-without-tracking">§20.3</a>). The bridge exists to avoid a completely empty marketplace, not to replace direct Federated Ads buying.</p>
 <p><strong>VAST bridge.</strong> It turns a Federated Ads manifest into a VAST <code>InLine</code> response for ad-insertion servers and video players.</p>
-<p><strong>Measurement bridge.</strong> It lets agencies, verification vendors and attribution providers keep their reporting pipelines. It receives signed Tracker Reports from selling nodes and maps them onto the formats those tools already ingest (for example delivery feeds and verification dashboards), and it hosts vendor measurement modules for the sandbox (<a href="#109-third-party-measurement-and-tracking">§10.9</a>). It never passes through, or asks for, any user-level field.</p>
-<p><strong>Agent binding.</strong> It exposes Federated Ads operations as tools for agent frameworks, as described in <a href="#136-ai-agents-profileagent">§13.6</a>.</p>
+<p><strong>Measurement bridge.</strong> It lets agencies, verification vendors and attribution providers keep their reporting pipelines. It receives signed Tracker Reports from selling nodes and maps them onto the formats those tools already ingest (for example delivery feeds and verification dashboards), and it can distribute vendor measurement modules, which selling nodes load by hash (<a href="#109-third-party-measurement-and-tracking">§10.9</a>). As a measurer, it declares that role and publishes a signed data-handling statement. It never passes through, or asks for, any user-level field.</p>
+<p><strong>Agent binding (planned).</strong> It would expose Federated Ads operations as tools for agent frameworks, as described in <a href="#136-ai-agents-profileagent">§13.6</a>.</p>
 <hr />
 <h1 id="part-iii-how">Part III: How</h1>
 <h2 id="15-protocol-overview">15. Protocol overview</h2>
@@ -3065,7 +3073,7 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <li>S. Guha, B. Cheng, P. Francis, "Privad: Practical Privacy in Online Advertising," USENIX NSDI 2011. <a href="https://www.usenix.org/conference/nsdi11/privad-practical-privacy-online-advertising">https://www.usenix.org/conference/nsdi11/privad-practical-privacy-online-advertising</a></li>
 <li>M. Backes, A. Kate, M. Maffei, K. Pecina, "ObliviAd: Provably Secure and Practical Online Behavioral Advertising," IEEE S&amp;P 2012. <a href="https://www.ieee-security.org/TC/SP2012/papers/4681a257.pdf">https://www.ieee-security.org/TC/SP2012/papers/4681a257.pdf</a></li>
 <li>G. Pestana, I. Querejeta-Azurmendi, P. Papadopoulos, B. Livshits, "THEMIS: A Decentralized Privacy-Preserving Ad Platform with Reporting Integrity," arXiv:2106.01940 (2021). <a href="https://arxiv.org/abs/2106.01940">https://arxiv.org/abs/2106.01940</a></li>
-<li>MediaPost, "Are Bluesky Feeds The Future Of Decentralized Media Advertising?" (23 April 2025). <a href="https://www.mediapost.com/publications/article/405169/are-bluesky-feeds-the-future-of-decentralized-medi.html">https://www.mediapost.com/publications/article/405169/are-bluesky-feeds-the-future-of-decentralized-medi.html</a></li>
+<li><em>Withdrawn.</em> A news commentary previously cited for Graze; replaced by Graze's own documentation (reference 82).</li>
 <li>Nostr NIPs, pull request #955, "NOSTR Decentralized Advertising Network (NOSTR-DAN)" (December 2023). <a href="https://github.com/nostr-protocol/nips/pull/955">https://github.com/nostr-protocol/nips/pull/955</a></li>
 <li>NostrGameEngine, nostrads. <a href="https://github.com/NostrGameEngine/nostrads">https://github.com/NostrGameEngine/nostrads</a></li>
 <li>R. Chairattana-Apirom, S. Tessaro, N. Tyagi, "Fraud Mitigation in Privacy-Preserving Attribution," IACR ePrint 2025/1891. <a href="https://eprint.iacr.org/2025/1891">https://eprint.iacr.org/2025/1891</a></li>
@@ -3097,7 +3105,7 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <li><p>A. Goli, J. Huang, D. Reiley, N. Riabov, "Measuring Consumer Sensitivity to Audio Advertising: A Long-Run Field Experiment on Pandora Internet Radio," working paper (revised August 2024). <a href="https://www.davidreiley.com/papers/PandoraListenerDemandCurve.pdf">https://www.davidreiley.com/papers/PandoraListenerDemandCurve.pdf</a></p></li>
 <li><p>D. G. Goldstein, R. P. McAfee, S. Suri, "The Cost of Annoying Ads," Proc. WWW (2013). <a href="https://doi.org/10.1145/2488388.2488429">https://doi.org/10.1145/2488388.2488429</a></p></li>
 <li><p>S. Yan, K. M. Miller, B. Skiera, "How Does the Adoption of Ad Blockers Affect News Consumption?" Journal of Marketing Research (2022). <a href="https://doi.org/10.1177/00222437221076160">https://doi.org/10.1177/00222437221076160</a></p></li>
-<li><p>Coalition for Better Ads, "The Initial Better Ads Standards." <a href="https://www.betterads.org/standards/">https://www.betterads.org/standards/</a></p></li>
+<li><p>Coalition for Better Ads, <em>The Better Ads Standards</em> (accessed October 2026). <a href="https://www.betterads.org/standards/">https://www.betterads.org/standards/</a></p></li>
 <li><p>Jounce Media, <em>The State of the Open Internet 2025</em> (2025). <a href="https://jouncemedia.com/build/resources/2025_Jounce_Media_State_Of_The_Open_Internet_2afe364829.pdf">https://jouncemedia.com/build/resources/2025_Jounce_Media_State_Of_The_Open_Internet_2afe364829.pdf</a></p></li>
 <li><p>A. Goldfarb, C. Tucker, "Online Display Advertising: Targeting and Obtrusiveness," Marketing Science 30(3) (2011). <a href="https://doi.org/10.1287/mksc.1100.0583">https://doi.org/10.1287/mksc.1100.0583</a></p></li>
 <li><p>O. Rafieian, H. Yoganarasimhan, "Targeting and Privacy in Mobile Advertising," Marketing Science 40(2) (2021). <a href="https://doi.org/10.1287/mksc.2020.1235">https://doi.org/10.1287/mksc.2020.1235</a></p></li>
@@ -3149,7 +3157,7 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <li><p>California Privacy Protection Agency, <em>CCPA Regulations</em>, 11 CCR §7025 (effective 1 January 2026). <a href="https://cppa.ca.gov/regulations/pdf/ccpa_statute_eff_20260101.pdf">https://cppa.ca.gov/regulations/pdf/ccpa_statute_eff_20260101.pdf</a></p></li>
 <li><p>California Attorney General, "Attorney General Bonta Announces Settlement with Sephora as Part of Ongoing Enforcement of California Consumer Privacy Act" (24 August 2022). <a href="https://oag.ca.gov/news/press-releases/attorney-general-bonta-announces-settlement-sephora-part-ongoing-enforcement">https://oag.ca.gov/news/press-releases/attorney-general-bonta-announces-settlement-sephora-part-ongoing-enforcement</a></p></li>
 <li><p>Colorado Attorney General, "Universal Opt-Out and the Colorado Privacy Act" (accessed October 2026). <a href="https://coag.gov/opt-out/">https://coag.gov/opt-out/</a></p></li>
-<li><p>Coalition for Better Ads, <em>The Better Ads Standards</em> (accessed October 2026). <a href="https://www.betterads.org/standards/">https://www.betterads.org/standards/</a></p></li>
+<li><p><em>Withdrawn.</em> A duplicate of reference 70.</p></li>
 <li><p>Coalition for Better Ads, <em>Members</em> (accessed October 2026). <a href="https://www.betterads.org/members/">https://www.betterads.org/members/</a></p></li>
 <li><p>Chromium Blog, "Improving advertising on the web" (1 June 2017). <a href="https://blog.chromium.org/2017/06/improving-advertising-on-web.html">https://blog.chromium.org/2017/06/improving-advertising-on-web.html</a></p></li>
 <li><p>Chromium Blog, "Under the hood: How Chrome's ad filtering works" (February 2018). <a href="https://blog.chromium.org/2018/02/how-chromes-ad-filtering-works.html">https://blog.chromium.org/2018/02/how-chromes-ad-filtering-works.html</a></p></li>
@@ -3175,6 +3183,15 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <li><p>AgenticAdvertising.org, "Experimental Status," <em>AdCP 3.2.2</em> documentation (accessed October 2026). <a href="https://docs.adcontextprotocol.org/dist/docs/3.2.2/reference/experimental-status">https://docs.adcontextprotocol.org/dist/docs/3.2.2/reference/experimental-status</a></p></li>
 <li><p>J. Graber, "A New Chapter for Bluesky," Bluesky (9 March 2026). <a href="https://bsky.social/about/blog/03-09-2026-a-new-chapter-for-bluesky">https://bsky.social/about/blog/03-09-2026-a-new-chapter-for-bluesky</a></p></li>
 <li><p>W3C, <em>Content Security Policy Level 3</em>, W3C Working Draft (16 September 2026), §6.4 "Navigation Directives". <a href="https://www.w3.org/TR/CSP3/">https://www.w3.org/TR/CSP3/</a></p></li>
+<li><p>IAB Tech Lab, "Content Taxonomy" (version 3.1, December 2024; accessed October 2026). <a href="https://iabtechlab.com/standards/content-taxonomy/">https://iabtechlab.com/standards/content-taxonomy/</a></p></li>
+<li><p>IAB Tech Lab, "Ad Product Taxonomy" (version 2.0, November 2024; accessed October 2026). <a href="https://iabtechlab.com/standards/ad-product-taxonomy/">https://iabtechlab.com/standards/ad-product-taxonomy/</a></p></li>
+<li><p>CHEQ, <em>How Keyword Blacklists Are Killing Reach and Monetization</em> (September 2019). <a href="https://info.cheq.ai/hubfs/Research/Brand_Safety_Blocklist_Report.pdf">https://info.cheq.ai/hubfs/Research/Brand_Safety_Blocklist_Report.pdf</a></p></li>
+<li><p>Apple, "Use Mail Privacy Protection on iPhone," iPhone User Guide (accessed October 2026). <a href="https://support.apple.com/guide/iphone/use-mail-privacy-protection-iphf084865c7/ios">https://support.apple.com/guide/iphone/use-mail-privacy-protection-iphf084865c7/ios</a></p></li>
+<li><p>Apple, "Replace CAPTCHAs with Private Access Tokens," WWDC22 session 10077 (June 2022). <a href="https://developer.apple.com/videos/play/wwdc2022/10077/">https://developer.apple.com/videos/play/wwdc2022/10077/</a></p></li>
+<li><p>IETF Privacy Pass Working Group, <em>Rate-Limited Token Issuance Protocol</em>, draft-ietf-privacypass-rate-limit-tokens-06 (expired 3 October 2024). <a href="https://datatracker.ietf.org/doc/draft-ietf-privacypass-rate-limit-tokens/">https://datatracker.ietf.org/doc/draft-ietf-privacypass-rate-limit-tokens/</a></p></li>
+<li><p>Regulation (EU) 2022/2065 (Digital Services Act), Article 26 (19 October 2022). <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32022R2065">https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32022R2065</a></p></li>
+<li><p>Regulation (EU) 2024/1689 (Artificial Intelligence Act), Article 5 (13 June 2024). <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32024R1689">https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32024R1689</a></p></li>
+<li><p>Fediverse Enhancement Proposals, pull request #340, "FEP-a4ed: Promotion of products and services" (opened 22 June 2024; open as of October 2026). <a href="https://codeberg.org/fediverse/fep/pulls/340">https://codeberg.org/fediverse/fep/pulls/340</a></p></li>
 </ol>
 <p><em>Technical specifications</em></p>
 <ul>
@@ -3217,6 +3234,18 @@ Signature: fa=:&lt;base64 Ed25519 signature&gt;:</code></pre>
 <li><strong>Measurement module limits:</strong> modules are described as running in a sandboxed frame whose fetches and subresource loads are blocked, not as having no network access, since Content Security Policy does not govern every navigation (Appendix D); reference [147] added. The Internet-Draft's measurement requirements are restated in testable terms, and modules may read only Intersection Observer and Page Visibility signals.</li>
 <li><strong>HTML rendering:</strong> the side index of the HTML page, empty since v0.2, is now generated from the article's headings by <code>scripts/render_whitepaper.py</code>.</li>
 <li><strong>Third-party measurement and tracking:</strong> new <a href="#109-third-party-measurement-and-tracking">§10.9</a> defining measurement channels (aggregate tracker callbacks, sandboxed measurement modules, aggregate conversion measurement, holdout experiments, consented panels), the measurer role, what stays prohibited and what it costs, with channel detail in the new <a href="#appendix-d-measurement-channels-in-detail">Appendix D</a>. Third parties receive only aggregate measurements (or, in the planned conversion profile, shares of reports that reveal nothing on their own); Tracker Reports are stated to be the seller's own numbers, not independent counts; pacing data sent to measurers is limited to spend totals. <a href="#104-viewability-measurement-in-the-page">§10.4</a> renamed and updated for vendor modules; <a href="#181-data-inventory">§18.1</a> gains a row for module signals; the Internet-Draft defines the measurement members, the Tracker Report and <code>measurementModules</code>. Cross-references added in the executive summary, <a href="#33-non-goals-for-v1">§3.3</a>, <a href="#4-actors-and-roles">§4</a>, <a href="#106-conversions-and-attribution">§10.6</a>, <a href="#131-web-display-and-native-surfaceweb">§13.1</a>, <a href="#143-bridges">§14.3</a>, <a href="#1511-conformance-levels">§15.11</a>, <a href="#172-threats-and-mitigations">§17.2</a>, <a href="#181-data-inventory">§18.1</a>, <a href="#26-open-questions">§26</a>, the FAQ and the glossary. Reference [143] added; 45 withdrawn (expired Internet-Draft) and 15 withdrawn (duplicate of reference 5).</li>
+<li><strong>§3 aligned with the rest of the paper:</strong> P3 says matching is contextual by default and that third parties measure deals but never observe people; P4 refers to signed, logged records rather than individual events; P8 includes agent protocols; the privacy goal is restated as no personal data leaving the selling node; the reach and frequency non-goal acknowledges on-device capping and panel estimates.</li>
+<li><strong>§4–§5:</strong> the measurer row is shortened; the topology diagram gains a text description and the measurer; the lifecycle states that Deals take effect when countersigned and that Spend Reports should be logged; the market evidence for deals keeps its source's scope.</li>
+<li><strong>§6.1–§6.3:</strong> the market-design gap is attributed to the internal review disclosed in §28; the feed saturation limit is attributed to Graze; IAB podcast and attention guidelines are cited precisely; reference 122 withdrawn (duplicate of reference 70).</li>
+<li><strong>§6.4–§6.5:</strong> the <code>rtb</code> and on-device profiles are described as planned, since the Internet-Draft does not yet specify them; an unsourced claim about how sponsorships are sold is removed; receipt windows match the draft (hourly, up to weekly for low-volume nodes).</li>
+<li><strong>§7:</strong> licence TTLs, the revocation deadline, the grace period and the pull rule now match the Internet-Draft, which adds a rule that relays forward revocations ahead of other traffic; Google's C2PA statement is reported as a stated goal.</li>
+<li><strong>§8–§9:</strong> IAB taxonomy versions are named and cited; the Brave claim is scoped; the claim that keyword blocklists over-block now cites a study, with its author's interest; references [148]–[150] added.</li>
+<li><strong>§10.1–§10.2:</strong> viewable time is recorded as a cell value, as in the Internet-Draft, not as an event; the case for non-billable email opens cites Apple's description of Mail Privacy Protection; receipt windows may exceed an hour for low-volume nodes; reference [151] added.</li>
+<li><strong>§10.5:</strong> the deployment of Privacy Pass is cited to Apple and the IETF datatracker; references [152]–[153] added.</li>
+<li><strong>§10.8:</strong> dispute grounds match the Internet-Draft (adding unlicensed delivery and arithmetic errors).</li>
+<li><strong>§11–§12:</strong> fee transparency is scoped to fees within the protocol; the "why this ad" disclosure includes an ad marking and is checked against Article 26(1) of the Digital Services Act; the opt-out text says contextual by default; the scam takedown time is marked as planned; reference [154] added.</li>
+<li><strong>§13:</strong> the fediverse plan is now a vendor-neutral FEP for marking sponsored posts, which Federated Ads adopts; the Graze claim cites Graze's documentation (reference 41 withdrawn); the AI Act reference is precise; the agent binding is described as planned and positioned as complementary to AdCP; references [155]–[156] added.</li>
+<li><strong>§14:</strong> AdCP listed as complementary; the measurement bridge distributes vendor modules rather than running them and holds the measurer role; the agent binding is marked as planned.</li>
 <li>Arjun Krishna added as a contributor; governance (<a href="#231-what-the-federated-ads-initiative-is-today">§23.1</a>) and risk (<a href="#25-risks-and-mitigations">§25</a>) updated to reflect two maintainers.</li>
 </ul>
 <h3 id="changes-in-v03-5-october-2026">Changes in v0.3 (5 October 2026)</h3>
