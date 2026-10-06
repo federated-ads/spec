@@ -171,7 +171,7 @@ Contextual matching is mandatory; on-device and first-party opt-in profiles are 
 
 ## Accessibility, Internationalization, Privacy, and Security Considerations
 
-- **Accessibility.** The "why this ad" disclosure must be available in text that assistive technology can read, and spoken on audio and AI voice surfaces ([whitepaper §12](whitepaper/federated-ads-whitepaper.md#12-end-user-rights)).
+- **Accessibility.** Every ad carries a "why this ad" disclosure in human-readable and machine-readable form, and it must render on every surface, including as a spoken disclosure on audio and AI surfaces ([whitepaper §12](whitepaper/federated-ads-whitepaper.md#12-end-user-rights)).
 - **Internationalization.** Objects carry language tags, currencies as ISO codes with decimal-string amounts, and regions as country or first-level subdivision codes. Legal variation is carried in machine-readable jurisdiction profiles ([whitepaper §19.6](whitepaper/federated-ads-whitepaper.md#196-jurisdiction-policy-profiles)).
 - **Privacy.** No cross-site identifiers; aggregated receipts with minimum cell sizes; IP address and user agent processed transiently on the selling node only; Global Privacy Control honoured; minor-safe defaults ([whitepaper §18](whitepaper/federated-ads-whitepaper.md#18-privacy-considerations)).
 - **Security.** Domain-bound keys, signed hops and objects, witnessed logs against equivocation, hash-pinned creative assets and a sandbox for interactive creatives ([whitepaper §17](whitepaper/federated-ads-whitepaper.md#17-security-considerations)).
