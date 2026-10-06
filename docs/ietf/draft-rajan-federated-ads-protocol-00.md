@@ -368,6 +368,11 @@ are:
 `labeler`:
 : Publishes signed Labels about nodes, domains or creatives.
 
+`measurer`:
+: Receives Tracker Reports and may supply measurement modules for
+  Deals that name it ({{measurement}}).  Receives aggregate
+  measurements only.
+
 One organization may hold several roles.  Attesters (Privacy Pass
 token issuers) and settlement providers are external to this protocol
 and are not nodes unless they also implement it.
@@ -993,6 +998,7 @@ object:
 | `disputeTolerance` | OPTIONAL | Decimal string fraction. Default `"0.10"`. |
 | `arbiter` | OPTIONAL | Node URL of the arbiter for disputes. |
 | `jurisdictionProfiles` | OPTIONAL | Array of jurisdiction profile identifiers that apply. |
+| `measurement` | OPTIONAL | Measurement object naming third-party measurers, tracker callbacks and holdouts ({{measurement-object}}). |
 {: #tab-terms title="Terms members"}
 
 ## Node {#obj-node}
@@ -1021,6 +1027,7 @@ Issued by: any node.  Public.
 | `creativeHosts` | COND. | Array of origins from which this node's creatives may be fetched. REQUIRED for nodes with the `advertiser` or `creative-host` role. |
 | `witnesses` | REQUIRED | Array of witness descriptors, each with `name` (signed-note key name), `key` (verifier key) and `node` (OPTIONAL URL). |
 | `logOrigin` | REQUIRED | The origin line of the node's log checkpoints. |
+| `dataHandling` | COND. | Data-handling statement ({{measurers}}). REQUIRED for nodes with the `measurer` role. |
 {: title="Node members"}
 
 ~~~ json
@@ -1625,7 +1632,7 @@ Issued by: selling node.  The billing record.
 | `viewableSeconds` | COND. | Integer: the sum of `viewableSeconds` over all cells.  REQUIRED if any cell carries `viewableSeconds` ({{cpvh}}). |
 | `cells` | REQUIRED | Array of Cell objects ({{cells}}). |
 | `cellTree` | REQUIRED | Object with `alg` (`"rfc6962-sha256"`), `size` and `root` (content hash). |
-| `measurementModule` | COND. | Content hash of the measurement module used to measure viewability and viewable time.  REQUIRED if any cell carries `viewableSeconds`. |
+| `measurementModules` | COND. | Array of content hashes of every measurement module used for the batch, including vendor modules ({{measurement-modules}}).  REQUIRED if any cell carries `viewableSeconds` or counters from a measurement module. |
 | `attestation` | COND. | Privacy Pass summary ({{privacy-pass}}); REQUIRED if the deal requires V3. |
 | `log` | REQUIRED | Object with `origin` and `index` of the batch's log entry. |
 {: title="ReceiptBatch members"}
@@ -1672,6 +1679,25 @@ issues the batch; see {{log-entries}}.
 }
 ~~~
 {: title="ReceiptBatch (illustrative)"}
+
+## TrackerReport {#obj-trackerreport}
+
+Issued by: selling node, to a measurer named in the Deal
+({{tracker-reports}}).
+
+| Member | Req. | Description |
+|---|---|---|
+| `deal` | REQUIRED | Deal `id`. |
+| `measurer` | REQUIRED | Node URL of the measurer. |
+| `kind` | REQUIRED | `"cells"` or `"spend"`. |
+| `batch` | COND. | Object Reference to the Receipt Batch whose cells are reported. REQUIRED if `kind` is `"cells"`. |
+| `window` | COND. | The batch's `window`. REQUIRED if `kind` is `"cells"`. |
+| `cells` | COND. | The batch's `cells`, unchanged. REQUIRED if `kind` is `"cells"`. |
+| `cellTree` | COND. | The batch's `cellTree`. REQUIRED if `kind` is `"cells"`. |
+| `log` | COND. | The batch's `log`. REQUIRED if `kind` is `"cells"`. |
+| `asOf` | COND. | Time of the spend total. REQUIRED if `kind` is `"spend"`. |
+| `spend` | COND. | Money spent on the deal to date. REQUIRED if `kind` is `"spend"`. |
+{: title="TrackerReport members"}
 
 ## Statement {#obj-statement}
 
@@ -2341,7 +2367,7 @@ down to an integer.
 For a `cpvh` deal:
 
 * viewable time MUST be measured by a measurement module whose content
-  hash is pinned in the Receipt Batch `measurementModule` member, so
+  hash is listed in the Receipt Batch `measurementModules` member, so
   that auditors can confirm which module pages load
   ({{verification-levels}});
 * viewable time MUST be reported only as `viewableSeconds` sums in
@@ -2469,6 +2495,110 @@ the buying node and its auditors.  Verifiers MUST check token
 signatures against the issuer's public key, check that each token's
 challenge digest matches the expected challenge, and reject duplicate
 tokens.
+
+# Third-Party Measurement {#measurement}
+
+This section lets an advertiser or buying node name third parties
+that receive measurements about a Deal, without receiving
+observations about any person.
+
+## Rule {#measurement-rule}
+
+A node MUST NOT send to a measurer, or to any other third party, data
+from which the recipient could tell that two events came from the same
+person or device, or recover an IP address, user agent, page URL,
+cookie or other identifier.  A measurer receives only the data defined
+in this section.
+
+## Measurers {#measurers}
+
+A measurer is a node with the `measurer` role ({{roles}}).  Its Node
+Descriptor MUST include a `dataHandling` object with these members:
+
+| Member | Req. | Description |
+|---|---|---|
+| `purposes` | REQUIRED | Array of purposes the measurer accepts: `"delivery-reporting"`, `"viewability"`, `"invalid-traffic"`, `"brand-safety"`, `"attribution"`, `"lift"`, `"audit"`. |
+| `retentionDays` | REQUIRED | Integer: the maximum number of days the measurer keeps received data. |
+| `onwardTransfer` | REQUIRED | MUST be `false`: received data is not sold or passed to others, except to processors bound by the same terms. |
+| `reidentification` | REQUIRED | MUST be `false`: the measurer does not attempt to re-identify people. |
+| `policy` | OPTIONAL | URL of a human-readable statement. |
+{: title="dataHandling members"}
+
+Because the Node Descriptor is signed, the statement is attributable to
+the measurer.  Labelers MAY publish Labels about measurers.
+
+## Measurement Object {#measurement-object}
+
+The Terms `measurement` member is an object with these members:
+
+| Member | Req. | Description |
+|---|---|---|
+| `measurers` | REQUIRED | Array, each with `id` (Node URL of a measurer), `purpose` (array of purposes from its `dataHandling`) and OPTIONAL `module` (content hash of a measurement module, {{measurement-modules}}). |
+| `trackers` | OPTIONAL | Array, each with `measurer` (Node URL, one of `measurers`), `endpoint` (HTTPS URL), `events` (array of event types), `cadence` (ISO 8601 duration) and OPTIONAL `macros`. |
+| `holdouts` | OPTIONAL | Array, each with `type` (`"region"`, `"context"` or `"window"`) and `cells` (array of identifiers of that type), committed by both parties in the Deal. |
+{: title="Measurement members"}
+
+A selling node MUST NOT countersign a Deal whose `measurement` names a
+node that does not declare the `measurer` role, or a purpose that the
+measurer's `dataHandling` does not include.  A tracker `endpoint`
+MUST be on an origin of the measurer's Node.
+
+## Tracker Reports {#tracker-reports}
+
+For each tracker, the selling node sends TrackerReport objects
+({{obj-trackerreport}}) to the tracker `endpoint`, signed with both
+signature layers ({{auth}}).  The browser never contacts a measurer.
+
+* A `"cells"` report carries the cells, cell tree and log reference of
+  one Receipt Batch, unchanged, so that the measurer can verify them
+  against the selling node's log ({{log-proofs}}).  It MUST be sent
+  only after the batch is logged, and the k-threshold of the batch
+  applies ({{k-threshold}}).
+* A `"spend"` report carries only the deal's spend to date.  It MAY be
+  sent as often as Spend Reports ({{obj-spendreport}}) and MUST NOT
+  carry event counts, contexts or regions.
+* `cadence` MUST NOT be shorter than the deal's `receiptWindow` for
+  `"cells"` reports.  Windows MUST NOT overlap.
+* `macros`, if used, MAY expand only to `deal`, `creative`, `window`,
+  `context` and `region` values.  No macro may expand to a value about
+  a person, device or request.
+* A selling node MUST NOT forward IP addresses, user agents, request
+  headers, cookies or referrers to a measurer.
+
+Tracker Reports repeat the selling node's own records.  They are not
+independent evidence that the numbers are true; independent
+corroboration comes from measurement modules, verification levels V2
+to V4 ({{verification-levels}}) and audits.
+
+## Measurement Modules {#measurement-modules}
+
+A measurement module is script code, identified by content hash, that
+runs in the page to measure viewability, viewable time or invalid
+traffic.  A selling node MAY run a measurer's module only if the module
+is named in the Deal's `measurement`.  A selling node that runs a
+module:
+
+* MUST load it only by its content hash, and MUST list the hash of
+  every module used in the Receipt Batch `measurementModules` member;
+* MUST run it in an isolated context with no network access of its own
+  (for example under a Content Security Policy with
+  `connect-src 'none'` and no other permitted origins), exchanging
+  messages only with the selling node's collector;
+* MUST NOT give it access to cookies, storage or device-identifying
+  interfaces;
+* MUST accept from it only coarse counters (for example viewable-time
+  buckets and invalid-traffic category flags) and fold them into
+  aggregate cells.
+
+The source of a vendor module SHOULD be public, and MUST be available
+to auditors.
+
+## Holdouts {#holdouts}
+
+If a Deal's `measurement` includes `holdouts`, the selling node MUST
+NOT deliver the deal's creatives in the listed cells, and the Receipt
+Batches show delivery by cell.  Holdouts are assigned by region,
+context or time window, never by person.
 
 # Disclosure and User Controls {#user-controls}
 
@@ -2631,7 +2761,8 @@ federated-ads-extended:
 : Everything in core, plus StandingOffer, Claim and RFP;
   signed-cache tier; SpendReport; Statement and PaymentNotice with at
   least one settlement profile; Dispute; the ad-free or support
-  endpoint; and the sandboxed HTML5 format ({{sec-malvertising}}).
+  endpoint; the sandboxed HTML5 format ({{sec-malvertising}}); and
+  Tracker Reports and measurement modules ({{measurement}}).
 
 federated-ads-verified:
 : Everything in extended, plus `V3` client attestation
@@ -2737,7 +2868,7 @@ remains subject to competition law.
 A selling node could inflate `viewableSeconds` for `cpvh` deals, for
 example by keeping placements in view artificially or by reporting
 times not measured by the declared module.  The pinned
-`measurementModule` hash, V2 outcome corroboration and V4 audits
+`measurementModules` hashes, V2 outcome corroboration and V4 audits
 mitigate this; buyers SHOULD require V3 or V4 for large `cpvh` deals.
 
 ## Malvertising {#sec-malvertising}
@@ -2827,6 +2958,15 @@ object that a counterparty logged under a witnessed checkpoint before
 log the Deals and Licences they rely on are therefore protected;
 those that do not bear the risk of such a revocation.
 
+## Measurer Misuse
+
+A measurement module could try to exfiltrate data or fingerprint the
+device; the isolation requirements of {{measurement-modules}} and
+module pinning limit this, and auditors can inspect module sources.  A
+`"cells"` Tracker Report cannot be altered without detection, because
+its cells are those of a logged Receipt Batch.  `"spend"` reports are
+not logged and are only as reliable as Spend Reports.
+
 ## Attester Centralization
 
 V3 relies on attesters, which today are few.  V3 is optional,
@@ -2897,8 +3037,9 @@ or volumes.  Issuers SHOULD use unguessable identifiers
 
 ## Device Access
 
-Viewability measurement, on-device profiles and Privacy Pass all
-involve access to the user's device, which some jurisdictions subject
+Viewability measurement, measurement modules ({{measurement-modules}}),
+on-device profiles and Privacy Pass all involve access to the user's
+device, which some jurisdictions subject
 to consent requirements.  Core billing is therefore server-side
 (impressions, sends, deliveries and clicks counted by the selling
 node), and device-side features are optional.  Privacy Pass tokens
@@ -2909,6 +3050,17 @@ sample randomly.  The same applies to cooperative ad-free passes
 reveals that the reader holds a pass, so members MUST NOT include pass
 redemptions in receipts or reports.
 
+## Third-Party Measurement
+
+Through Tracker Reports, measurers receive only aggregate cells and
+spend totals ({{measurement}}).  Aggregation services for conversion
+measurement, such as Distributed Aggregation Protocol aggregators, are
+outside this document ({{conversions}}).  The k-threshold, fixed windows and the
+restriction of macros to deal-level values limit re-identification
+from Tracker Reports.  A measurer could still combine reports from
+many deals; the `dataHandling` statement commits it not to attempt
+re-identification, and Labels can record breaches.
+
 ## User Controls {#privacy-user-controls}
 
 The user controls in {{user-controls}}, including honoring Global
@@ -2916,7 +3068,7 @@ Privacy Control and the minor-safe default, are mandatory at every
 conformance level.  Report objects carry only aggregate counts.
 Block lists remain on the device or with the first party.
 
-## Conversions
+## Conversions {#conversions}
 
 This document defines no conversion measurement.  Aggregate,
 privacy-preserving conversion measurement could be added as a profile
@@ -3026,7 +3178,7 @@ Reference.  Initial contents: `Node`, `Discovery`, `Policy`,
 `Inventory`, `Offer`, `StandingOffer`, `RFP`, `Claim`, `Acceptance`,
 `CounterOffer`, `Decline`, `Deal`, `DealAmendment`, `StatusChange`,
 `CreativeManifest`, `Licence`, `Revocation`, `RevocationAck`,
-`SpendReport`, `ReceiptBatch`, `Statement`, `PaymentNotice`,
+`SpendReport`, `ReceiptBatch`, `TrackerReport`, `Statement`, `PaymentNotice`,
 `Dispute`, `Report`, `Label`, `KeyRotation`, `KeyRevocation`, `Ack`,
 `Collection`, `SupportOptions`, `MemberList`, each as defined in {{objects}} or {{discovery}}.
 
@@ -3195,6 +3347,13 @@ draft-rajan-federated-ads-protocol-00:
   rounding are specified; the privacy considerations note that the
   k-threshold counts events, not people; RFC 5646 is a normative
   reference.
+
+  Third-party measurement (from whitepaper section 10.9): the
+  `measurer` role and `dataHandling` statement; the Terms
+  `measurement` member; the TrackerReport object; measurement modules
+  and holdouts; `measurementModules` replaces `measurementModule` in
+  Receipt Batches; Tracker Reports and measurement modules are added to
+  `federated-ads-extended`.
 
 # Acknowledgments {#acknowledgments}
 {:numbered="false"}
