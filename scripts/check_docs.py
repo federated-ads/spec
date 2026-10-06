@@ -123,7 +123,9 @@ NAMING_ALLOWED = re.compile(
     r"Trade Desk(?:'s|’s)? (?:sell-side solution )?\"?OpenAds\"?(?: header-bidding wrapper)?|"
     r"OpenAds announcement|Open Ads Protocol|openads-initiative"
 )
-EXCLUSIONARY = re.compile(r"\b(whitelist\w*|blacklist\w*|master\w*|slave\w*)\b", re.IGNORECASE)
+EXCLUSIONARY = re.compile(
+    r"\b(whitelist(?:s|ed|ing)?|blacklist(?:s|ed|ing)?|masters?|slaves?)\b", re.IGNORECASE,
+)
 EXCLUSIONARY_ALLOWED = re.compile(
     r"MasterCard|Master's degree|"
     r"never \"whitelist\", \"blacklist\", \"master\" or \"slave\"",
@@ -239,7 +241,8 @@ def check_whitepaper(path: str, text: str) -> None:
 
     # Citations anywhere outside Appendix B itself (Appendix C included).
     cited: dict[int, int] = {}
-    after_offset = ref_line_offset + refs_part.count("\n")
+    # Line 1 of `after` is the rest of the "## Appendix C" heading line.
+    after_offset = ref_line_offset + refs_part.count("\n") - 1
     for chunk, offset in ((before, 0), (after, after_offset)):
         for no, line in lines_outside_code(chunk):
             for m in CITATION.finditer(strip_inline_code(line)):
