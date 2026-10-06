@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Layer 1 again, then layer 2: AI editorial review of the pushed doc changes.
+# See scripts/ai_review.py for FA_SKIP_AI_REVIEW, FA_AI_REVIEW_WARN and FA_AI_VERIFY_WEB.
+set -euo pipefail
+root=$(git rev-parse --show-toplevel)
+python3 "$root/scripts/check_docs.py"
+# git sends the pushed refs on stdin; the review does not need them.
+python3 "$root/scripts/ai_review.py" </dev/null

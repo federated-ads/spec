@@ -1,0 +1,242 @@
+#!/usr/bin/env python3
+"""AI editorial review of document changes, run from the pre-push hook.
+
+Reviews the documentation diff between the push base and HEAD against
+docs/STYLE.md using the Claude Code CLI in headless mode with read-only
+tools. High-severity findings (evidence-gate failures, conflicts with the
+project's ideals, contradictions between sections, misused industry
+definitions) block the push; everything else is reported as a warning.
+
+Environment variables:
+  FA_SKIP_AI_REVIEW=1    skip the review entirely
+  FA_AI_REVIEW_WARN=1    report findings but never block
+  FA_AI_VERIFY_WEB=1     also let the reviewer fetch cited sources on the web
+                         (slower; use before a release)
+  FA_AI_REVIEW_BASE=ref  compare against this ref instead of the merge base
+                         with origin/main
+
+Run it by hand with --worktree to review uncommitted changes as well, for
+example before committing: scripts/ai_review.py --worktree
+
+The review fails open: if the CLI is missing or errors, it warns and lets
+the push continue. The deterministic checks (scripts/check_docs.py) still
+run in CI on every pull request.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+TIMEOUT_SECONDS = 900
+
+# Documentation that is written by hand. Generated renderings are excluded.
+PATHS = ["docs", "README.md", "CONTRIBUTING.md"]
+EXCLUDE = [
+    ":(exclude)docs/whitepaper/web/*.html",
+    ":(exclude)docs/ietf/*.xml",
+    ":(exclude)docs/ietf/*.txt",
+    ":(exclude)docs/ietf/*.html",
+    ":(exclude)docs/whitepaper/archive/**",
+]
+
+SCHEMA = {
+    "type": "object",
+    "properties": {
+        "summary": {"type": "string"},
+        "findings": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "severity": {"type": "string", "enum": ["high", "medium", "low"]},
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "evidence-gate", "ideals", "consistency", "overclaim",
+                            "industry-definitions", "naming", "tone", "clarity", "style",
+                        ],
+                    },
+                    "file": {"type": "string"},
+                    "line": {"type": "integer"},
+                    "quote": {"type": "string"},
+                    "problem": {"type": "string"},
+                    "suggestion": {"type": "string"},
+                },
+                "required": ["severity", "category", "file", "quote", "problem", "suggestion"],
+            },
+        },
+    },
+    "required": ["summary", "findings"],
+}
+
+PROMPT = """You are the editorial reviewer for the Federated Ads Protocol repository.
+Your job is to stop changes that would get the documents rejected by W3C, IETF,
+IAB Tech Lab or a careful industry reader.
+
+First read docs/STYLE.md in full. It is the standard you apply. Then review ONLY
+the added or changed lines in the diff below (lines starting with '+'). Read the
+surrounding file text, and any section a changed line cross-references, when you
+need context. Do not report problems in unchanged text.
+
+Severity rules:
+- high:
+  * evidence-gate: a factual claim (figure, date, quotation, legal status, what
+    a standard or organisation says or did, a claim that something does not
+    exist) with no citation, or whose cited Appendix B entry plainly cannot
+    support it (wrong source, wrong date, news coverage where STYLE.md requires
+    a primary source).
+  * ideals: text that contradicts the ideals in STYLE.md section 1.
+  * consistency: text that contradicts another section of the same document or
+    the Internet-Draft.
+  * industry-definitions: an IAB or MRC term or standard used wrongly.
+- medium: overclaiming, missing caveats or source interests, undefined jargon,
+  naming problems, tone a fair reviewer would reject.
+- low: style, clarity, length budget.
+
+{web_rule}
+
+Be precise and sparing. Report a finding only if you can quote the exact
+changed text and explain concretely why it fails STYLE.md. If nothing fails,
+return an empty findings list. Return your answer in the required JSON schema.
+
+DIFF:
+{diff}
+"""
+
+WEB_ON = (
+    "You may use WebFetch and WebSearch to open the cited sources for changed "
+    "factual claims. If a source does not contain the claim as stated, that is a "
+    "high-severity evidence-gate finding; say what the source actually says."
+)
+WEB_OFF = (
+    "Do not use the web. Judge citations from the paper and its Appendix B "
+    "entries only; do not report a claim as false just because you cannot "
+    "verify it offline, but do report claims that have no citation at all."
+)
+
+
+def git(*args: str) -> str:
+    return subprocess.run(
+        ["git", *args], cwd=ROOT, capture_output=True, text=True, check=True,
+    ).stdout
+
+
+def base_ref() -> str | None:
+    override = os.environ.get("FA_AI_REVIEW_BASE")
+    if override:
+        return override
+    for candidate in ("origin/main", "main"):
+        try:
+            return git("merge-base", "HEAD", candidate).strip()
+        except subprocess.CalledProcessError:
+            continue
+    return None
+
+
+def extract(output: str) -> dict | None:
+    """Pull the structured result out of `claude -p --output-format json`."""
+    try:
+        envelope = json.loads(output)
+    except json.JSONDecodeError:
+        return None
+    if isinstance(envelope, dict):
+        for key in ("structured_output", "structuredOutput"):
+            if isinstance(envelope.get(key), dict):
+                return envelope[key]
+        result = envelope.get("result")
+        if isinstance(result, str):
+            text = result.strip()
+            if text.startswith("```"):
+                text = text.strip("`").removeprefix("json").strip()
+            try:
+                return json.loads(text)
+            except json.JSONDecodeError:
+                return None
+        if "findings" in envelope:
+            return envelope
+    return None
+
+
+def main() -> int:
+    if os.environ.get("FA_SKIP_AI_REVIEW") == "1":
+        print("ai_review: skipped (FA_SKIP_AI_REVIEW=1)")
+        return 0
+    claude = shutil.which("claude")
+    if not claude:
+        print("ai_review: warning: Claude Code CLI not found; AI review skipped", file=sys.stderr)
+        return 0
+
+    base = base_ref()
+    if not base:
+        print("ai_review: warning: no base ref found; AI review skipped", file=sys.stderr)
+        return 0
+    if "--worktree" in sys.argv[1:]:
+        diff = git("diff", "--unified=3", base, "--", *PATHS, *EXCLUDE)
+    else:
+        diff = git("diff", "--unified=3", f"{base}...HEAD", "--", *PATHS, *EXCLUDE)
+    if not diff.strip():
+        print("ai_review: no documentation changes to review")
+        return 0
+
+    web = os.environ.get("FA_AI_VERIFY_WEB") == "1"
+    tools = "Read,Grep,Glob" + (",WebFetch,WebSearch" if web else "")
+    prompt = PROMPT.format(web_rule=WEB_ON if web else WEB_OFF, diff=diff)
+
+    print(f"ai_review: reviewing documentation changes since {base[:8]}"
+          f"{' with web verification' if web else ''} (this can take a few minutes)...",
+          file=sys.stderr)
+    try:
+        proc = subprocess.run(
+            [
+                claude, "-p",
+                "--output-format", "json",
+                "--json-schema", json.dumps(SCHEMA),
+                "--tools", tools,
+                "--allowedTools", tools,
+                "--no-session-persistence",
+            ],
+            input=prompt, cwd=ROOT, capture_output=True, text=True, timeout=TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        print("ai_review: warning: review timed out; push allowed", file=sys.stderr)
+        return 0
+    if proc.returncode != 0:
+        print(f"ai_review: warning: Claude CLI failed ({proc.returncode}); push allowed\n{proc.stderr[-2000:]}",
+              file=sys.stderr)
+        return 0
+
+    report = extract(proc.stdout)
+    if report is None:
+        print("ai_review: warning: could not parse the review; push allowed", file=sys.stderr)
+        print(proc.stdout[-2000:], file=sys.stderr)
+        return 0
+
+    findings = report.get("findings", [])
+    order = {"high": 0, "medium": 1, "low": 2}
+    findings.sort(key=lambda f: order.get(f.get("severity"), 3))
+    print(f"\nai_review: {report.get('summary', '').strip()}")
+    for f in findings:
+        loc = f"{f.get('file', '?')}:{f.get('line', '?')}"
+        print(f"\n[{f.get('severity', '?').upper()}] {f.get('category', '?')}  {loc}")
+        print(f"  text:       {f.get('quote', '').strip()[:300]}")
+        print(f"  problem:    {f.get('problem', '').strip()}")
+        print(f"  suggestion: {f.get('suggestion', '').strip()}")
+
+    high = [f for f in findings if f.get("severity") == "high"]
+    if high and os.environ.get("FA_AI_REVIEW_WARN") != "1":
+        print(f"\nai_review: {len(high)} high-severity finding(s); push blocked.\n"
+              "Fix them, or push with FA_AI_REVIEW_WARN=1 if you are sure they are wrong.",
+              file=sys.stderr)
+        return 1
+    print(f"\nai_review: done ({len(findings)} finding(s), none blocking)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
