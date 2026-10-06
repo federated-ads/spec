@@ -9,7 +9,7 @@ The design commitments are the principles in whitepaper §3.1. Editing does not 
 - **Federated.** No mandatory central server, exchange, registry or token. Intermediaries are optional and replaceable.
 - **Owner control of creative.** Creatives are licensed, time-limited and revocable, never surrendered.
 - **Privacy by default.** Contextual matching by default. No cross-site identifiers. Aggregated receipts. Third parties may *measure* deals, never *observe* people.
-- **Verifiable.** Economically meaningful records (deals, licences and revocations, receipts, statements) are signed and logged.
+- **Verifiable.** Economically meaningful records (deals, revocations and their acknowledgements, receipt batches and statements) are signed and recorded in an append-only log that independent witnesses can cosign.
 - **Rail-agnostic, surface-neutral, bridge to today, boring primitives.**
 - **User agency.** People can understand, refuse, pay to avoid and report ads.
 - **Honest limits.** Where the protocol cannot guarantee something, say so.
